@@ -25,7 +25,7 @@ def get_version() -> str:
                 return str(data["version"])
         except Exception:
             pass
-    return "0.33.5.4"
+    return "1.0.0"
 
 VERSION = get_version()
 IS_TEST_BUILD = "--test" in sys.argv or "-test" in VERSION.lower() or os.environ.get("BUILD_TEST", "").lower() in ("1", "true")
@@ -40,7 +40,7 @@ APP_NAME = "DroneFlames_Reborn"
 PUBLISHER = "reborn"
 
 BUILD_DIR = ROOT_DIR / "build"
-STAGE_NAME = f"{APP_NAME}_PC_v{VERSION}_{PUBLISHER}"
+STAGE_NAME = f"{APP_NAME}_PC_v{VERSION}"
 STAGE_DIR = BUILD_DIR / STAGE_NAME
 DIST_DIR = ROOT_DIR / "dist"
 
@@ -174,7 +174,7 @@ def main():
             ]
             res = subprocess.run(cmd)
             if res.returncode == 0:
-                setup_exe = DIST_DIR / f"{APP_NAME}_PC_Setup_v{VERSION}_{PUBLISHER}.exe"
+                setup_exe = DIST_DIR / f"{APP_NAME}_PC_Setup_v{VERSION}.exe"
                 if setup_exe.exists():
                     setup_size_mb = setup_exe.stat().st_size / (1024 * 1024)
                     print(f"  [OK] Windows Installer created: {setup_exe.name} ({setup_size_mb:.2f} MB)")
@@ -194,7 +194,7 @@ def main():
         ]
         mac_app = next((p for p in mac_app_candidates if p.exists()), None)
         if mac_app:
-            dmg_name = f"{APP_NAME}_macOS_v{VERSION}_{PUBLISHER}.dmg"
+            dmg_name = f"{APP_NAME}_macOS_v{VERSION}.dmg"
             dmg_path = DIST_DIR / dmg_name
             print(f"Creating macOS DMG package: {dmg_name}...")
             subprocess.run([

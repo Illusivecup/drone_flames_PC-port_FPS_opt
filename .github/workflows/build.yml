@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build-windows:
-    name: Build Windows PC Port
+    name: Build Reborn Release
     runs-on: windows-latest
 
     steps:
@@ -96,12 +96,12 @@ jobs:
           python3 -m pip install dmgbuild
 
           # Create Styled DMG with standard drag-to-Applications installer
-          DMG_NAME="DroneFlames_macOS_v${VERSION}_good_boy_irl.dmg"
+          DMG_NAME="DroneFlames_Reborn_macOS_v${VERSION}.dmg"
           DMG_PATH="dist/${DMG_NAME}"
           python3 scripts/build_dmg.py --app dist/DroneFlames.app --output "$DMG_PATH"
 
           # Create Portable ZIP
-          (cd dist && zip -r -q "DroneFlames_macOS_v${VERSION}_good_boy_irl.zip" "DroneFlames.app" && rm -rf "DroneFlames.app")
+          (cd dist && zip -r -q "DroneFlames_Reborn_macOS_v${VERSION}.zip" "DroneFlames.app" && rm -rf "DroneFlames.app")
 
       - name: Upload macOS Build Artifacts
         uses: actions/upload-artifact@v4
@@ -175,7 +175,7 @@ jobs:
         run: |
           mkdir -p dist
           VERSION=$(python3 -c "import build; print(build.VERSION)")
-          ./godot_bin/Godot_v4.7.2-stable_linux.x86_64 --headless --export-debug "Android" "dist/DroneFlames_v${VERSION}_good_boy_irl.apk"
+          ./godot_bin/Godot_v4.7.2-stable_linux.x86_64 --headless --export-debug "Android" "dist/DroneFlames_Reborn_v${VERSION}_android.apk"
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
@@ -256,15 +256,15 @@ jobs:
             dist/*.dmg
             dist/*.apk
           body: |
-            ## 🎮 DroneFlames — PC Port by @droneflamesmod
+            ## 🎮 DroneFlames Reborn
             Релиз ПК-порта DroneFlames `${{ steps.version_info.outputs.TAG_NAME }}` (commit `${{ github.sha }}`).
 
             ### 📦 Файлы для загрузки:
-            - **Windows Setup Installer:** `DroneFlames_PC_Setup_v${{ steps.version_info.outputs.RAW_VER }}_good_boy_irl.exe`
-            - **Windows Portable (.ZIP):** `DroneFlames_PC_v${{ steps.version_info.outputs.RAW_VER }}_good_boy_irl.zip`
-            - **macOS Universal (.DMG):** `DroneFlames_macOS_v${{ steps.version_info.outputs.RAW_VER }}_good_boy_irl.dmg`
-            - **macOS Portable (.ZIP):** `DroneFlames_macOS_v${{ steps.version_info.outputs.RAW_VER }}_good_boy_irl.zip`
-            - **Android APK:** `DroneFlames_v${{ steps.version_info.outputs.RAW_VER }}_good_boy_irl.apk`
+            - **Windows Setup Installer:** `DroneFlames_Reborn_PC_Setup_v${{ steps.version_info.outputs.RAW_VER }}.exe`
+            - **Windows Portable (.ZIP):** `DroneFlames_Reborn_PC_v${{ steps.version_info.outputs.RAW_VER }}.zip`
+            - **macOS Universal (.DMG):** `DroneFlames_Reborn_macOS_v${{ steps.version_info.outputs.RAW_VER }}.dmg`
+            - **macOS Portable (.ZIP):** `DroneFlames_Reborn_macOS_v${{ steps.version_info.outputs.RAW_VER }}.zip`
+            - **Android APK:** `DroneFlames_Reborn_v${{ steps.version_info.outputs.RAW_VER }}_android.apk`
 
             ---
 
@@ -306,7 +306,7 @@ jobs:
             - **Сохранение игроков по никнеймам и бесшовный реконнект:** Хост сохраняет всех игроков по их никнеймам. Вылетевшие игроки или друзья могут заново присоединиться к начатой/сохранённой игре и продолжить свой геймплей.
             - **Приглашение друзей и LAN IP в 1 клик:** Кнопка «ПРИГЛАСИТЬ» в меню паузы и плашка с IP адресом в лобби локальной сети с мгновенным копированием (поддержка локальной сети, Radmin VPN и Hamachi).
             - **Анонс возобновлённых партий:** При нажатии «Продолжить партию» локальный сервер автоматически объявляет себя в сети, и друзья видят комнату в списке серверов.
-            - **Чистый заголовок окна:** Убрана надоедливая надпись `(DEBUG)` из заголовка окна, теперь там отображается версия: `DroneFlames v${{ steps.version_info.outputs.RAW_VER }} — PC Port by @droneflamesmod`.
+            - **Чистый заголовок окна:** Убрана надоедливая надпись `(DEBUG)` из заголовка окна, теперь там отображается версия: `DroneFlames Reborn v${{ steps.version_info.outputs.RAW_VER }}`.
             - **Официальная иконка игры:** Заменена стандартная иконка Godot — теперь везде отображается официальная эмблема игры (в таскбаре, окне, Alt-Tab и при полноэкранном режиме).
 
       - name: Send Notification to Telegram

@@ -77,14 +77,14 @@ russian.CreditsTitle=О проекте DroneFlames Reborn
 russian.DebugModeTitle=DroneFlames (Консоль и логи отладки)
 russian.DesktopShortcut=Создать ярлык на Рабочем столе
 russian.WelcomeTitle=Вас приветствует установка DroneFlames Reborn
-russian.WelcomeSubtitle=Программа установит DroneFlames Reborn v{#MyAppVersion} на ваш компьютер.%n%n• Пересобранная симуляция: без фризов на 1 FPS%n• Оптимизированный рендер и производительность%n• Нативная поддержка мультиплеера по WebRTC%n• Поддержка F11, WASD, плавного зума, модов%n%nДля продолжения нажмите «Далее».
+russian.WelcomeSubtitle=Программа установит DroneFlames Reborn v{#MyAppVersion} на ваш компьютер.%n%n• Реальный экспорт игры: exe + pck, никаких архивов с исходниками%n• Отказоустойчивый мультиплеер: релей, реконнект, позднее подключение%n• Поддержка F11, WASD, плавного зума, модов%n%nДля продолжения нажмите «Далее».
 
 english.LaunchProgramTitle=Launch DroneFlames Reborn
 english.CreditsTitle=About DroneFlames Reborn
 english.DebugModeTitle=DroneFlames (Debug Console Mode)
 english.DesktopShortcut=Create a desktop shortcut
 english.WelcomeTitle=Welcome to DroneFlames Reborn Setup
-english.WelcomeSubtitle=This will install DroneFlames Reborn v{#MyAppVersion} on your computer.%n%n• Rebuilt simulation: no more 1 FPS freezes%n• Optimized rendering and performance%n• Native WebRTC multiplayer%n• F11 fullscreen, WASD, smooth zoom, mod support%n%nClick Next to continue.
+english.WelcomeSubtitle=This will install DroneFlames Reborn v{#MyAppVersion} on your computer.%n%n• Real game export: exe + pck, no more sources-only archives%n• Resilient multiplayer: relay server, reconnect, late join%n• F11 fullscreen, WASD, smooth zoom, mod support%n%nClick Next to continue.
 
 [Messages]
 russian.WelcomeLabel1={cm:WelcomeTitle}
@@ -97,16 +97,14 @@ Name: "desktopicon"; Description: "{cm:DesktopShortcut}"; GroupDescription: "{cm
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "PORT_BY_GOOD_BOY_IRL.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "app_icon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Main application shortcut
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--path ""{app}"""; WorkingDir: "{app}"; IconFilename: "{app}\app_icon.ico"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--path ""{app}"""; WorkingDir: "{app}"; IconFilename: "{app}\app_icon.ico"; Tasks: desktopicon
 
-; Debug Console Launcher
-Name: "{group}\{cm:DebugModeTitle}"; Filename: "{app}\DroneFlames_Debug.exe"; Parameters: "--path ""{app}"""; WorkingDir: "{app}"; IconFilename: "{app}\app_icon.ico"
+; Debug Console Launcher (verbose log -> debug.log)
+Name: "{group}\{cm:DebugModeTitle}"; Filename: "{app}\DroneFlames_Debug.bat"; WorkingDir: "{app}"; IconFilename: "{app}\app_icon.ico"
 
 ; Credits & Release info
 

@@ -26,3 +26,4 @@ perf/
 Thumbs.db
 .idea/
 .vscode/
+godot_bin/

@@ -139,7 +139,7 @@ def ensure_templates() -> Path:
         return tpl_dir
     tpz = GODOT_BIN_DIR / "templates.tpz"
     if not tpz.exists() or tpz.stat().st_size == 0:
-        download(f"{GODOT_RELEASE_BASE}/Godot_{GODOT_VERSION}_export_templates.tpz", tpz)
+        download(f"{GODOT_RELEASE_BASE}/Godot_v{GODOT_VERSION}_export_templates.tpz", tpz)
     tpl_dir.mkdir(parents=True, exist_ok=True)
     log(f"Installing export templates into {tpl_dir}")
     with zipfile.ZipFile(tpz) as zf:

@@ -110,6 +110,10 @@ func _ready() -> void :
                         var lan_test: RefCounted = (load("res://dev/lan_smoke_test.gd") as GDScript).new()
                         set_meta("lan_smoke_test", lan_test)
                         lan_test.call("run", self, a.get_slice("=", 1))
+                elif a.begins_with("--mp-resilience=") or a.begins_with("--lan-resilience="):
+                        var mp_res: RefCounted = (load("res://dev/mp_resilience_test.gd") as GDScript).new()
+                        set_meta("mp_resilience", mp_res)
+                        mp_res.call("run", self, a.get_slice("=", 1))
                 elif a == "--graphics-test":
                         var gfx_test: RefCounted = (load("res://dev/graphics_test.gd") as GDScript).new()
                         set_meta("gfx_test", gfx_test)

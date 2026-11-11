@@ -31,6 +31,7 @@ var _cf_token: String = ""
 var _cf_api: String = "https://rtc.live.cloudflare.com"
 const CF_STUN: Dictionary = {"urls": ["stun:stun.cloudflare.com:3478"]}
 var _proxied: bool = false
+var _open_auth: bool = false  # dev (--open): no accounts needed (local / CI testing only)
 var _diag_elapsed: float = 0.0
 
 # User database and persistent stats
@@ -92,6 +93,8 @@ func _initialize() -> void :
 			_db_file = v
 		elif a == "--behind-proxy":
 			_proxied = true
+		elif a == "--open":
+			_open_auth = true
 	_secret = OS.get_environment("DF_TURN_SECRET")
 	_cf_key = OS.get_environment("DF_CF_TURN_KEY_ID")
 	_cf_token = OS.get_environment("DF_CF_TURN_TOKEN")
@@ -465,6 +468,11 @@ func _send(ck: int, d: Dictionary) -> void :
 
 func _check_auth(ck: int, d: Dictionary) -> bool:
 	var cl: Dictionary = _clients[ck]
+	if _open_auth:
+		cl["auth"] = true
+		if String(cl.get("auth_user", "")) == "":
+			cl["auth_user"] = String(cl.get("name", "Player"))
+		return true
 	if bool(cl.get("auth", false)):
 		return true
 	var tok: String = String(d.get("auth_token", ""))

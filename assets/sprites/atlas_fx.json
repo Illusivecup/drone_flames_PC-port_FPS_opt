@@ -1,0 +1,125 @@
+{
+ "sprites": {
+  "explosion_m": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 7,
+   "fps": 14,
+   "ax": 12,
+   "ay": 12
+  },
+  "explosion_s": {
+   "x": 426,
+   "y": 1,
+   "w": 12,
+   "h": 12,
+   "frames": 5,
+   "fps": 14,
+   "ax": 6,
+   "ay": 6
+  },
+  "splash": {
+   "x": 1,
+   "y": 26,
+   "w": 16,
+   "h": 12,
+   "frames": 6,
+   "fps": 12,
+   "ax": 8,
+   "ay": 8
+  },
+  "debris": {
+   "x": 107,
+   "y": 26,
+   "w": 8,
+   "h": 8,
+   "frames": 4,
+   "fps": 12,
+   "ax": 4,
+   "ay": 4
+  },
+  "debris_wood": {
+   "x": 140,
+   "y": 26,
+   "w": 8,
+   "h": 8,
+   "frames": 4,
+   "fps": 12,
+   "ax": 4,
+   "ay": 4
+  },
+  "smoke_loop": {
+   "x": 267,
+   "y": 1,
+   "w": 12,
+   "h": 16,
+   "frames": 8,
+   "fps": 8,
+   "ax": 6,
+   "ay": 16
+  },
+  "smoke_black_loop": {
+   "x": 170,
+   "y": 1,
+   "w": 12,
+   "h": 16,
+   "frames": 8,
+   "fps": 8,
+   "ax": 6,
+   "ay": 16
+  },
+  "fire_small": {
+   "x": 173,
+   "y": 26,
+   "w": 6,
+   "h": 8,
+   "frames": 4,
+   "fps": 10,
+   "ax": 3,
+   "ay": 8
+  },
+  "crater_s": {
+   "x": 98,
+   "y": 26,
+   "w": 8,
+   "h": 8,
+   "frames": 1,
+   "fps": 0,
+   "ax": 4,
+   "ay": 4
+  },
+  "crater_m": {
+   "x": 364,
+   "y": 1,
+   "w": 12,
+   "h": 12,
+   "frames": 1,
+   "fps": 0,
+   "ax": 6,
+   "ay": 6
+  },
+  "dust_s": {
+   "x": 377,
+   "y": 1,
+   "w": 12,
+   "h": 12,
+   "frames": 4,
+   "fps": 12,
+   "ax": 6,
+   "ay": 6
+  },
+  "build_spark": {
+   "x": 198,
+   "y": 26,
+   "w": 4,
+   "h": 4,
+   "frames": 3,
+   "fps": 10,
+   "ax": 2,
+   "ay": 2
+  }
+ },
+ "note": "frame i region: (x + i*w, y, w, h); frames contiguous, 1px padding between sprites; ax,ay = anchor in frame px (offset = -anchor); fps 0 = static decal"
+}

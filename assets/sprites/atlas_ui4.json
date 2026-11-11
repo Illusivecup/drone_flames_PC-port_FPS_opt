@@ -1,0 +1,94 @@
+{
+ "image": "atlas_ui4.png",
+ "size": [
+  256,
+  64
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "icon_missile_factory": {
+   "x": 151,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_move": {
+   "x": 176,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_solar": {
+   "x": 226,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_m_ballistic": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_m_cruise": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_m_aa": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_m_sam": {
+   "x": 126,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_m_hyper": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_war": {
+   "x": 1,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_peace": {
+   "x": 201,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_diplomacy": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "res_ballistic": {
+   "x": 36,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  },
+  "res_cruise": {
+   "x": 46,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  },
+  "res_aa": {
+   "x": 26,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  }
+ }
+}

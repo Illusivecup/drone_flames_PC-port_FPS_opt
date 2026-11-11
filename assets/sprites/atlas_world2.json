@@ -1,0 +1,370 @@
+{
+ "cell_px": 4,
+ "image": "atlas_world2.png",
+ "size": [
+  256,
+  256
+ ],
+ "anchor": "ax,ay = pixel edges: footprint = cols [ax, ax+fw*4), rows [ay-fd*4, ay) of the frame; draw frame at (cell_x*4-ax, (cell_y+fd)*4-ay), cell = NW cell of footprint",
+ "anchor_units": "kind unit/unit_shadow: ax,ay = centre pixel of the frame (draw at world_px - (ax, ay)); frame k = heading k*22.5 deg clockwise from east (screen, y down): k=4 south, k=12 north",
+ "light": "top-left; shadows baked opaque, falling right-down",
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "refinery": {
+   "x": 81,
+   "y": 1,
+   "w": 42,
+   "h": 58,
+   "fw": 10,
+   "fd": 8,
+   "ax": 0,
+   "ay": 57,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "flare_x": 1,
+   "flare_y": 0,
+   "tanks": [
+    [
+     25,
+     25
+    ],
+    [
+     34,
+     24
+    ],
+    [
+     25,
+     35
+    ],
+    [
+     34,
+     36
+    ]
+   ]
+  },
+  "refinery_ruin": {
+   "x": 124,
+   "y": 1,
+   "w": 42,
+   "h": 58,
+   "fw": 10,
+   "fd": 8,
+   "ax": 0,
+   "ay": 57,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "refinery",
+   "shadow": "rock_deep",
+   "tanks_fire": [
+    [
+     25,
+     28
+    ],
+    [
+     34,
+     28
+    ],
+    [
+     25,
+     38
+    ],
+    [
+     34,
+     38
+    ]
+   ]
+  },
+  "power_plant": {
+   "x": 1,
+   "y": 1,
+   "w": 39,
+   "h": 63,
+   "fw": 9,
+   "fd": 8,
+   "ax": 0,
+   "ay": 62,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "steam": [
+    [
+     6,
+     22
+    ],
+    [
+     20,
+     22
+    ]
+   ],
+   "smoke": [
+    [
+     29,
+     2
+    ],
+    [
+     33,
+     2
+    ]
+   ]
+  },
+  "power_plant_ruin": {
+   "x": 41,
+   "y": 1,
+   "w": 39,
+   "h": 63,
+   "fw": 9,
+   "fd": 8,
+   "ax": 0,
+   "ay": 62,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "power_plant",
+   "shadow": "rock_deep"
+  },
+  "drone_factory": {
+   "x": 167,
+   "y": 1,
+   "w": 34,
+   "h": 40,
+   "fw": 8,
+   "fd": 6,
+   "ax": 0,
+   "ay": 39,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep"
+  },
+  "drone_factory_ruin": {
+   "x": 202,
+   "y": 1,
+   "w": 34,
+   "h": 40,
+   "fw": 8,
+   "fd": 6,
+   "ax": 0,
+   "ay": 39,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "drone_factory",
+   "shadow": "rock_deep"
+  },
+  "airfield_hangar": {
+   "x": 49,
+   "y": 65,
+   "w": 22,
+   "h": 24,
+   "fw": 5,
+   "fd": 4,
+   "ax": 1,
+   "ay": 24,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep"
+  },
+  "airfield_hangar_ruin": {
+   "x": 72,
+   "y": 65,
+   "w": 22,
+   "h": 24,
+   "fw": 5,
+   "fd": 4,
+   "ax": 1,
+   "ay": 24,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "airfield_hangar",
+   "shadow": "rock_deep"
+  },
+  "airfield_tower": {
+   "x": 135,
+   "y": 65,
+   "w": 11,
+   "h": 23,
+   "fw": 2,
+   "fd": 2,
+   "ax": 1,
+   "ay": 22,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep"
+  },
+  "airfield_tower_ruin": {
+   "x": 147,
+   "y": 65,
+   "w": 11,
+   "h": 23,
+   "fw": 2,
+   "fd": 2,
+   "ax": 1,
+   "ay": 22,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "airfield_tower",
+   "shadow": "rock_deep"
+  },
+  "hospital": {
+   "x": 159,
+   "y": 65,
+   "w": 22,
+   "h": 22,
+   "fw": 5,
+   "fd": 4,
+   "ax": 0,
+   "ay": 22,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep"
+  },
+  "hospital_ruin": {
+   "x": 182,
+   "y": 65,
+   "w": 22,
+   "h": 22,
+   "fw": 5,
+   "fd": 4,
+   "ax": 0,
+   "ay": 22,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "hospital",
+   "shadow": "rock_deep"
+  },
+  "police": {
+   "x": 95,
+   "y": 65,
+   "w": 19,
+   "h": 23,
+   "fw": 4,
+   "fd": 3,
+   "ax": 1,
+   "ay": 23,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep"
+  },
+  "police_ruin": {
+   "x": 115,
+   "y": 65,
+   "w": 19,
+   "h": 23,
+   "fw": 4,
+   "fd": 3,
+   "ax": 1,
+   "ay": 23,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "police",
+   "shadow": "rock_deep"
+  },
+  "fire_station": {
+   "x": 1,
+   "y": 65,
+   "w": 23,
+   "h": 28,
+   "fw": 5,
+   "fd": 3,
+   "ax": 1,
+   "ay": 28,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep"
+  },
+  "fire_station_ruin": {
+   "x": 25,
+   "y": 65,
+   "w": 23,
+   "h": 28,
+   "fw": 5,
+   "fd": 3,
+   "ax": 1,
+   "ay": 28,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "fire_station",
+   "shadow": "rock_deep"
+  },
+  "airfield_runway": {
+   "x": 1,
+   "y": 94,
+   "w": 120,
+   "h": 16,
+   "fw": 30,
+   "fd": 4,
+   "ax": 0,
+   "ay": 16,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ground",
+   "height": 0
+  },
+  "uav_delta": {
+   "x": 1,
+   "y": 111,
+   "w": 11,
+   "h": 11,
+   "fw": 1,
+   "fd": 1,
+   "ax": 5,
+   "ay": 5,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true
+  },
+  "uav_delta_shadow": {
+   "x": 1,
+   "y": 123,
+   "w": 11,
+   "h": 11,
+   "fw": 1,
+   "fd": 1,
+   "ax": 5,
+   "ay": 5,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit_shadow",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "shadow_of": "uav_delta",
+   "color": "rock_deep"
+  },
+  "uav_delta_parked": {
+   "x": 178,
+   "y": 123,
+   "w": 11,
+   "h": 11,
+   "fw": 1,
+   "fd": 1,
+   "ax": 5,
+   "ay": 5,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "state": "parked"
+  }
+ }
+}

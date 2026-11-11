@@ -1,0 +1,24 @@
+{
+ "_doc": "v0.19 unified terrain + flora palette (48 colours). Ramps run shadow -> highlight: shadows shift cool (blue-violet), highlights warm (yellow). Read by world/terrain_view.gd, world/decal_layer.gd and tools/art/gen_flora19_atlas.py.",
+ "colors": {
+  "g0": "#1a2e2a", "g1": "#23402f", "g2": "#2d5232", "g3": "#34682b", "g4": "#467c2c", "g5": "#649430", "g6": "#7da739", "g7": "#96b74b", "g8": "#afc35f",
+  "d0": "#5a4a3e", "d1": "#7a6241", "d2": "#987a40", "d3": "#b29245", "d4": "#c6a855", "d5": "#d6bd6e",
+  "s0": "#a8946e", "s1": "#c0aa7c", "s2": "#d2be8c", "s3": "#e0d0a2", "s4": "#ece2be",
+  "e0": "#3c3440", "e1": "#54443f", "e2": "#6c5744", "e3": "#846c4e", "e4": "#9c845e",
+  "r0": "#2e2f3b", "r1": "#41424e", "r2": "#585861", "r3": "#706f70", "r4": "#8b897f", "r5": "#aca793",
+  "n0": "#8e9cc0", "n1": "#aab6d2", "n2": "#c7cfe2", "n3": "#e2e6ee", "n4": "#f8f6ec",
+  "w0": "#e8f4ee", "w1": "#bde0ec", "w2": "#98cbe6", "w3": "#77b3de", "w4": "#5c9cd5", "w5": "#4886c9", "w6": "#3b72b9", "w7": "#3060a6", "w8": "#284e92", "w9": "#21407c",
+  "a0": "#e49ab2", "a1": "#a48bce"
+ },
+ "ramps": {
+  "grass": [["g4", "g5", "g6", "g7", "g8"], 2, 18],
+  "forest": [["g1", "g2", "g3", "g4", "g5"], 2, 14],
+  "pine": [["g0", "g1", "g2", "g3", "g4"], 2, 12],
+  "steppe": [["d0", "d1", "d2", "d3", "d4", "d5"], 3, 22],
+  "sand": [["s0", "s1", "s2", "s3", "s4"], 2, 14],
+  "hills": [["e0", "e1", "e2", "e3", "e4"], 3, 10],
+  "rock": [["r0", "r1", "r2", "r3", "r4", "r5"], 3, 12],
+  "snow": [["n0", "n1", "n2", "n3", "n4"], 3, 8],
+  "water": [["w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w9"], 5, 0]
+ }
+}

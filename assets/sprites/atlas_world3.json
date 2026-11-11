@@ -1,0 +1,455 @@
+{
+ "cell_px": 4,
+ "image": "atlas_world3.png",
+ "size": [
+  256,
+  256
+ ],
+ "anchor": "ax,ay = pixel edges: footprint = cols [ax, ax+fw*4), rows [ay-fd*4, ay) of the frame; draw frame at (cell_x*4-ax, (cell_y+fd)*4-ay), cell = NW cell of footprint",
+ "anchor_units": "kind unit/unit_shadow: ax,ay = centre pixel of the frame (draw at world_px - (ax, ay)); frame k = heading k*22.5 deg clockwise from east (screen, y down): k=4 south, k=12 north",
+ "local_px": "spots / rail0 / rail1 / nozzle / top / roll_y / start_x / end_x are frame-local px (world px = frame draw position + value)",
+ "light": "top-left; shadows baked opaque, falling right-down",
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "dp_base": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 35,
+   "fw": 6,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "spots": [
+    [
+     6,
+     29
+    ],
+    [
+     17,
+     29
+    ]
+   ]
+  },
+  "dp_base_ruin": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 35,
+   "fw": 6,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "dp_base",
+   "shadow": "rock_deep"
+  },
+  "dp_store": {
+   "x": 1,
+   "y": 124,
+   "w": 21,
+   "h": 22,
+   "fw": 5,
+   "fd": 4,
+   "ax": 1,
+   "ay": 22,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "spots": [
+    [
+     17,
+     9
+    ],
+    [
+     4,
+     17
+    ],
+    [
+     11,
+     17
+    ],
+    [
+     18,
+     17
+    ]
+   ]
+  },
+  "dp_store_ruin": {
+   "x": 23,
+   "y": 124,
+   "w": 21,
+   "h": 22,
+   "fw": 5,
+   "fd": 4,
+   "ax": 1,
+   "ay": 22,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "dp_store",
+   "shadow": "rock_deep"
+  },
+  "dp_ramp": {
+   "x": 45,
+   "y": 124,
+   "w": 19,
+   "h": 14,
+   "fw": 4,
+   "fd": 2,
+   "ax": 1,
+   "ay": 13,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "rail0": [
+    5,
+    5
+   ],
+   "rail1": [
+    15,
+    0
+   ],
+   "h0": 3,
+   "h1": 8,
+   "launch_dir": "east"
+  },
+  "dp_ramp_ruin": {
+   "x": 65,
+   "y": 124,
+   "w": 19,
+   "h": 14,
+   "fw": 4,
+   "fd": 2,
+   "ax": 1,
+   "ay": 13,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "dp_ramp",
+   "shadow": "rock_deep"
+  },
+  "dp_runway": {
+   "x": 85,
+   "y": 124,
+   "w": 64,
+   "h": 12,
+   "fw": 16,
+   "fd": 3,
+   "ax": 0,
+   "ay": 12,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ground",
+   "height": 0,
+   "roll_y": 6,
+   "start_x": 10,
+   "end_x": 56,
+   "roll_dir": "east"
+  },
+  "tel2": {
+   "x": 51,
+   "y": 1,
+   "w": 27,
+   "h": 28,
+   "fw": 6,
+   "fd": 2,
+   "ax": 1,
+   "ay": 27,
+   "frames": 7,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "facing": "east",
+   "missiles": 2,
+   "erect_frames": [
+    1,
+    6
+   ],
+   "nozzle": [
+    2,
+    15
+   ],
+   "top": [
+    2,
+    0
+   ]
+  },
+  "tel1": {
+   "x": 1,
+   "y": 37,
+   "w": 27,
+   "h": 28,
+   "fw": 6,
+   "fd": 2,
+   "ax": 1,
+   "ay": 27,
+   "frames": 7,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "facing": "east",
+   "missiles": 1,
+   "erect_frames": [
+    1,
+    6
+   ],
+   "nozzle": [
+    2,
+    18
+   ],
+   "top": [
+    2,
+    3
+   ]
+  },
+  "tel0": {
+   "x": 191,
+   "y": 95,
+   "w": 27,
+   "h": 28,
+   "fw": 6,
+   "fd": 2,
+   "ax": 1,
+   "ay": 27,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "facing": "east",
+   "missiles": 0
+  },
+  "tel2e": {
+   "x": 1,
+   "y": 66,
+   "w": 27,
+   "h": 28,
+   "fw": 6,
+   "fd": 2,
+   "ax": 1,
+   "ay": 27,
+   "frames": 7,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "facing": "east",
+   "missiles": 1,
+   "empty_boom": "N",
+   "lower_frames": [
+    6,
+    0
+   ],
+   "lower_s": 1.5,
+   "nozzle": [
+    2,
+    15
+   ],
+   "top": [
+    2,
+    0
+   ]
+  },
+  "tel1e": {
+   "x": 1,
+   "y": 95,
+   "w": 27,
+   "h": 28,
+   "fw": 6,
+   "fd": 2,
+   "ax": 1,
+   "ay": 27,
+   "frames": 7,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "facing": "east",
+   "missiles": 0,
+   "empty_boom": "S",
+   "lower_frames": [
+    6,
+    0
+   ],
+   "lower_s": 1.5,
+   "nozzle": [
+    2,
+    18
+   ],
+   "top": [
+    2,
+    3
+   ]
+  },
+  "tel_ruin": {
+   "x": 219,
+   "y": 95,
+   "w": 27,
+   "h": 28,
+   "fw": 6,
+   "fd": 2,
+   "ax": 1,
+   "ay": 27,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "tel2",
+   "shadow": "rock_deep"
+  },
+  "missile": {
+   "x": 1,
+   "y": 147,
+   "w": 11,
+   "h": 11,
+   "fw": 1,
+   "fd": 1,
+   "ax": 5,
+   "ay": 5,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true
+  },
+  "missile_shadow": {
+   "x": 1,
+   "y": 159,
+   "w": 11,
+   "h": 11,
+   "fw": 1,
+   "fd": 1,
+   "ax": 5,
+   "ay": 5,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit_shadow",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "shadow_of": "missile",
+   "color": "rock_deep"
+  },
+  "tel2_s": {
+   "x": 1,
+   "y": 171,
+   "w": 9,
+   "h": 31,
+   "fw": 2,
+   "fd": 6,
+   "ax": 0,
+   "ay": 30,
+   "frames": 1,
+   "fps": 0,
+   "kind": "vehicle_dir",
+   "dir": "s",
+   "of": "tel2",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "gen": "vehicle_dirs23"
+  },
+  "tel2_n": {
+   "x": 11,
+   "y": 171,
+   "w": 9,
+   "h": 32,
+   "fw": 2,
+   "fd": 6,
+   "ax": 0,
+   "ay": 31,
+   "frames": 1,
+   "fps": 0,
+   "kind": "vehicle_dir",
+   "dir": "n",
+   "of": "tel2",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "gen": "vehicle_dirs23"
+  },
+  "tel1_s": {
+   "x": 21,
+   "y": 171,
+   "w": 9,
+   "h": 31,
+   "fw": 2,
+   "fd": 6,
+   "ax": 0,
+   "ay": 30,
+   "frames": 1,
+   "fps": 0,
+   "kind": "vehicle_dir",
+   "dir": "s",
+   "of": "tel1",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "gen": "vehicle_dirs23"
+  },
+  "tel1_n": {
+   "x": 31,
+   "y": 171,
+   "w": 9,
+   "h": 32,
+   "fw": 2,
+   "fd": 6,
+   "ax": 0,
+   "ay": 31,
+   "frames": 1,
+   "fps": 0,
+   "kind": "vehicle_dir",
+   "dir": "n",
+   "of": "tel1",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "gen": "vehicle_dirs23"
+  },
+  "tel0_s": {
+   "x": 41,
+   "y": 171,
+   "w": 9,
+   "h": 29,
+   "fw": 2,
+   "fd": 6,
+   "ax": 0,
+   "ay": 28,
+   "frames": 1,
+   "fps": 0,
+   "kind": "vehicle_dir",
+   "dir": "s",
+   "of": "tel0",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "gen": "vehicle_dirs23"
+  },
+  "tel0_n": {
+   "x": 51,
+   "y": 171,
+   "w": 9,
+   "h": 32,
+   "fw": 2,
+   "fd": 6,
+   "ax": 0,
+   "ay": 31,
+   "frames": 1,
+   "fps": 0,
+   "kind": "vehicle_dir",
+   "dir": "n",
+   "of": "tel0",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "gen": "vehicle_dirs23"
+  }
+ }
+}

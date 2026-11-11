@@ -1,0 +1,85 @@
+{
+ "sprites": {
+  "muzzle_flash": {
+   "x": 553,
+   "y": 34,
+   "w": 7,
+   "h": 7,
+   "frames": 3,
+   "fps": 20,
+   "ax": 3,
+   "ay": 3
+  },
+  "tank_shot": {
+   "x": 431,
+   "y": 34,
+   "w": 12,
+   "h": 12,
+   "frames": 5,
+   "fps": 16,
+   "ax": 6,
+   "ay": 6
+  },
+  "hit_small": {
+   "x": 492,
+   "y": 34,
+   "w": 10,
+   "h": 10,
+   "frames": 6,
+   "fps": 16,
+   "ax": 5,
+   "ay": 5
+  },
+  "ew_pulse_loop": {
+   "x": 322,
+   "y": 1,
+   "w": 48,
+   "h": 28,
+   "frames": 8,
+   "fps": 10,
+   "ax": 24,
+   "ay": 14
+  },
+  "radar_ping": {
+   "x": 1,
+   "y": 34,
+   "w": 40,
+   "h": 24,
+   "frames": 8,
+   "fps": 12,
+   "ax": 20,
+   "ay": 12
+  },
+  "intercept_flash": {
+   "x": 322,
+   "y": 34,
+   "w": 18,
+   "h": 18,
+   "frames": 6,
+   "fps": 18,
+   "ax": 9,
+   "ay": 9
+  },
+  "capture_burst": {
+   "x": 1,
+   "y": 1,
+   "w": 32,
+   "h": 32,
+   "frames": 10,
+   "fps": 12,
+   "ax": 16,
+   "ay": 32
+  },
+  "farm_dust_loop": {
+   "x": 575,
+   "y": 34,
+   "w": 10,
+   "h": 6,
+   "frames": 6,
+   "fps": 8,
+   "ax": 5,
+   "ay": 6
+  }
+ },
+ "note": "frame i region: (x + i*w, y, w, h); frames contiguous, 1px padding between sprites; ax,ay = anchor in frame px (offset = -anchor); *_loop = seamless loop"
+}

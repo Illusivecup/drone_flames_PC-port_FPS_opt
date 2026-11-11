@@ -1,0 +1,50 @@
+{
+ "cell_px": 4,
+ "image": "atlas_fui_crane.png",
+ "size": [
+  554,
+  119
+ ],
+ "anchor": "overlay: draw frame at (mast_foot_px - (ax, ay)); mast foot = ground point under the mast south edge",
+ "note": "v0.28 FIX-UI: animated tower crane on construction / rebuild sites (world/units_layer.gd _cranes)",
+ "light": "top-left",
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "crane_l": {
+   "x": 1,
+   "y": 1,
+   "w": 23,
+   "h": 50,
+   "fw": 1,
+   "fd": 1,
+   "ax": 5,
+   "ay": 49,
+   "frames": 24,
+   "fps": 5
+  },
+  "crane_m": {
+   "x": 1,
+   "y": 52,
+   "w": 18,
+   "h": 38,
+   "fw": 1,
+   "fd": 1,
+   "ax": 5,
+   "ay": 37,
+   "frames": 24,
+   "fps": 5
+  },
+  "crane_s": {
+   "x": 1,
+   "y": 91,
+   "w": 14,
+   "h": 27,
+   "fw": 1,
+   "fd": 1,
+   "ax": 5,
+   "ay": 26,
+   "frames": 24,
+   "fps": 5
+  }
+ }
+}

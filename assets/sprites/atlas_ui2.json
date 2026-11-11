@@ -1,0 +1,118 @@
+{
+ "image": "atlas_ui2.png",
+ "size": [
+  256,
+  64
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "icon_refinery": {
+   "x": 176,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_power": {
+   "x": 151,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_factory": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_dronefactory": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_airfield": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_launch": {
+   "x": 126,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_target": {
+   "x": 1,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_route": {
+   "x": 201,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_follow": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_sell": {
+   "x": 226,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_info": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "res_money": {
+   "x": 73,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  },
+  "res_fuel": {
+   "x": 53,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  },
+  "res_power": {
+   "x": 83,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  },
+  "res_drone": {
+   "x": 43,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  },
+  "res_level": {
+   "x": 63,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  },
+  "info_panel": {
+   "x": 26,
+   "y": 26,
+   "w": 16,
+   "h": 16,
+   "slice": [
+    5,
+    5,
+    5,
+    5
+   ]
+  }
+ }
+}

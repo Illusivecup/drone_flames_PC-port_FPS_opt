@@ -1,0 +1,115 @@
+{
+ "cell_px": 4,
+ "image": "atlas_world4.png",
+ "size": [
+  256,
+  128
+ ],
+ "anchor": "ax,ay = pixel edges: footprint = cols [ax, ax+fw*4), rows [ay-fd*4, ay) of the frame; draw frame at (cell_x*4-ax, (cell_y+fd)*4-ay), cell = NW cell of footprint",
+ "local_px": "out / wires are frame-local px (world px = frame draw position + value). out = yard exit (south gate) of missile_factory; wires = insulator tops of power_pole (west, east) for drawing power lines",
+ "light": "top-left; shadows baked opaque, falling right-down",
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "missile_factory": {
+   "x": 1,
+   "y": 1,
+   "w": 34,
+   "h": 34,
+   "fw": 8,
+   "fd": 6,
+   "ax": 0,
+   "ay": 33,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "out": [
+    28,
+    31
+   ]
+  },
+  "missile_factory_ruin": {
+   "x": 36,
+   "y": 1,
+   "w": 34,
+   "h": 34,
+   "fw": 8,
+   "fd": 6,
+   "ax": 0,
+   "ay": 33,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "missile_factory",
+   "shadow": "rock_deep"
+  },
+  "solar": {
+   "x": 87,
+   "y": 1,
+   "w": 12,
+   "h": 15,
+   "fw": 3,
+   "fd": 3,
+   "ax": 0,
+   "ay": 15,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep"
+  },
+  "solar_ruin": {
+   "x": 100,
+   "y": 1,
+   "w": 12,
+   "h": 15,
+   "fw": 3,
+   "fd": 3,
+   "ax": 0,
+   "ay": 15,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "solar",
+   "shadow": "rock_deep"
+  },
+  "power_pole": {
+   "x": 71,
+   "y": 1,
+   "w": 7,
+   "h": 16,
+   "fw": 1,
+   "fd": 1,
+   "ax": 0,
+   "ay": 14,
+   "frames": 1,
+   "fps": 0,
+   "kind": "prop",
+   "shadow": "rock_deep",
+   "wires": [
+    [
+     0,
+     0
+    ],
+    [
+     3,
+     0
+    ]
+   ]
+  },
+  "power_pole_ruin": {
+   "x": 79,
+   "y": 1,
+   "w": 7,
+   "h": 16,
+   "fw": 1,
+   "fd": 1,
+   "ax": 0,
+   "ay": 14,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "power_pole",
+   "shadow": "rock_deep"
+  }
+ }
+}

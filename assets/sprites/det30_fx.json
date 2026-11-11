@@ -1,0 +1,109 @@
+{
+ "image": "det30_fx.png",
+ "size": [
+  410,
+  146
+ ],
+ "note": "DETAIL30 combat detail fx (fires with a life cycle, strike blast, ground flashes)",
+ "sprites": {
+  "fire_a_loop": {
+   "x": 1,
+   "y": 1,
+   "w": 10,
+   "h": 13,
+   "frames": 6,
+   "fps": 10,
+   "ax": 5,
+   "ay": 13,
+   "kind": "fx"
+  },
+  "fire_b_loop": {
+   "x": 1,
+   "y": 15,
+   "w": 13,
+   "h": 16,
+   "frames": 6,
+   "fps": 10,
+   "ax": 6,
+   "ay": 16,
+   "kind": "fx"
+  },
+  "fire_c_loop": {
+   "x": 1,
+   "y": 32,
+   "w": 8,
+   "h": 10,
+   "frames": 6,
+   "fps": 11,
+   "ax": 4,
+   "ay": 10,
+   "kind": "fx"
+  },
+  "fire_k_loop": {
+   "x": 1,
+   "y": 43,
+   "w": 6,
+   "h": 7,
+   "frames": 4,
+   "fps": 12,
+   "ax": 3,
+   "ay": 7,
+   "kind": "fx"
+  },
+  "fire_d_loop": {
+   "x": 1,
+   "y": 51,
+   "w": 10,
+   "h": 7,
+   "frames": 6,
+   "fps": 8,
+   "ax": 5,
+   "ay": 7,
+   "kind": "fx"
+  },
+  "blast_m": {
+   "x": 1,
+   "y": 59,
+   "w": 34,
+   "h": 34,
+   "frames": 12,
+   "fps": 18,
+   "ax": 17,
+   "ay": 24,
+   "kind": "fx"
+  },
+  "flash_s": {
+   "x": 1,
+   "y": 94,
+   "w": 14,
+   "h": 9,
+   "frames": 2,
+   "fps": 1,
+   "ax": 7,
+   "ay": 4,
+   "kind": "fx"
+  },
+  "flash_m": {
+   "x": 1,
+   "y": 104,
+   "w": 26,
+   "h": 15,
+   "frames": 2,
+   "fps": 1,
+   "ax": 13,
+   "ay": 7,
+   "kind": "fx"
+  },
+  "flash_l": {
+   "x": 1,
+   "y": 120,
+   "w": 46,
+   "h": 25,
+   "frames": 2,
+   "fps": 1,
+   "ax": 23,
+   "ay": 12,
+   "kind": "fx"
+  }
+ }
+}

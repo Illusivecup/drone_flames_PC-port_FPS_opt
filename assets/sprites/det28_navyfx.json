@@ -1,0 +1,73 @@
+{
+ "image": "det28_navyfx.png",
+ "size": [
+  290,
+  52
+ ],
+ "note": "DETAIL28 pixel smoke puffs; frame = dissolve*6 + size (radius 2..7)",
+ "sprites": {
+  "puff_dark": {
+   "x": 1,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 18,
+   "fps": 0,
+   "ax": 8,
+   "ay": 8,
+   "kind": "fx_puff",
+   "sizes": 6,
+   "radii": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "dissolve": 3
+  },
+  "puff_white": {
+   "x": 1,
+   "y": 18,
+   "w": 16,
+   "h": 16,
+   "frames": 18,
+   "fps": 0,
+   "ax": 8,
+   "ay": 8,
+   "kind": "fx_puff",
+   "sizes": 6,
+   "radii": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "dissolve": 3
+  },
+  "puff_fire": {
+   "x": 1,
+   "y": 35,
+   "w": 16,
+   "h": 16,
+   "frames": 18,
+   "fps": 0,
+   "ax": 8,
+   "ay": 8,
+   "kind": "fx_puff",
+   "sizes": 6,
+   "radii": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "dissolve": 3
+  }
+ }
+}

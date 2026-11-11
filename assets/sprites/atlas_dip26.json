@@ -1,0 +1,193 @@
+{
+ "cell_px": 4,
+ "image": "atlas_dip26.png",
+ "size": [
+  128,
+  128
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "icon_dip_aid": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_protest": {
+   "x": 76,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_call": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_vassal": {
+   "x": 101,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_puppet": {
+   "x": 101,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_conf": {
+   "x": 1,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_annex": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_return": {
+   "x": 1,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_points": {
+   "x": 1,
+   "y": 93,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_dip_vassal_16": {
+   "x": 52,
+   "y": 93,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_dip_puppet_16": {
+   "x": 18,
+   "y": 93,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_dip_threat": {
+   "x": 51,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_demand": {
+   "x": 51,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_ult": {
+   "x": 76,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_stop": {
+   "x": 26,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_comp": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_crisis": {
+   "x": 26,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_cause_convoy": {
+   "x": 35,
+   "y": 76,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_cause_port": {
+   "x": 86,
+   "y": 76,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_cause_bridge": {
+   "x": 18,
+   "y": 76,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_cause_oil": {
+   "x": 69,
+   "y": 76,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_cause_blockade": {
+   "x": 1,
+   "y": 76,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_cause_neutral": {
+   "x": 52,
+   "y": 76,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_dip_tension_16": {
+   "x": 35,
+   "y": 93,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_dip_chat": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "icon_dip_chat_16": {
+   "x": 103,
+   "y": 76,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  }
+ }
+}

@@ -1,0 +1,2649 @@
+{
+ "cell_px": 4,
+ "image": "atlas_navy1.png",
+ "size": [
+  2304,
+  464
+ ],
+ "anchor": "as atlas_world9: buildings draw at (cell_x*4-ax, (cell_y+fd)*4-ay), cell = NW cell of footprint",
+ "anchor_units": "kind unit*: ax, ay = centre pixel (draw at world_px - (ax, ay)); frame = state*dirs + dir, dir k = heading k*step deg clockwise from east",
+ "local_px": "slots/bow/stern = px offsets from the hull anchor per dir (3/4 lift included); berths = frame-local px",
+ "light": "top-left",
+ "palette": "palettes/main_named.json",
+ "gen": "navy26",
+ "sprites": {
+  "ship_light": {
+   "x": 1322,
+   "y": 374,
+   "w": 33,
+   "h": 33,
+   "fw": 0,
+   "fd": 0,
+   "ax": 16,
+   "ay": 16,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "hull": "light",
+   "length_px": 28,
+   "slots": [
+    [
+     [
+      7,
+      -2
+     ],
+     [
+      -5,
+      -2
+     ],
+     [
+      -10,
+      -2
+     ]
+    ],
+    [
+     [
+      7,
+      1
+     ],
+     [
+      -5,
+      -4
+     ],
+     [
+      -10,
+      -6
+     ]
+    ],
+    [
+     [
+      5,
+      3
+     ],
+     [
+      -4,
+      -6
+     ],
+     [
+      -7,
+      -9
+     ]
+    ],
+    [
+     [
+      3,
+      5
+     ],
+     [
+      -2,
+      -7
+     ],
+     [
+      -4,
+      -12
+     ]
+    ],
+    [
+     [
+      0,
+      5
+     ],
+     [
+      0,
+      -7
+     ],
+     [
+      0,
+      -12
+     ]
+    ],
+    [
+     [
+      -3,
+      5
+     ],
+     [
+      2,
+      -7
+     ],
+     [
+      4,
+      -12
+     ]
+    ],
+    [
+     [
+      -5,
+      3
+     ],
+     [
+      4,
+      -6
+     ],
+     [
+      7,
+      -9
+     ]
+    ],
+    [
+     [
+      -7,
+      1
+     ],
+     [
+      5,
+      -4
+     ],
+     [
+      10,
+      -6
+     ]
+    ],
+    [
+     [
+      -7,
+      -2
+     ],
+     [
+      5,
+      -2
+     ],
+     [
+      10,
+      -2
+     ]
+    ],
+    [
+     [
+      -7,
+      -5
+     ],
+     [
+      5,
+      0
+     ],
+     [
+      10,
+      2
+     ]
+    ],
+    [
+     [
+      -5,
+      -7
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      7,
+      5
+     ]
+    ],
+    [
+     [
+      -3,
+      -9
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      4,
+      8
+     ]
+    ],
+    [
+     [
+      0,
+      -9
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      0,
+      8
+     ]
+    ],
+    [
+     [
+      3,
+      -9
+     ],
+     [
+      -2,
+      3
+     ],
+     [
+      -4,
+      8
+     ]
+    ],
+    [
+     [
+      5,
+      -7
+     ],
+     [
+      -4,
+      2
+     ],
+     [
+      -7,
+      5
+     ]
+    ],
+    [
+     [
+      7,
+      -5
+     ],
+     [
+      -5,
+      0
+     ],
+     [
+      -10,
+      2
+     ]
+    ]
+   ],
+   "slots_local": [
+    [
+     7.4,
+     0,
+     2.0
+    ],
+    [
+     -5.4,
+     0,
+     2.0
+    ],
+    [
+     -10.4,
+     0,
+     2.0
+    ]
+   ],
+   "bow": [
+    [
+     14,
+     0
+    ],
+    [
+     13,
+     5
+    ],
+    [
+     10,
+     10
+    ],
+    [
+     5,
+     13
+    ],
+    [
+     0,
+     14
+    ],
+    [
+     -5,
+     13
+    ],
+    [
+     -10,
+     10
+    ],
+    [
+     -13,
+     5
+    ],
+    [
+     -14,
+     0
+    ],
+    [
+     -13,
+     -5
+    ],
+    [
+     -10,
+     -10
+    ],
+    [
+     -5,
+     -13
+    ],
+    [
+     0,
+     -14
+    ],
+    [
+     5,
+     -13
+    ],
+    [
+     10,
+     -10
+    ],
+    [
+     13,
+     -5
+    ]
+   ],
+   "stern": [
+    [
+     -14,
+     0
+    ],
+    [
+     -13,
+     -5
+    ],
+    [
+     -10,
+     -10
+    ],
+    [
+     -5,
+     -13
+    ],
+    [
+     0,
+     -14
+    ],
+    [
+     5,
+     -13
+    ],
+    [
+     10,
+     -10
+    ],
+    [
+     13,
+     -5
+    ],
+    [
+     14,
+     0
+    ],
+    [
+     13,
+     5
+    ],
+    [
+     10,
+     10
+    ],
+    [
+     5,
+     13
+    ],
+    [
+     0,
+     14
+    ],
+    [
+     -5,
+     13
+    ],
+    [
+     -10,
+     10
+    ],
+    [
+     -13,
+     5
+    ]
+   ],
+   "dirs": 16
+  },
+  "ship_light_shadow": {
+   "x": 1,
+   "y": 408,
+   "w": 33,
+   "h": 33,
+   "fw": 0,
+   "fd": 0,
+   "ax": 16,
+   "ay": 16,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit_shadow",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "shadow_of": "ship_light",
+   "color": "rock_deep",
+   "dirs": 16
+  },
+  "ship_light_dmg": {
+   "x": 530,
+   "y": 408,
+   "w": 33,
+   "h": 33,
+   "fw": 0,
+   "fd": 0,
+   "ax": 16,
+   "ay": 16,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "of": "ship_light",
+   "dirs": 16,
+   "note": "damaged hull: same slots as ship_light"
+  },
+  "ship_light_sink": {
+   "x": 1,
+   "y": 374,
+   "w": 33,
+   "h": 33,
+   "fw": 0,
+   "fd": 0,
+   "ax": 16,
+   "ay": 16,
+   "frames": 40,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 45.0,
+   "clockwise": true,
+   "of": "ship_light",
+   "dirs": 8,
+   "states": 5,
+   "note": "frame = stage*8 + dir8 (dir8 = round(dir16/2)%8); stages: 0 settling+smoke, 1 stern under, 2 bow up, 3 bow tip, 4 gone (foam+oil)"
+  },
+  "ship_medium": {
+   "x": 1,
+   "y": 330,
+   "w": 43,
+   "h": 43,
+   "fw": 0,
+   "fd": 0,
+   "ax": 21,
+   "ay": 21,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "hull": "medium",
+   "length_px": 38,
+   "slots": [
+    [
+     [
+      13,
+      -2
+     ],
+     [
+      8,
+      -2
+     ],
+     [
+      -3,
+      -4
+     ],
+     [
+      -8,
+      -2
+     ]
+    ],
+    [
+     [
+      12,
+      3
+     ],
+     [
+      7,
+      1
+     ],
+     [
+      -3,
+      -6
+     ],
+     [
+      -8,
+      -5
+     ]
+    ],
+    [
+     [
+      9,
+      7
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      -2,
+      -7
+     ],
+     [
+      -6,
+      -8
+     ]
+    ],
+    [
+     [
+      5,
+      10
+     ],
+     [
+      3,
+      5
+     ],
+     [
+      -1,
+      -8
+     ],
+     [
+      -3,
+      -10
+     ]
+    ],
+    [
+     [
+      0,
+      11
+     ],
+     [
+      0,
+      6
+     ],
+     [
+      0,
+      -8
+     ],
+     [
+      0,
+      -10
+     ]
+    ],
+    [
+     [
+      -5,
+      10
+     ],
+     [
+      -3,
+      5
+     ],
+     [
+      1,
+      -8
+     ],
+     [
+      3,
+      -10
+     ]
+    ],
+    [
+     [
+      -9,
+      7
+     ],
+     [
+      -5,
+      3
+     ],
+     [
+      2,
+      -7
+     ],
+     [
+      6,
+      -8
+     ]
+    ],
+    [
+     [
+      -12,
+      3
+     ],
+     [
+      -7,
+      1
+     ],
+     [
+      3,
+      -6
+     ],
+     [
+      8,
+      -5
+     ]
+    ],
+    [
+     [
+      -13,
+      -2
+     ],
+     [
+      -8,
+      -2
+     ],
+     [
+      3,
+      -4
+     ],
+     [
+      8,
+      -2
+     ]
+    ],
+    [
+     [
+      -12,
+      -7
+     ],
+     [
+      -7,
+      -5
+     ],
+     [
+      3,
+      -3
+     ],
+     [
+      8,
+      1
+     ]
+    ],
+    [
+     [
+      -9,
+      -11
+     ],
+     [
+      -5,
+      -7
+     ],
+     [
+      2,
+      -2
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    [
+     [
+      -5,
+      -14
+     ],
+     [
+      -3,
+      -9
+     ],
+     [
+      1,
+      -1
+     ],
+     [
+      3,
+      6
+     ]
+    ],
+    [
+     [
+      0,
+      -15
+     ],
+     [
+      0,
+      -10
+     ],
+     [
+      0,
+      -1
+     ],
+     [
+      0,
+      6
+     ]
+    ],
+    [
+     [
+      5,
+      -14
+     ],
+     [
+      3,
+      -9
+     ],
+     [
+      -1,
+      -1
+     ],
+     [
+      -3,
+      6
+     ]
+    ],
+    [
+     [
+      9,
+      -11
+     ],
+     [
+      5,
+      -7
+     ],
+     [
+      -2,
+      -2
+     ],
+     [
+      -6,
+      4
+     ]
+    ],
+    [
+     [
+      12,
+      -7
+     ],
+     [
+      7,
+      -5
+     ],
+     [
+      -3,
+      -3
+     ],
+     [
+      -8,
+      1
+     ]
+    ]
+   ],
+   "slots_local": [
+    [
+     12.6,
+     0,
+     2.0
+    ],
+    [
+     7.6,
+     0,
+     2.0
+    ],
+    [
+     -3.4,
+     0,
+     4.5
+    ],
+    [
+     -8.4,
+     0,
+     2.0
+    ]
+   ],
+   "bow": [
+    [
+     19,
+     0
+    ],
+    [
+     18,
+     7
+    ],
+    [
+     13,
+     13
+    ],
+    [
+     7,
+     18
+    ],
+    [
+     0,
+     19
+    ],
+    [
+     -7,
+     18
+    ],
+    [
+     -13,
+     13
+    ],
+    [
+     -18,
+     7
+    ],
+    [
+     -19,
+     0
+    ],
+    [
+     -18,
+     -7
+    ],
+    [
+     -13,
+     -13
+    ],
+    [
+     -7,
+     -18
+    ],
+    [
+     0,
+     -19
+    ],
+    [
+     7,
+     -18
+    ],
+    [
+     13,
+     -13
+    ],
+    [
+     18,
+     -7
+    ]
+   ],
+   "stern": [
+    [
+     -19,
+     0
+    ],
+    [
+     -18,
+     -7
+    ],
+    [
+     -13,
+     -13
+    ],
+    [
+     -7,
+     -18
+    ],
+    [
+     0,
+     -19
+    ],
+    [
+     7,
+     -18
+    ],
+    [
+     13,
+     -13
+    ],
+    [
+     18,
+     -7
+    ],
+    [
+     19,
+     0
+    ],
+    [
+     18,
+     7
+    ],
+    [
+     13,
+     13
+    ],
+    [
+     7,
+     18
+    ],
+    [
+     0,
+     19
+    ],
+    [
+     -7,
+     18
+    ],
+    [
+     -13,
+     13
+    ],
+    [
+     -18,
+     7
+    ]
+   ],
+   "dirs": 16
+  },
+  "ship_medium_shadow": {
+   "x": 690,
+   "y": 330,
+   "w": 43,
+   "h": 43,
+   "fw": 0,
+   "fd": 0,
+   "ax": 21,
+   "ay": 21,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit_shadow",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "shadow_of": "ship_medium",
+   "color": "rock_deep",
+   "dirs": 16
+  },
+  "ship_medium_dmg": {
+   "x": 1379,
+   "y": 330,
+   "w": 43,
+   "h": 43,
+   "fw": 0,
+   "fd": 0,
+   "ax": 21,
+   "ay": 21,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "of": "ship_medium",
+   "dirs": 16,
+   "note": "damaged hull: same slots as ship_medium"
+  },
+  "ship_medium_sink": {
+   "x": 1,
+   "y": 286,
+   "w": 43,
+   "h": 43,
+   "fw": 0,
+   "fd": 0,
+   "ax": 21,
+   "ay": 21,
+   "frames": 40,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 45.0,
+   "clockwise": true,
+   "of": "ship_medium",
+   "dirs": 8,
+   "states": 5,
+   "note": "frame = stage*8 + dir8 (dir8 = round(dir16/2)%8); stages: 0 settling+smoke, 1 stern under, 2 bow up, 3 bow tip, 4 gone (foam+oil)"
+  },
+  "ship_heavy": {
+   "x": 1,
+   "y": 174,
+   "w": 55,
+   "h": 55,
+   "fw": 0,
+   "fd": 0,
+   "ax": 27,
+   "ay": 27,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "hull": "heavy",
+   "length_px": 50,
+   "slots": [
+    [
+     [
+      19,
+      -2
+     ],
+     [
+      11,
+      -2
+     ],
+     [
+      1,
+      -5
+     ],
+     [
+      -9,
+      -4
+     ],
+     [
+      -9,
+      0
+     ],
+     [
+      -13,
+      -2
+     ]
+    ],
+    [
+     [
+      18,
+      5
+     ],
+     [
+      10,
+      2
+     ],
+     [
+      1,
+      -5
+     ],
+     [
+      -7,
+      -7
+     ],
+     [
+      -9,
+      -3
+     ],
+     [
+      -12,
+      -7
+     ]
+    ],
+    [
+     [
+      14,
+      12
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      1,
+      -4
+     ],
+     [
+      -5,
+      -10
+     ],
+     [
+      -8,
+      -7
+     ],
+     [
+      -9,
+      -11
+     ]
+    ],
+    [
+     [
+      7,
+      16
+     ],
+     [
+      4,
+      8
+     ],
+     [
+      0,
+      -4
+     ],
+     [
+      -1,
+      -11
+     ],
+     [
+      -5,
+      -9
+     ],
+     [
+      -5,
+      -14
+     ]
+    ],
+    [
+     [
+      0,
+      17
+     ],
+     [
+      0,
+      9
+     ],
+     [
+      0,
+      -4
+     ],
+     [
+      2,
+      -11
+     ],
+     [
+      -2,
+      -11
+     ],
+     [
+      0,
+      -15
+     ]
+    ],
+    [
+     [
+      -7,
+      16
+     ],
+     [
+      -4,
+      8
+     ],
+     [
+      0,
+      -4
+     ],
+     [
+      5,
+      -9
+     ],
+     [
+      1,
+      -11
+     ],
+     [
+      5,
+      -14
+     ]
+    ],
+    [
+     [
+      -14,
+      12
+     ],
+     [
+      -8,
+      6
+     ],
+     [
+      -1,
+      -4
+     ],
+     [
+      8,
+      -7
+     ],
+     [
+      5,
+      -10
+     ],
+     [
+      9,
+      -11
+     ]
+    ],
+    [
+     [
+      -18,
+      5
+     ],
+     [
+      -10,
+      2
+     ],
+     [
+      -1,
+      -5
+     ],
+     [
+      9,
+      -3
+     ],
+     [
+      7,
+      -7
+     ],
+     [
+      12,
+      -7
+     ]
+    ],
+    [
+     [
+      -19,
+      -2
+     ],
+     [
+      -11,
+      -2
+     ],
+     [
+      -1,
+      -5
+     ],
+     [
+      9,
+      0
+     ],
+     [
+      9,
+      -4
+     ],
+     [
+      13,
+      -2
+     ]
+    ],
+    [
+     [
+      -18,
+      -9
+     ],
+     [
+      -10,
+      -6
+     ],
+     [
+      -1,
+      -5
+     ],
+     [
+      7,
+      3
+     ],
+     [
+      9,
+      -1
+     ],
+     [
+      12,
+      3
+     ]
+    ],
+    [
+     [
+      -14,
+      -16
+     ],
+     [
+      -8,
+      -10
+     ],
+     [
+      -1,
+      -6
+     ],
+     [
+      5,
+      6
+     ],
+     [
+      8,
+      3
+     ],
+     [
+      9,
+      7
+     ]
+    ],
+    [
+     [
+      -7,
+      -20
+     ],
+     [
+      -4,
+      -12
+     ],
+     [
+      0,
+      -6
+     ],
+     [
+      1,
+      7
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      5,
+      10
+     ]
+    ],
+    [
+     [
+      0,
+      -21
+     ],
+     [
+      0,
+      -13
+     ],
+     [
+      0,
+      -6
+     ],
+     [
+      -2,
+      7
+     ],
+     [
+      2,
+      7
+     ],
+     [
+      0,
+      11
+     ]
+    ],
+    [
+     [
+      7,
+      -20
+     ],
+     [
+      4,
+      -12
+     ],
+     [
+      0,
+      -6
+     ],
+     [
+      -5,
+      5
+     ],
+     [
+      -1,
+      7
+     ],
+     [
+      -5,
+      10
+     ]
+    ],
+    [
+     [
+      14,
+      -16
+     ],
+     [
+      8,
+      -10
+     ],
+     [
+      1,
+      -6
+     ],
+     [
+      -8,
+      3
+     ],
+     [
+      -5,
+      6
+     ],
+     [
+      -9,
+      7
+     ]
+    ],
+    [
+     [
+      18,
+      -9
+     ],
+     [
+      10,
+      -6
+     ],
+     [
+      1,
+      -5
+     ],
+     [
+      -9,
+      -1
+     ],
+     [
+      -7,
+      3
+     ],
+     [
+      -12,
+      3
+     ]
+    ]
+   ],
+   "slots_local": [
+    [
+     19.2,
+     0,
+     2.0
+    ],
+    [
+     10.8,
+     0,
+     2.0
+    ],
+    [
+     0.9,
+     0,
+     5.0
+    ],
+    [
+     -8.6,
+     -2.1,
+     2.0
+    ],
+    [
+     -8.6,
+     2.1,
+     2.0
+    ],
+    [
+     -13.4,
+     0,
+     2.0
+    ]
+   ],
+   "bow": [
+    [
+     25,
+     0
+    ],
+    [
+     23,
+     10
+    ],
+    [
+     18,
+     18
+    ],
+    [
+     10,
+     23
+    ],
+    [
+     0,
+     25
+    ],
+    [
+     -10,
+     23
+    ],
+    [
+     -18,
+     18
+    ],
+    [
+     -23,
+     10
+    ],
+    [
+     -25,
+     0
+    ],
+    [
+     -23,
+     -10
+    ],
+    [
+     -18,
+     -18
+    ],
+    [
+     -10,
+     -23
+    ],
+    [
+     0,
+     -25
+    ],
+    [
+     10,
+     -23
+    ],
+    [
+     18,
+     -18
+    ],
+    [
+     23,
+     -10
+    ]
+   ],
+   "stern": [
+    [
+     -25,
+     0
+    ],
+    [
+     -23,
+     -10
+    ],
+    [
+     -18,
+     -18
+    ],
+    [
+     -10,
+     -23
+    ],
+    [
+     0,
+     -25
+    ],
+    [
+     10,
+     -23
+    ],
+    [
+     18,
+     -18
+    ],
+    [
+     23,
+     -10
+    ],
+    [
+     25,
+     0
+    ],
+    [
+     23,
+     10
+    ],
+    [
+     18,
+     18
+    ],
+    [
+     10,
+     23
+    ],
+    [
+     0,
+     25
+    ],
+    [
+     -10,
+     23
+    ],
+    [
+     -18,
+     18
+    ],
+    [
+     -23,
+     10
+    ]
+   ],
+   "dirs": 16
+  },
+  "ship_heavy_shadow": {
+   "x": 882,
+   "y": 174,
+   "w": 55,
+   "h": 55,
+   "fw": 0,
+   "fd": 0,
+   "ax": 27,
+   "ay": 27,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit_shadow",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "shadow_of": "ship_heavy",
+   "color": "rock_deep",
+   "dirs": 16
+  },
+  "ship_heavy_dmg": {
+   "x": 1,
+   "y": 230,
+   "w": 55,
+   "h": 55,
+   "fw": 0,
+   "fd": 0,
+   "ax": 27,
+   "ay": 27,
+   "frames": 16,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "of": "ship_heavy",
+   "dirs": 16,
+   "note": "damaged hull: same slots as ship_heavy"
+  },
+  "ship_heavy_sink": {
+   "x": 1,
+   "y": 118,
+   "w": 55,
+   "h": 55,
+   "fw": 0,
+   "fd": 0,
+   "ax": 27,
+   "ay": 27,
+   "frames": 40,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 45.0,
+   "clockwise": true,
+   "of": "ship_heavy",
+   "dirs": 8,
+   "states": 5,
+   "note": "frame = stage*8 + dir8 (dir8 = round(dir16/2)%8); stages: 0 settling+smoke, 1 stern under, 2 bow up, 3 bow tip, 4 gone (foam+oil)"
+  },
+  "mod_gun": {
+   "x": 1,
+   "y": 442,
+   "w": 9,
+   "h": 9,
+   "fw": 0,
+   "fd": 0,
+   "ax": 4,
+   "ay": 4,
+   "frames": 32,
+   "fps": 0,
+   "kind": "unit_module",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "dirs": 16,
+   "states": 2,
+   "note": "frame = state*16 + dir; state 0 idle, 1 firing (recoil + muzzle flash)"
+  },
+  "mod_ciws": {
+   "x": 290,
+   "y": 442,
+   "w": 9,
+   "h": 9,
+   "fw": 0,
+   "fd": 0,
+   "ax": 4,
+   "ay": 4,
+   "frames": 32,
+   "fps": 0,
+   "kind": "unit_module",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "dirs": 16,
+   "states": 2,
+   "note": "frame = state*16 + dir; state 0 idle, 1 firing flash"
+  },
+  "mod_sam": {
+   "x": 579,
+   "y": 442,
+   "w": 9,
+   "h": 9,
+   "fw": 0,
+   "fd": 0,
+   "ax": 4,
+   "ay": 4,
+   "frames": 32,
+   "fps": 0,
+   "kind": "unit_module",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "dirs": 16,
+   "states": 2,
+   "note": "frame = state*16 + dir; state 0 loaded (2 missiles), 1 launching (one rail empty + flash)"
+  },
+  "mod_ash": {
+   "x": 868,
+   "y": 442,
+   "w": 9,
+   "h": 9,
+   "fw": 0,
+   "fd": 0,
+   "ax": 4,
+   "ay": 4,
+   "frames": 32,
+   "fps": 0,
+   "kind": "unit_module",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "dirs": 16,
+   "states": 2,
+   "note": "frame = state*16 + dir; state 0 idle, 1 launching (open cap + flash)"
+  },
+  "mod_vls": {
+   "x": 1157,
+   "y": 442,
+   "w": 9,
+   "h": 9,
+   "fw": 0,
+   "fd": 0,
+   "ax": 4,
+   "ay": 4,
+   "frames": 32,
+   "fps": 0,
+   "kind": "unit_module",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "dirs": 16,
+   "states": 2,
+   "note": "frame = state*16 + dir; state 0 closed, 1 open (launch)"
+  },
+  "navbase": {
+   "x": 203,
+   "y": 1,
+   "w": 97,
+   "h": 65,
+   "fw": 24,
+   "fd": 12,
+   "ax": 0,
+   "ay": 65,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "berths": [
+    [
+     58,
+     52,
+     4
+    ],
+    [
+     90,
+     57,
+     8
+    ]
+   ],
+   "mask": [
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW"
+   ],
+   "water_side": "south",
+   "note": "mask rows = footprint cells north->south, L land / W water (piers stand over the real sea, the sprite is transparent there); berths = frame-local px [x, y, dir16] of FREE berths for live ships (painted ships occupy the others)"
+  },
+  "navbase_ruin": {
+   "x": 301,
+   "y": 1,
+   "w": 97,
+   "h": 65,
+   "fw": 24,
+   "fd": 12,
+   "ax": 0,
+   "ay": 65,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "navbase",
+   "shadow": "rock_deep"
+  },
+  "navbase_n": {
+   "x": 399,
+   "y": 1,
+   "w": 97,
+   "h": 56,
+   "fw": 24,
+   "fd": 12,
+   "ax": 0,
+   "ay": 55,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "berths": [
+    [
+     58,
+     18,
+     12
+    ],
+    [
+     90,
+     13,
+     8
+    ]
+   ],
+   "mask": [
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWWWWWWWWWW",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLLLLL"
+   ],
+   "water_side": "north",
+   "note": "mask rows = footprint cells north->south, L land / W water (piers stand over the real sea, the sprite is transparent there); berths = frame-local px [x, y, dir16] of FREE berths for live ships (painted ships occupy the others)"
+  },
+  "navbase_n_ruin": {
+   "x": 497,
+   "y": 1,
+   "w": 97,
+   "h": 56,
+   "fw": 24,
+   "fd": 12,
+   "ax": 0,
+   "ay": 55,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "navbase_n",
+   "shadow": "rock_deep"
+  },
+  "navbase_e": {
+   "x": 1,
+   "y": 1,
+   "w": 50,
+   "h": 116,
+   "fw": 12,
+   "fd": 24,
+   "ax": 1,
+   "ay": 115,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "berths": [
+    [
+     37,
+     76,
+     0
+    ],
+    [
+     42,
+     108,
+     12
+    ]
+   ],
+   "mask": [
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW",
+    "LLLLLLWWWWWW"
+   ],
+   "water_side": "east",
+   "note": "mask rows = footprint cells north->south, L land / W water (piers stand over the real sea, the sprite is transparent there); berths = frame-local px [x, y, dir16] of FREE berths for live ships (painted ships occupy the others)"
+  },
+  "navbase_e_ruin": {
+   "x": 52,
+   "y": 1,
+   "w": 50,
+   "h": 116,
+   "fw": 12,
+   "fd": 24,
+   "ax": 1,
+   "ay": 115,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "navbase_e",
+   "shadow": "rock_deep"
+  },
+  "navbase_w": {
+   "x": 103,
+   "y": 1,
+   "w": 49,
+   "h": 116,
+   "fw": 12,
+   "fd": 24,
+   "ax": 0,
+   "ay": 115,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "berths": [
+    [
+     12,
+     76,
+     8
+    ],
+    [
+     7,
+     108,
+     12
+    ]
+   ],
+   "mask": [
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL",
+    "WWWWWWLLLLLL"
+   ],
+   "water_side": "west",
+   "note": "mask rows = footprint cells north->south, L land / W water (piers stand over the real sea, the sprite is transparent there); berths = frame-local px [x, y, dir16] of FREE berths for live ships (painted ships occupy the others)"
+  },
+  "navbase_w_ruin": {
+   "x": 153,
+   "y": 1,
+   "w": 49,
+   "h": 116,
+   "fw": 12,
+   "fd": 24,
+   "ax": 0,
+   "ay": 115,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "navbase_w",
+   "shadow": "rock_deep"
+  },
+  "ship_marker_light": {
+   "x": 1975,
+   "y": 408,
+   "w": 15,
+   "h": 13,
+   "fw": 0,
+   "fd": 0,
+   "ax": 7,
+   "ay": 12,
+   "frames": 2,
+   "fps": 0,
+   "kind": "unit_marker",
+   "note": "frame 0 = badge (draw with modulate = country colour), frame 1 = white glyph overlay (unmodulated); ax/ay = pin tip, put it a few px above the hull"
+  },
+  "ship_marker_medium": {
+   "x": 2006,
+   "y": 408,
+   "w": 15,
+   "h": 13,
+   "fw": 0,
+   "fd": 0,
+   "ax": 7,
+   "ay": 12,
+   "frames": 2,
+   "fps": 0,
+   "kind": "unit_marker",
+   "note": "frame 0 = badge (draw with modulate = country colour), frame 1 = white glyph overlay (unmodulated); ax/ay = pin tip, put it a few px above the hull"
+  },
+  "ship_marker_heavy": {
+   "x": 2037,
+   "y": 408,
+   "w": 15,
+   "h": 13,
+   "fw": 0,
+   "fd": 0,
+   "ax": 7,
+   "ay": 12,
+   "frames": 2,
+   "fps": 0,
+   "kind": "unit_marker",
+   "note": "frame 0 = badge (draw with modulate = country colour), frame 1 = white glyph overlay (unmodulated); ax/ay = pin tip, put it a few px above the hull"
+  },
+  "fleet_pennant": {
+   "x": 1642,
+   "y": 408,
+   "w": 13,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 1,
+   "ay": 15,
+   "frames": 2,
+   "fps": 0,
+   "kind": "unit_marker",
+   "note": "frame 0 = cloth (modulate = country colour), frame 1 = pole + anchor (unmodulated); ax/ay = foot of the pole"
+  },
+  "coastal_asm": {
+   "x": 1070,
+   "y": 408,
+   "w": 30,
+   "h": 26,
+   "fw": 6,
+   "fd": 2,
+   "ax": 4,
+   "ay": 25,
+   "frames": 3,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "vehicle": true,
+   "facing": "east",
+   "dirs": 1,
+   "states": 3,
+   "erect_frames": [
+    0,
+    1
+   ],
+   "launch_frame": 2,
+   "mouth": [
+    15,
+    3
+   ],
+   "note": "frame = state (0 stowed / driving, 1 canisters raised, 2 launch flash + smoke); west = this frame mirrored, south / north = coastal_asm_s / _n (stowed), exactly like tel2 / ad_sam; mouth = frame-local px of the canister mouths (raised)"
+  },
+  "coastal_asm_ruin": {
+   "x": 1161,
+   "y": 408,
+   "w": 30,
+   "h": 26,
+   "fw": 6,
+   "fd": 2,
+   "ax": 4,
+   "ay": 25,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "coastal_asm",
+   "shadow": "rock_deep"
+  },
+  "coastal_asm_s": {
+   "x": 1059,
+   "y": 408,
+   "w": 10,
+   "h": 31,
+   "fw": 2,
+   "fd": 6,
+   "ax": 0,
+   "ay": 30,
+   "frames": 1,
+   "fps": 0,
+   "kind": "vehicle_dir",
+   "dir": "s",
+   "of": "coastal_asm",
+   "shadow": "rock_deep",
+   "vehicle": true
+  },
+  "coastal_asm_n": {
+   "x": 2068,
+   "y": 330,
+   "w": 10,
+   "h": 34,
+   "fw": 2,
+   "fd": 6,
+   "ax": 0,
+   "ay": 33,
+   "frames": 1,
+   "fps": 0,
+   "kind": "vehicle_dir",
+   "dir": "n",
+   "of": "coastal_asm",
+   "shadow": "rock_deep",
+   "vehicle": true
+  },
+  "icon_hull_light": {
+   "x": 1192,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_hull_light_16": {
+   "x": 1669,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_hull_medium": {
+   "x": 1217,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_hull_medium_16": {
+   "x": 1686,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_hull_heavy": {
+   "x": 1242,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_hull_heavy_16": {
+   "x": 1703,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_mod_gun": {
+   "x": 1267,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_mod_gun_16": {
+   "x": 1720,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_mod_ciws": {
+   "x": 1292,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_mod_ciws_16": {
+   "x": 1737,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_mod_sam": {
+   "x": 1317,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_mod_sam_16": {
+   "x": 1754,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_mod_ash": {
+   "x": 1342,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_mod_ash_16": {
+   "x": 1771,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_mod_vls": {
+   "x": 1367,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_mod_vls_16": {
+   "x": 1788,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_navbase": {
+   "x": 1392,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_navbase_16": {
+   "x": 1805,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_fleet": {
+   "x": 1417,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_fleet_16": {
+   "x": 1822,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_patrol": {
+   "x": 1442,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_patrol_16": {
+   "x": 1839,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_hunt_convoy": {
+   "x": 1467,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_hunt_convoy_16": {
+   "x": 1856,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_escort": {
+   "x": 1492,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_escort_16": {
+   "x": 1873,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_repair_ship": {
+   "x": 1517,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_repair_ship_16": {
+   "x": 1890,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_ash_ammo": {
+   "x": 1542,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_ash_ammo_16": {
+   "x": 1907,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_cruise_ammo": {
+   "x": 1567,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_cruise_ammo_16": {
+   "x": 1924,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_coastal_asm": {
+   "x": 1592,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_coastal_asm_16": {
+   "x": 1941,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_ship_cr": {
+   "x": 1617,
+   "y": 408,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_ship_cr_16": {
+   "x": 1958,
+   "y": 408,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  }
+ }
+}

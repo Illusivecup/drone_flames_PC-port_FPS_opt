@@ -1,0 +1,22 @@
+{
+ "palette": "palettes/main_named.json",
+ "image": "atlas_ui13.png",
+ "size": [
+  64,
+  32
+ ],
+ "sprites": {
+  "icon_satellite": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_strategic": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  }
+ }
+}

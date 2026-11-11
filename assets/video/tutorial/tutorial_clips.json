@@ -1,0 +1,654 @@
+{
+ "version": "R340",
+ "size": [
+  540,
+  960
+ ],
+ "fps": 30,
+ "clips": [
+  {
+   "n": 1,
+   "id": "econ_basics",
+   "section": "ЭКОНОМИКА",
+   "title": "Экономика: основы",
+   "sub": "ОСНОВЫ",
+   "duration": 15.0,
+   "file": "01_econ_basics.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Экономика: основы",
+     "section": "ЭКОНОМИКА",
+     "sub": "ОСНОВЫ",
+     "file": "01_econ_basics.ogv"
+    },
+    "uk": {
+     "title": "Економіка: основи",
+     "section": "ЕКОНОМІКА",
+     "sub": "ОСНОВИ",
+     "file": "uk/01_econ_basics.ogv"
+    },
+    "en": {
+     "title": "Economy: basics",
+     "section": "ECONOMY",
+     "sub": "BASICS",
+     "file": "en/01_econ_basics.ogv"
+    }
+   }
+  },
+  {
+   "n": 2,
+   "id": "econ_cities",
+   "section": "ЭКОНОМИКА",
+   "title": "Города и энергия",
+   "sub": "ДОХОД И ТОК",
+   "duration": 18.0,
+   "file": "02_econ_cities.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Города и энергия",
+     "section": "ЭКОНОМИКА",
+     "sub": "ДОХОД И ТОК",
+     "file": "02_econ_cities.ogv"
+    },
+    "uk": {
+     "title": "Міста й енергія",
+     "section": "ЕКОНОМІКА",
+     "sub": "ДОХІД І СТРУМ",
+     "file": "uk/02_econ_cities.ogv"
+    },
+    "en": {
+     "title": "Cities and power",
+     "section": "ECONOMY",
+     "sub": "INCOME AND POWER",
+     "file": "en/02_econ_cities.ogv"
+    }
+   }
+  },
+  {
+   "n": 3,
+   "id": "econ_ores",
+   "section": "ЭКОНОМИКА",
+   "title": "Недра: залежи и добыча",
+   "sub": "ЗАЛЕЖИ И ДОБЫЧА",
+   "duration": 20.0,
+   "file": "03_econ_ores.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Недра: залежи и добыча",
+     "section": "ЭКОНОМИКА",
+     "sub": "ЗАЛЕЖИ И ДОБЫЧА",
+     "file": "03_econ_ores.ogv"
+    },
+    "uk": {
+     "title": "Надра: поклади й видобуток",
+     "section": "ЕКОНОМІКА",
+     "sub": "ПОКЛАДИ Й ВИДОБУТОК",
+     "file": "uk/03_econ_ores.ogv"
+    },
+    "en": {
+     "title": "Deposits and mining",
+     "section": "ECONOMY",
+     "sub": "DEPOSITS AND MINING",
+     "file": "en/03_econ_ores.ogv"
+    }
+   }
+  },
+  {
+   "n": 4,
+   "id": "econ_chains",
+   "section": "ЭКОНОМИКА",
+   "title": "Цепочки ресурсов",
+   "sub": "ЧТО ИЗ ЧЕГО",
+   "duration": 20.0,
+   "file": "04_econ_chains.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Цепочки ресурсов",
+     "section": "ЭКОНОМИКА",
+     "sub": "ЧТО ИЗ ЧЕГО",
+     "file": "04_econ_chains.ogv"
+    },
+    "uk": {
+     "title": "Ланцюжки ресурсів",
+     "section": "ЕКОНОМІКА",
+     "sub": "ЩО З ЧОГО",
+     "file": "uk/04_econ_chains.ogv"
+    },
+    "en": {
+     "title": "Resource chains",
+     "section": "ECONOMY",
+     "sub": "WHAT MAKES WHAT",
+     "file": "en/04_econ_chains.ogv"
+    }
+   }
+  },
+  {
+   "n": 5,
+   "id": "trade_port",
+   "section": "ТОРГОВЛЯ",
+   "title": "Торговля и порт",
+   "sub": "РЫНОК И ПОРТ",
+   "duration": 20.0,
+   "file": "05_trade_port.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Торговля и порт",
+     "section": "ТОРГОВЛЯ",
+     "sub": "РЫНОК И ПОРТ",
+     "file": "05_trade_port.ogv"
+    },
+    "uk": {
+     "title": "Торгівля і порт",
+     "section": "ТОРГІВЛЯ",
+     "sub": "РИНОК І ПОРТ",
+     "file": "uk/05_trade_port.ogv"
+    },
+    "en": {
+     "title": "Trade and port",
+     "section": "TRADE",
+     "sub": "MARKET AND PORT",
+     "file": "en/05_trade_port.ogv"
+    }
+   }
+  },
+  {
+   "n": 6,
+   "id": "rail_build",
+   "section": "ТОРГОВЛЯ",
+   "title": "Железная дорога",
+   "sub": "САМА И ВРУЧНУЮ",
+   "duration": 22.0,
+   "file": "06_rail_build.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Железная дорога",
+     "section": "ТОРГОВЛЯ",
+     "sub": "САМА И ВРУЧНУЮ",
+     "file": "06_rail_build.ogv"
+    },
+    "uk": {
+     "title": "Залізниця",
+     "section": "ТОРГІВЛЯ",
+     "sub": "САМА Й ВРУЧНУ",
+     "file": "uk/06_rail_build.ogv"
+    },
+    "en": {
+     "title": "Railway",
+     "section": "TRADE",
+     "sub": "AUTO OR BY HAND",
+     "file": "en/06_rail_build.ogv"
+    }
+   }
+  },
+  {
+   "n": 7,
+   "id": "supply",
+   "section": "ТОРГОВЛЯ",
+   "title": "Снабжение и мосты",
+   "sub": "МОСТЫ И ДОРОГИ",
+   "duration": 20.0,
+   "file": "07_supply.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Снабжение и мосты",
+     "section": "ТОРГОВЛЯ",
+     "sub": "МОСТЫ И ДОРОГИ",
+     "file": "07_supply.ogv"
+    },
+    "uk": {
+     "title": "Постачання і мости",
+     "section": "ТОРГІВЛЯ",
+     "sub": "МОСТИ Й ДОРОГИ",
+     "file": "uk/07_supply.ogv"
+    },
+    "en": {
+     "title": "Supply and bridges",
+     "section": "TRADE",
+     "sub": "BRIDGES AND ROADS",
+     "file": "en/07_supply.ogv"
+    }
+   }
+  },
+  {
+   "n": 8,
+   "id": "army_barracks",
+   "section": "АРМИЯ",
+   "title": "Казармы и состав",
+   "sub": "СОСТАВ АРМИИ",
+   "duration": 16.0,
+   "file": "08_army_barracks.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Казармы и состав",
+     "section": "АРМИЯ",
+     "sub": "СОСТАВ АРМИИ",
+     "file": "08_army_barracks.ogv"
+    },
+    "uk": {
+     "title": "Казарми та склад",
+     "section": "АРМІЯ",
+     "sub": "СКЛАД АРМІЇ",
+     "file": "uk/08_army_barracks.ogv"
+    },
+    "en": {
+     "title": "Barracks and troops",
+     "section": "ARMY",
+     "sub": "ARMY SETUP",
+     "file": "en/08_army_barracks.ogv"
+    }
+   }
+  },
+  {
+   "n": 9,
+   "id": "army_orders",
+   "section": "АРМИЯ",
+   "title": "Приказы армии",
+   "sub": "РЕЖИМ · ДВИЖЕНИЕ · ДЕРЖАТЬ",
+   "duration": 25.0,
+   "file": "09_army_orders.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Приказы армии",
+     "section": "АРМИЯ",
+     "sub": "РЕЖИМ · ДВИЖЕНИЕ · ДЕРЖАТЬ",
+     "file": "09_army_orders.ogv"
+    },
+    "uk": {
+     "title": "Накази армії",
+     "section": "АРМІЯ",
+     "sub": "РЕЖИМ · РУХ · ТРИМАТИ",
+     "file": "uk/09_army_orders.ogv"
+    },
+    "en": {
+     "title": "Army orders",
+     "section": "ARMY",
+     "sub": "MODE · MOVE · HOLD",
+     "file": "en/09_army_orders.ogv"
+    }
+   }
+  },
+  {
+   "n": 10,
+   "id": "army_rail",
+   "section": "АРМИЯ",
+   "title": "Быстрый марш и поезд",
+   "sub": "БЫСТРЫЙ МАРШ И ПОЕЗД",
+   "duration": 23.8,
+   "file": "10_army_rail.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Быстрый марш и поезд",
+     "section": "АРМИЯ",
+     "sub": "БЫСТРЫЙ МАРШ И ПОЕЗД",
+     "file": "10_army_rail.ogv"
+    },
+    "uk": {
+     "title": "Форсований марш і потяг",
+     "section": "АРМІЯ",
+     "sub": "ФОРСОВАНИЙ МАРШ І ПОТЯГ",
+     "file": "uk/10_army_rail.ogv"
+    },
+    "en": {
+     "title": "Forced march and train",
+     "section": "ARMY",
+     "sub": "FORCED MARCH AND TRAIN",
+     "file": "en/10_army_rail.ogv"
+    }
+   }
+  },
+  {
+   "n": 11,
+   "id": "army_groups",
+   "section": "АРМИЯ",
+   "title": "Группы и фронт",
+   "sub": "ЛИНИЯ И ПЛАН АТАКИ",
+   "duration": 25.0,
+   "file": "11_army_groups.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Группы и фронт",
+     "section": "АРМИЯ",
+     "sub": "ЛИНИЯ И ПЛАН АТАКИ",
+     "file": "11_army_groups.ogv"
+    },
+    "uk": {
+     "title": "Групи і фронт",
+     "section": "АРМІЯ",
+     "sub": "ЛІНІЯ І ПЛАН АТАКИ",
+     "file": "uk/11_army_groups.ogv"
+    },
+    "en": {
+     "title": "Groups and front",
+     "section": "ARMY",
+     "sub": "LINE AND ATTACK PLAN",
+     "file": "en/11_army_groups.ogv"
+    }
+   }
+  },
+  {
+   "n": 12,
+   "id": "army_upkeep",
+   "section": "АРМИЯ",
+   "title": "Содержание армии",
+   "sub": "АРМИЯ СТОИТ ДЕНЕГ",
+   "duration": 20.0,
+   "file": "12_army_upkeep.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Содержание армии",
+     "section": "АРМИЯ",
+     "sub": "АРМИЯ СТОИТ ДЕНЕГ",
+     "file": "12_army_upkeep.ogv"
+    },
+    "uk": {
+     "title": "Утримання армії",
+     "section": "АРМІЯ",
+     "sub": "АРМІЯ КОШТУЄ ГРОШЕЙ",
+     "file": "uk/12_army_upkeep.ogv"
+    },
+    "en": {
+     "title": "Army upkeep",
+     "section": "ARMY",
+     "sub": "ARMY COSTS MONEY",
+     "file": "en/12_army_upkeep.ogv"
+    }
+   }
+  },
+  {
+   "n": 13,
+   "id": "ad_who",
+   "section": "ПВО",
+   "title": "ПВО: кто что сбивает",
+   "sub": "КТО ЧТО СБИВАЕТ",
+   "duration": 25.2,
+   "file": "13_ad_who.ogv",
+   "l10n": {
+    "ru": {
+     "title": "ПВО: кто что сбивает",
+     "section": "ПВО",
+     "sub": "КТО ЧТО СБИВАЕТ",
+     "file": "13_ad_who.ogv"
+    },
+    "uk": {
+     "title": "ППО: хто що збиває",
+     "section": "ППО",
+     "sub": "ХТО ЩО ЗБИВАЄ",
+     "file": "uk/13_ad_who.ogv"
+    },
+    "en": {
+     "title": "Air defense: who hits what",
+     "section": "AIR DEFENSE",
+     "sub": "WHO SHOOTS WHAT",
+     "file": "en/13_ad_who.ogv"
+    }
+   }
+  },
+  {
+   "n": 14,
+   "id": "ad_radar_rules",
+   "section": "ПВО",
+   "title": "Радар, РЭБ и мирное небо",
+   "sub": "ЦЕЛИ ПВО И МИРНОЕ НЕБО",
+   "duration": 22.0,
+   "file": "14_ad_radar_rules.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Радар, РЭБ и мирное небо",
+     "section": "ПВО",
+     "sub": "ЦЕЛИ ПВО И МИРНОЕ НЕБО",
+     "file": "14_ad_radar_rules.ogv"
+    },
+    "uk": {
+     "title": "Радар, РЕБ і мирне небо",
+     "section": "ППО",
+     "sub": "ЦІЛІ ППО І МИРНЕ НЕБО",
+     "file": "uk/14_ad_radar_rules.ogv"
+    },
+    "en": {
+     "title": "Radar, EW and a calm sky",
+     "section": "AIR DEFENSE",
+     "sub": "AD TARGETS AND CALM SKY",
+     "file": "en/14_ad_radar_rules.ogv"
+    }
+   }
+  },
+  {
+   "n": 15,
+   "id": "strike_drones",
+   "section": "УДАРЫ",
+   "title": "Дроны и разведка",
+   "sub": "ПУСК, МАРШРУТ, РАЗВЕДКА",
+   "duration": 22.0,
+   "file": "15_strike_drones.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Дроны и разведка",
+     "section": "УДАРЫ",
+     "sub": "ПУСК, МАРШРУТ, РАЗВЕДКА",
+     "file": "15_strike_drones.ogv"
+    },
+    "uk": {
+     "title": "Дрони й розвідка",
+     "section": "УДАРИ",
+     "sub": "ПУСК, МАРШРУТ, РОЗВІДКА",
+     "file": "uk/15_strike_drones.ogv"
+    },
+    "en": {
+     "title": "Drones and recon",
+     "section": "STRIKES",
+     "sub": "LAUNCH, ROUTE, RECON",
+     "file": "en/15_strike_drones.ogv"
+    }
+   }
+  },
+  {
+   "n": 16,
+   "id": "strike_missiles",
+   "section": "УДАРЫ",
+   "title": "Ракеты и ОТРК",
+   "sub": "ОТРК И ПРИЛЁТ ВМЕСТЕ",
+   "duration": 20.0,
+   "file": "16_strike_missiles.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Ракеты и ОТРК",
+     "section": "УДАРЫ",
+     "sub": "ОТРК И ПРИЛЁТ ВМЕСТЕ",
+     "file": "16_strike_missiles.ogv"
+    },
+    "uk": {
+     "title": "Ракети й ОТРК",
+     "section": "УДАРИ",
+     "sub": "ОТРК І ПРИЛІТ РАЗОМ",
+     "file": "uk/16_strike_missiles.ogv"
+    },
+    "en": {
+     "title": "Missiles and TEL",
+     "section": "STRIKES",
+     "sub": "TEL AND ARRIVE TOGETHER",
+     "file": "en/16_strike_missiles.ogv"
+    }
+   }
+  },
+  {
+   "n": 17,
+   "id": "strike_air",
+   "section": "УДАРЫ",
+   "title": "Авиация и КАБ",
+   "sub": "ШТУРМОВИК И КАБ",
+   "duration": 20.0,
+   "file": "17_strike_air.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Авиация и КАБ",
+     "section": "УДАРЫ",
+     "sub": "ШТУРМОВИК И КАБ",
+     "file": "17_strike_air.ogv"
+    },
+    "uk": {
+     "title": "Авіація і КАБ",
+     "section": "УДАРИ",
+     "sub": "ШТУРМОВИК І КАБ",
+     "file": "uk/17_strike_air.ogv"
+    },
+    "en": {
+     "title": "Aircraft and glide bombs",
+     "section": "STRIKES",
+     "sub": "ATTACK PLANE, GLIDE BOMB",
+     "file": "en/17_strike_air.ogv"
+    }
+   }
+  },
+  {
+   "n": 18,
+   "id": "navy_basics",
+   "section": "ФЛОТ",
+   "title": "Флот",
+   "sub": "ВЕРФЬ, КОНВОИ, ПКР",
+   "duration": 25.0,
+   "file": "18_navy_basics.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Флот",
+     "section": "ФЛОТ",
+     "sub": "ВЕРФЬ, КОНВОИ, ПКР",
+     "file": "18_navy_basics.ogv"
+    },
+    "uk": {
+     "title": "Флот",
+     "section": "ФЛОТ",
+     "sub": "ВЕРФ, КОНВОЇ, ПКР",
+     "file": "uk/18_navy_basics.ogv"
+    },
+    "en": {
+     "title": "Navy",
+     "section": "NAVY",
+     "sub": "SHIPYARD, CONVOYS, ASHM",
+     "file": "en/18_navy_basics.ogv"
+    }
+   }
+  },
+  {
+   "n": 19,
+   "id": "dip_treaties",
+   "section": "ПОЛИТИКА",
+   "title": "Отношения и договоры",
+   "sub": "МНЕНИЕ И ДОГОВОРЫ",
+   "duration": 25.0,
+   "file": "19_dip_treaties.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Отношения и договоры",
+     "section": "ПОЛИТИКА",
+     "sub": "МНЕНИЕ И ДОГОВОРЫ",
+     "file": "19_dip_treaties.ogv"
+    },
+    "uk": {
+     "title": "Відносини й договори",
+     "section": "ПОЛІТИКА",
+     "sub": "ДУМКА Й ДОГОВОРИ",
+     "file": "uk/19_dip_treaties.ogv"
+    },
+    "en": {
+     "title": "Relations and treaties",
+     "section": "POLITICS",
+     "sub": "OPINION AND TREATIES",
+     "file": "en/19_dip_treaties.ogv"
+    }
+   }
+  },
+  {
+   "n": 20,
+   "id": "dip_requests",
+   "section": "ПОЛИТИКА",
+   "title": "Просьбы, эмбарго, статус",
+   "sub": "ЭМБАРГО И СТАТУС",
+   "duration": 22.0,
+   "file": "20_dip_requests.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Просьбы, эмбарго, статус",
+     "section": "ПОЛИТИКА",
+     "sub": "ЭМБАРГО И СТАТУС",
+     "file": "20_dip_requests.ogv"
+    },
+    "uk": {
+     "title": "Прохання, ембарго, статус",
+     "section": "ПОЛІТИКА",
+     "sub": "ЕМБАРГО І СТАТУС",
+     "file": "uk/20_dip_requests.ogv"
+    },
+    "en": {
+     "title": "Requests, embargo, status",
+     "section": "POLITICS",
+     "sub": "EMBARGO AND STATUS",
+     "file": "en/20_dip_requests.ogv"
+    }
+   }
+  },
+  {
+   "n": 21,
+   "id": "dip_war_peace",
+   "section": "ПОЛИТИКА",
+   "title": "Война, мир и конференция",
+   "sub": "ПЕРЕМИРИЕ И КОНФЕРЕНЦИЯ",
+   "duration": 22.0,
+   "file": "21_dip_war_peace.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Война, мир и конференция",
+     "section": "ПОЛИТИКА",
+     "sub": "ПЕРЕМИРИЕ И КОНФЕРЕНЦИЯ",
+     "file": "21_dip_war_peace.ogv"
+    },
+    "uk": {
+     "title": "Війна, мир і конференція",
+     "section": "ПОЛІТИКА",
+     "sub": "ПЕРЕМИР’Я І КОНФЕРЕНЦІЯ",
+     "file": "uk/21_dip_war_peace.ogv"
+    },
+    "en": {
+     "title": "War, peace and conference",
+     "section": "POLITICS",
+     "sub": "CEASEFIRE AND CONFERENCE",
+     "file": "en/21_dip_war_peace.ogv"
+    }
+   }
+  },
+  {
+   "n": 22,
+   "id": "game_saves",
+   "section": "ПАРТИЯ",
+   "title": "Время и сохранения",
+   "sub": "ПАУЗА И ОТКАТ",
+   "duration": 15.0,
+   "file": "22_game_saves.ogv",
+   "l10n": {
+    "ru": {
+     "title": "Время и сохранения",
+     "section": "ПАРТИЯ",
+     "sub": "ПАУЗА И ОТКАТ",
+     "file": "22_game_saves.ogv"
+    },
+    "uk": {
+     "title": "Час і збереження",
+     "section": "ПАРТІЯ",
+     "sub": "ПАУЗА І ВІДКАТ",
+     "file": "uk/22_game_saves.ogv"
+    },
+    "en": {
+     "title": "Time and saves",
+     "section": "GAME",
+     "sub": "PAUSE AND REWIND",
+     "file": "en/22_game_saves.ogv"
+    }
+   }
+  }
+ ],
+ "langs": [
+  "ru",
+  "uk",
+  "en"
+ ],
+ "fallback": "ru"
+}

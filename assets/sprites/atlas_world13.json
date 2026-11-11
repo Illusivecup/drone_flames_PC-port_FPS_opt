@@ -1,0 +1,47 @@
+{
+ "cell_px": 4,
+ "image": "atlas_world13.png",
+ "size": [
+  320,
+  64
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "uav_recon": {
+   "x": 1,
+   "y": 1,
+   "w": 17,
+   "h": 17,
+   "frames": 16,
+   "fw": 1,
+   "fd": 1,
+   "ax": 8,
+   "ay": 8,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true
+  },
+  "uav_recon_shadow": {
+   "x": 1,
+   "y": 19,
+   "w": 17,
+   "h": 17,
+   "frames": 16,
+   "fw": 1,
+   "fd": 1,
+   "ax": 8,
+   "ay": 8,
+   "fps": 0,
+   "kind": "unit_shadow",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "shadow_of": "uav_recon",
+   "color": "rock_deep"
+  }
+ }
+}

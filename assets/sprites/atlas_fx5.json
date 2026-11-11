@@ -1,0 +1,60 @@
+{
+ "note": "batch 8 combat fx",
+ "image": "atlas_fx5.png",
+ "size": [
+  512,
+  64
+ ],
+ "sprites": {
+  "rpg_backblast": {
+   "x": 185,
+   "y": 26,
+   "w": 12,
+   "h": 8,
+   "frames": 5,
+   "fps": 18,
+   "ax": 6,
+   "ay": 4
+  },
+  "atgm_launch": {
+   "x": 100,
+   "y": 26,
+   "w": 14,
+   "h": 10,
+   "frames": 6,
+   "fps": 16,
+   "ax": 7,
+   "ay": 5
+  },
+  "atgm_hit": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 8,
+   "fps": 14,
+   "ax": 12,
+   "ay": 23
+  },
+  "dirt_burst": {
+   "x": 1,
+   "y": 26,
+   "w": 14,
+   "h": 14,
+   "frames": 7,
+   "fps": 16,
+   "ax": 7,
+   "ay": 13
+  },
+  "smoke_screen_loop": {
+   "x": 194,
+   "y": 1,
+   "w": 32,
+   "h": 18,
+   "frames": 8,
+   "fps": 8,
+   "ax": 16,
+   "ay": 17
+  }
+ }
+}

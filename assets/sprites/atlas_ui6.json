@@ -1,0 +1,88 @@
+{
+ "image": "atlas_ui6.png",
+ "size": [
+  256,
+  64
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "icon_ad_mfg": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_ad_spaag": {
+   "x": 126,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_ad_sam": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_ad_patriot": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_ad_radar": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_ad_ew": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_int_drone": {
+   "x": 176,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_war_declare": {
+   "x": 1,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_truce": {
+   "x": 226,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_alliance": {
+   "x": 151,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_relations": {
+   "x": 201,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "res_sam": {
+   "x": 36,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  },
+  "res_int": {
+   "x": 26,
+   "y": 26,
+   "w": 9,
+   "h": 9
+  }
+ }
+}

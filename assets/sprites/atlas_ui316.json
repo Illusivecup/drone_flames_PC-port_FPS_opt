@@ -1,0 +1,17 @@
+{
+ "image": "atlas_ui316.png",
+ "size": [
+  24,
+  24
+ ],
+ "palette": "palettes/main_named.json",
+ "note": "R316 tools/art/gen_air316_attack.py: attack jet card icon",
+ "sprites": {
+  "icon_attack": {
+   "x": 0,
+   "y": 0,
+   "w": 24,
+   "h": 24
+  }
+ }
+}

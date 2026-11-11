@@ -1,0 +1,82 @@
+{
+ "palette": "palettes/main_named.json",
+ "image": "atlas_ui11.png",
+ "size": [
+  256,
+  64
+ ],
+ "sprites": {
+  "icon_build_assault": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_build_motor": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_build_at": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_build_support": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_build_armor": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_mortar": {
+   "x": 126,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_arty": {
+   "x": 151,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_mlrs": {
+   "x": 176,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_recon": {
+   "x": 201,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_grenade": {
+   "x": 226,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_support_call": {
+   "x": 1,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_smoke": {
+   "x": 26,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  }
+ }
+}

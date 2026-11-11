@@ -1,0 +1,55 @@
+{
+ "sprites": {
+  "power_arc_loop": {
+   "x": 663,
+   "y": 1,
+   "w": 28,
+   "h": 28,
+   "frames": 8,
+   "fps": 14,
+   "ax": 14,
+   "ay": 14
+  },
+  "spark_burst": {
+   "x": 1,
+   "y": 54,
+   "w": 12,
+   "h": 12,
+   "frames": 6,
+   "fps": 16,
+   "ax": 6,
+   "ay": 6
+  },
+  "fire_big_loop": {
+   "x": 888,
+   "y": 1,
+   "w": 14,
+   "h": 20,
+   "frames": 8,
+   "fps": 10,
+   "ax": 7,
+   "ay": 20
+  },
+  "smoke_column_loop": {
+   "x": 1,
+   "y": 1,
+   "w": 26,
+   "h": 52,
+   "frames": 10,
+   "fps": 7,
+   "ax": 13,
+   "ay": 52
+  },
+  "tank_blast": {
+   "x": 262,
+   "y": 1,
+   "w": 40,
+   "h": 40,
+   "frames": 10,
+   "fps": 14,
+   "ax": 20,
+   "ay": 20
+  }
+ },
+ "note": "frame i region: (x + i*w, y, w, h); frames contiguous, 1px padding between sprites; ax,ay = anchor in frame px (offset = -anchor); *_loop = seamless loop"
+}

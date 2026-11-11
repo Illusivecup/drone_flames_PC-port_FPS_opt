@@ -1,0 +1,50 @@
+{
+ "note": "v0.11 operations fx: frame i region = (x + i*w, y, w, h); ax,ay = anchor (ground point); *_loop sprites loop. EW dome is drawn by world/ops_layer.gd",
+ "image": "atlas_fx8.png",
+ "size": [
+  512,
+  64
+ ],
+ "sprites": {
+  "smoke_wall_loop": {
+   "x": 1,
+   "y": 1,
+   "w": 40,
+   "h": 26,
+   "frames": 8,
+   "fps": 6,
+   "ax": 20,
+   "ay": 23
+  },
+  "smoke_pop": {
+   "x": 395,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 7,
+   "fps": 14,
+   "ax": 8,
+   "ay": 13
+  },
+  "ew_spark": {
+   "x": 1,
+   "y": 28,
+   "w": 14,
+   "h": 14,
+   "frames": 5,
+   "fps": 16,
+   "ax": 7,
+   "ay": 7
+  },
+  "target_flare_loop": {
+   "x": 322,
+   "y": 1,
+   "w": 12,
+   "h": 22,
+   "frames": 6,
+   "fps": 8,
+   "ax": 6,
+   "ay": 20
+  }
+ }
+}

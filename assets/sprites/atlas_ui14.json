@@ -1,0 +1,46 @@
+{
+ "image": "atlas_ui14.png",
+ "size": [
+  160,
+  32
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "icon_map_normal": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_map_political": {
+   "x": 126,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_map_mine": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_map_ores": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_map_logistics": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_map_military": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  }
+ }
+}

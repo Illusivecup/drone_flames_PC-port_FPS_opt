@@ -1,0 +1,58 @@
+{
+ "palette": "palettes/main_named.json",
+ "image": "atlas_ui8.png",
+ "size": [
+  256,
+  32
+ ],
+ "sprites": {
+  "icon_trench": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_teeth": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_defend": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_occupy": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_atgm": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_rpg": {
+   "x": 126,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_dugout": {
+   "x": 151,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "res_defense": {
+   "x": 176,
+   "y": 1,
+   "w": 9,
+   "h": 9
+  }
+ }
+}

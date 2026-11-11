@@ -1,0 +1,16 @@
+[configuration]
+
+entry_symbol = "webrtc_extension_init"
+compatibility_minimum = 4.3
+
+exclude_tags = ["web", "no-webrtc", "android", "ios", "macos", "linux"]
+
+[libraries]
+
+windows.debug.x86_64 = "lib/libwebrtc_native.windows.template_debug.x86_64.dll"
+windows.debug.arm64 = "lib/libwebrtc_native.windows.template_debug.arm64.dll"
+windows.debug.x86_32 = "lib/libwebrtc_native.windows.template_debug.x86_32.dll"
+
+windows.release.x86_64 = "lib/libwebrtc_native.windows.template_release.x86_64.dll"
+windows.release.arm64 = "lib/libwebrtc_native.windows.template_release.arm64.dll"
+windows.release.x86_32 = "lib/libwebrtc_native.windows.template_release.x86_32.dll"

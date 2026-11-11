@@ -1,0 +1,81 @@
+{
+ "cell_px": 4,
+ "image": "atlas_world12.png",
+ "size": [
+  256,
+  64
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "uav_jet": {
+   "x": 1,
+   "y": 1,
+   "w": 13,
+   "h": 13,
+   "frames": 16,
+   "fw": 1,
+   "fd": 1,
+   "ax": 6,
+   "ay": 6,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true
+  },
+  "uav_jet_cold": {
+   "x": 1,
+   "y": 15,
+   "w": 13,
+   "h": 13,
+   "frames": 16,
+   "fw": 1,
+   "fd": 1,
+   "ax": 6,
+   "ay": 6,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true
+  },
+  "uav_jet_shadow": {
+   "x": 1,
+   "y": 29,
+   "w": 13,
+   "h": 13,
+   "frames": 16,
+   "fw": 1,
+   "fd": 1,
+   "ax": 6,
+   "ay": 6,
+   "fps": 0,
+   "kind": "unit_shadow",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "shadow_of": "uav_jet",
+   "color": "rock_deep"
+  },
+  "uav_jet_parked": {
+   "x": 210,
+   "y": 29,
+   "w": 13,
+   "h": 13,
+   "frames": 1,
+   "fw": 1,
+   "fd": 1,
+   "ax": 6,
+   "ay": 6,
+   "fps": 0,
+   "kind": "unit",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true
+  }
+ }
+}

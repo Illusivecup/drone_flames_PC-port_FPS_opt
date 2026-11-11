@@ -1,0 +1,124 @@
+{
+ "image": "atlas_ui15.png",
+ "size": [
+  160,
+  128
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "icon_persona_trader": {
+   "x": 126,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_persona_militarist": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_persona_cautious": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_persona_adventurer": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_persona_unknown": {
+   "x": 1,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_treaty_trade": {
+   "x": 26,
+   "y": 51,
+   "w": 24,
+   "h": 24
+  },
+  "icon_treaty_visa": {
+   "x": 51,
+   "y": 51,
+   "w": 24,
+   "h": 24
+  },
+  "icon_treaty_nap": {
+   "x": 1,
+   "y": 51,
+   "w": 24,
+   "h": 24
+  },
+  "icon_treaty_defense": {
+   "x": 101,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_treaty_alliance": {
+   "x": 76,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_treaty_embargo": {
+   "x": 126,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_ultimatum": {
+   "x": 76,
+   "y": 51,
+   "w": 24,
+   "h": 24
+  },
+  "icon_coalition": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_aid": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_substitute": {
+   "x": 51,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_scarce": {
+   "x": 26,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_rel_up": {
+   "x": 127,
+   "y": 51,
+   "w": 12,
+   "h": 12
+  },
+  "icon_rel_down": {
+   "x": 101,
+   "y": 51,
+   "w": 12,
+   "h": 12
+  },
+  "icon_rel_flat": {
+   "x": 114,
+   "y": 51,
+   "w": 12,
+   "h": 12
+  }
+ }
+}

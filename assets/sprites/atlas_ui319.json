@@ -1,0 +1,88 @@
+{
+ "image": "atlas_ui319.png",
+ "size": [
+  326,
+  26
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "icon_m_cruise": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_m_kab": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_m_hyper": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_cr_launch": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_m_aa": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_m_sam": {
+   "x": 126,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_halt": {
+   "x": 151,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_prot_net": {
+   "x": 176,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_prot_conc": {
+   "x": 201,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_cruise_ammo": {
+   "x": 226,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_cruise_ammo_16": {
+   "x": 251,
+   "y": 1,
+   "w": 16,
+   "h": 16
+  },
+  "res_cruise": {
+   "x": 276,
+   "y": 1,
+   "w": 9,
+   "h": 9
+  },
+  "icon_armies": {
+   "x": 301,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  }
+ }
+}

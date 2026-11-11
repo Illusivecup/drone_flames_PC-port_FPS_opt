@@ -1,0 +1,136 @@
+{
+ "cell_px": 4,
+ "image": "atlas_cosm_tt.png",
+ "size": [
+  512,
+  128
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "tt_plate": {
+   "x": 290,
+   "y": 1,
+   "w": 48,
+   "h": 36,
+   "frames": 1,
+   "nine": [
+    12,
+    12,
+    12,
+    12
+   ],
+   "art_px": 2
+  },
+  "tt_plate_legend": {
+   "x": 1,
+   "y": 38,
+   "w": 48,
+   "h": 36,
+   "frames": 1,
+   "nine": [
+    12,
+    12,
+    12,
+    12
+   ],
+   "art_px": 2
+  },
+  "tt_plate_dev": {
+   "x": 388,
+   "y": 1,
+   "w": 48,
+   "h": 36,
+   "frames": 1,
+   "nine": [
+    12,
+    12,
+    12,
+    12
+   ],
+   "art_px": 2
+  },
+  "tt_plate_cbt": {
+   "x": 339,
+   "y": 1,
+   "w": 48,
+   "h": 36,
+   "frames": 1,
+   "nine": [
+    12,
+    12,
+    12,
+    12
+   ],
+   "art_px": 2
+  },
+  "tt_legend": {
+   "x": 142,
+   "y": 38,
+   "w": 8,
+   "h": 8,
+   "frames": 1
+  },
+  "tt_eternal": {
+   "x": 133,
+   "y": 38,
+   "w": 8,
+   "h": 8,
+   "frames": 1
+  },
+  "tt_dev": {
+   "x": 124,
+   "y": 38,
+   "w": 8,
+   "h": 8,
+   "frames": 1
+  },
+  "tt_cbt": {
+   "x": 115,
+   "y": 38,
+   "w": 8,
+   "h": 8,
+   "frames": 1
+  },
+  "tt_plate_dev_rgb": {
+   "x": 437,
+   "y": 1,
+   "w": 48,
+   "h": 36,
+   "frames": 1,
+   "nine": [
+    12,
+    12,
+    12,
+    12
+   ],
+   "art_px": 2
+  },
+  "tt_plate_dev_rgb_anim": {
+   "x": 1,
+   "y": 1,
+   "w": 48,
+   "h": 36,
+   "frames": 6,
+   "fx_dx": 48,
+   "fx_dy": 0,
+   "fps": 8,
+   "nine": [
+    12,
+    12,
+    12,
+    12
+   ],
+   "art_px": 2
+  },
+  "tt_dev_rgb": {
+   "x": 50,
+   "y": 38,
+   "w": 8,
+   "h": 8,
+   "frames": 8,
+   "fx_dx": 8,
+   "fx_dy": 0,
+   "fps": 8
+  }
+ }
+}

@@ -1,0 +1,90 @@
+{
+ "note": "army builds fx: frame i region = (x + i*w, y, w, h); ax,ay = anchor; bursts anchored at the ground point; wreck_hull = 1-frame ground decal",
+ "image": "atlas_fx6.png",
+ "size": [
+  512,
+  64
+ ],
+ "sprites": {
+  "arty_flash": {
+   "x": 128,
+   "y": 32,
+   "w": 18,
+   "h": 14,
+   "frames": 6,
+   "fps": 16,
+   "ax": 9,
+   "ay": 7
+  },
+  "mortar_flash": {
+   "x": 310,
+   "y": 32,
+   "w": 8,
+   "h": 12,
+   "frames": 5,
+   "fps": 18,
+   "ax": 4,
+   "ay": 9
+  },
+  "mlrs_launch": {
+   "x": 351,
+   "y": 32,
+   "w": 12,
+   "h": 10,
+   "frames": 5,
+   "fps": 18,
+   "ax": 6,
+   "ay": 5
+  },
+  "shell_burst": {
+   "x": 1,
+   "y": 1,
+   "w": 28,
+   "h": 30,
+   "frames": 9,
+   "fps": 14,
+   "ax": 14,
+   "ay": 29
+  },
+  "mortar_burst": {
+   "x": 1,
+   "y": 32,
+   "w": 18,
+   "h": 20,
+   "frames": 7,
+   "fps": 15,
+   "ax": 9,
+   "ay": 19
+  },
+  "rocket_burst": {
+   "x": 254,
+   "y": 1,
+   "w": 22,
+   "h": 24,
+   "frames": 8,
+   "fps": 15,
+   "ax": 11,
+   "ay": 23
+  },
+  "grenade_burst": {
+   "x": 237,
+   "y": 32,
+   "w": 12,
+   "h": 12,
+   "frames": 6,
+   "fps": 16,
+   "ax": 6,
+   "ay": 10
+  },
+  "wreck_hull": {
+   "x": 412,
+   "y": 32,
+   "w": 12,
+   "h": 10,
+   "frames": 1,
+   "fps": 0,
+   "ax": 6,
+   "ay": 5
+  }
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "cell_px": 4,
+ "image": "atlas_ui12.png",
+ "size": [
+  64,
+  32
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "icon_jet_uav": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  }
+ }
+}

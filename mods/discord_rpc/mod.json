@@ -1,0 +1,12 @@
+{
+  "id": "discord_rpc",
+  "name": "Discord Rich Presence",
+  "author": "Reborn Team",
+  "version": "1.0.1",
+  "client_id": "1566515978806759500",
+  "description": "Интеграция с Discord: статус матча, название карты и размер мира, режим, города, армии, войны, казна, время игры и тактический профиль игрока.",
+  "entry": "mod.gd",
+  "icon": "icon.png",
+  "type": "utility",
+  "archive": "discord_rpc.dfmod"
+}

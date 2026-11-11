@@ -1,0 +1,25 @@
+{
+ "cell_px": 4,
+ "image": "atlas_ui335.png",
+ "size": [
+  64,
+  32
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "u335_rail_line": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "u335_ad_rules": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  }
+ }
+}

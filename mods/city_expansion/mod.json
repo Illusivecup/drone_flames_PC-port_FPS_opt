@@ -1,0 +1,9 @@
+{
+  "id": "city_expansion",
+  "name": "Расширение и развитие городов",
+  "version": "1.1.1",
+  "author": "Reborn Team",
+  "type": "gameplay",
+  "description": "Расширение границ, жилые кварталы и рост населения города с сохраняемыми жителями и вместимостью жилья.",
+  "archive": "city_expansion.dfmod"
+}

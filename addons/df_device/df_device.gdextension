@@ -1,0 +1,13 @@
+; BACKEND 1b (docs/BACKEND.md): App Attest + Keychain (native/df_device, godot-cpp 4.5). Engine singleton "DFDevice".
+; Android gets the same singleton from the Android plugin (native/df_device_android), not from this file.
+[configuration]
+
+entry_symbol = "df_device_init"
+compatibility_minimum = 4.5
+
+exclude_tags = ["android", "windows", "linux", "macos"]
+
+[libraries]
+
+ios.debug.arm64 = "lib/libdf_device.ios.template_debug.arm64.dylib"
+ios.release.arm64 = "lib/libdf_device.ios.template_release.arm64.dylib"

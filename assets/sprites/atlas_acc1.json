@@ -1,0 +1,67 @@
+{
+ "cell_px": 4,
+ "image": "atlas_acc1.png",
+ "size": [
+  128,
+  64
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "acc_pilot": {
+   "x": 107,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "acc_eye": {
+   "x": 39,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "acc_eye_off": {
+   "x": 56,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "acc_login": {
+   "x": 73,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "acc_logout": {
+   "x": 90,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "acc_ban": {
+   "x": 22,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "acc_ranked": {
+   "x": 1,
+   "y": 22,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "acc_frame": {
+   "x": 1,
+   "y": 1,
+   "w": 20,
+   "h": 20,
+   "frames": 1
+  }
+ }
+}

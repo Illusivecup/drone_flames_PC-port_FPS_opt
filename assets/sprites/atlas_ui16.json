@@ -1,0 +1,70 @@
+{
+ "image": "atlas_ui16.png",
+ "size": [
+  160,
+  64
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "icon_op_attack": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_op_defend": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_op_retreat": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_op_operation": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_order_arty": {
+   "x": 126,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_order_smoke": {
+   "x": 26,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_order_ew": {
+   "x": 1,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_battle_cam": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24
+  },
+  "icon_speed_fast": {
+   "x": 51,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  },
+  "icon_speed_max": {
+   "x": 76,
+   "y": 26,
+   "w": 24,
+   "h": 24
+  }
+ }
+}

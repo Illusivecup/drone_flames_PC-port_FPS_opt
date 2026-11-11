@@ -1,0 +1,528 @@
+{
+ "image": "atlas_fauna319.png",
+ "size": [
+  128,
+  128
+ ],
+ "palette": "palettes/main_named.json",
+ "anchor": "ax,ay = middle column, feet row; draw frame at (pos.x-ax, pos.y-ay)",
+ "directions": "side view facing east; west = flip_h",
+ "sprites": {
+  "deer_idle": {
+   "x": 38,
+   "y": 1,
+   "w": 9,
+   "h": 9,
+   "frames": 1,
+   "fps": 0,
+   "ax": 4,
+   "ay": 8,
+   "eye": [
+    3,
+    -5
+   ]
+  },
+  "deer_graze": {
+   "x": 1,
+   "y": 1,
+   "w": 9,
+   "h": 9,
+   "frames": 4,
+   "fps": 2,
+   "ax": 4,
+   "ay": 8
+  },
+  "deer_walk": {
+   "x": 85,
+   "y": 1,
+   "w": 9,
+   "h": 9,
+   "frames": 4,
+   "fps": 7,
+   "ax": 4,
+   "ay": 8,
+   "eye": [
+    3,
+    -5
+   ]
+  },
+  "deer_run": {
+   "x": 48,
+   "y": 1,
+   "w": 9,
+   "h": 9,
+   "frames": 4,
+   "fps": 12,
+   "ax": 4,
+   "ay": 8,
+   "eye": [
+    3,
+    -4
+   ]
+  },
+  "doe_idle": {
+   "x": 38,
+   "y": 11,
+   "w": 9,
+   "h": 9,
+   "frames": 1,
+   "fps": 0,
+   "ax": 4,
+   "ay": 8,
+   "eye": [
+    3,
+    -4
+   ]
+  },
+  "doe_graze": {
+   "x": 1,
+   "y": 11,
+   "w": 9,
+   "h": 9,
+   "frames": 4,
+   "fps": 2,
+   "ax": 4,
+   "ay": 8
+  },
+  "doe_walk": {
+   "x": 85,
+   "y": 11,
+   "w": 9,
+   "h": 9,
+   "frames": 4,
+   "fps": 7,
+   "ax": 4,
+   "ay": 8,
+   "eye": [
+    3,
+    -4
+   ]
+  },
+  "doe_run": {
+   "x": 48,
+   "y": 11,
+   "w": 9,
+   "h": 9,
+   "frames": 4,
+   "fps": 12,
+   "ax": 4,
+   "ay": 8,
+   "eye": [
+    3,
+    -3
+   ]
+  },
+  "fawn_idle": {
+   "x": 96,
+   "y": 49,
+   "w": 7,
+   "h": 6,
+   "frames": 1,
+   "fps": 0,
+   "ax": 3,
+   "ay": 5,
+   "eye": [
+    2,
+    -4
+   ]
+  },
+  "fawn_graze": {
+   "x": 67,
+   "y": 49,
+   "w": 7,
+   "h": 6,
+   "frames": 4,
+   "fps": 2,
+   "ax": 3,
+   "ay": 5
+  },
+  "fawn_walk": {
+   "x": 30,
+   "y": 56,
+   "w": 7,
+   "h": 6,
+   "frames": 4,
+   "fps": 7,
+   "ax": 3,
+   "ay": 5,
+   "eye": [
+    2,
+    -4
+   ]
+  },
+  "fawn_run": {
+   "x": 1,
+   "y": 56,
+   "w": 7,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 3,
+   "ay": 5,
+   "eye": [
+    2,
+    -4
+   ]
+  },
+  "elk_idle": {
+   "x": 46,
+   "y": 21,
+   "w": 11,
+   "h": 9,
+   "frames": 1,
+   "fps": 0,
+   "ax": 5,
+   "ay": 8,
+   "eye": [
+    4,
+    -4
+   ]
+  },
+  "elk_graze": {
+   "x": 1,
+   "y": 21,
+   "w": 11,
+   "h": 9,
+   "frames": 4,
+   "fps": 2,
+   "ax": 5,
+   "ay": 8
+  },
+  "elk_walk": {
+   "x": 1,
+   "y": 31,
+   "w": 11,
+   "h": 9,
+   "frames": 4,
+   "fps": 7,
+   "ax": 5,
+   "ay": 8,
+   "eye": [
+    4,
+    -4
+   ]
+  },
+  "elk_run": {
+   "x": 58,
+   "y": 21,
+   "w": 11,
+   "h": 9,
+   "frames": 4,
+   "fps": 12,
+   "ax": 5,
+   "ay": 8,
+   "eye": [
+    4,
+    -3
+   ]
+  },
+  "boar_idle": {
+   "x": 109,
+   "y": 41,
+   "w": 8,
+   "h": 6,
+   "frames": 1,
+   "fps": 0,
+   "ax": 4,
+   "ay": 5,
+   "eye": [
+    2,
+    -2
+   ]
+  },
+  "boar_graze": {
+   "x": 76,
+   "y": 41,
+   "w": 8,
+   "h": 6,
+   "frames": 4,
+   "fps": 2,
+   "ax": 4,
+   "ay": 5
+  },
+  "boar_walk": {
+   "x": 34,
+   "y": 49,
+   "w": 8,
+   "h": 6,
+   "frames": 4,
+   "fps": 7,
+   "ax": 4,
+   "ay": 5,
+   "eye": [
+    2,
+    -2
+   ]
+  },
+  "boar_run": {
+   "x": 1,
+   "y": 49,
+   "w": 8,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 4,
+   "ay": 5,
+   "eye": [
+    2,
+    -2
+   ]
+  },
+  "piglet_idle": {
+   "x": 59,
+   "y": 75,
+   "w": 5,
+   "h": 3,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 2,
+   "eye": [
+    1,
+    -1
+   ]
+  },
+  "piglet_graze": {
+   "x": 38,
+   "y": 75,
+   "w": 5,
+   "h": 3,
+   "frames": 4,
+   "fps": 2,
+   "ax": 2,
+   "ay": 2
+  },
+  "piglet_walk": {
+   "x": 86,
+   "y": 75,
+   "w": 5,
+   "h": 3,
+   "frames": 4,
+   "fps": 7,
+   "ax": 2,
+   "ay": 2,
+   "eye": [
+    1,
+    -1
+   ]
+  },
+  "piglet_run": {
+   "x": 65,
+   "y": 75,
+   "w": 5,
+   "h": 3,
+   "frames": 4,
+   "fps": 12,
+   "ax": 2,
+   "ay": 2,
+   "eye": [
+    1,
+    -1
+   ]
+  },
+  "hare_idle": {
+   "x": 59,
+   "y": 69,
+   "w": 5,
+   "h": 5,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 4,
+   "eye": [
+    1,
+    -2
+   ]
+  },
+  "hare_graze": {
+   "x": 38,
+   "y": 69,
+   "w": 5,
+   "h": 5,
+   "frames": 4,
+   "fps": 2,
+   "ax": 2,
+   "ay": 4
+  },
+  "hare_walk": {
+   "x": 86,
+   "y": 69,
+   "w": 5,
+   "h": 5,
+   "frames": 4,
+   "fps": 7,
+   "ax": 2,
+   "ay": 4,
+   "eye": [
+    1,
+    -2
+   ]
+  },
+  "hare_run": {
+   "x": 65,
+   "y": 69,
+   "w": 5,
+   "h": 5,
+   "frames": 4,
+   "fps": 12,
+   "ax": 2,
+   "ay": 4,
+   "eye": [
+    1,
+    -1
+   ]
+  },
+  "fox_idle": {
+   "x": 38,
+   "y": 63,
+   "w": 9,
+   "h": 5,
+   "frames": 1,
+   "fps": 0,
+   "ax": 4,
+   "ay": 4,
+   "eye": [
+    2,
+    -2
+   ]
+  },
+  "fox_graze": {
+   "x": 1,
+   "y": 63,
+   "w": 9,
+   "h": 5,
+   "frames": 4,
+   "fps": 2,
+   "ax": 4,
+   "ay": 4
+  },
+  "fox_walk": {
+   "x": 1,
+   "y": 69,
+   "w": 9,
+   "h": 5,
+   "frames": 4,
+   "fps": 7,
+   "ax": 4,
+   "ay": 4,
+   "eye": [
+    2,
+    -2
+   ]
+  },
+  "fox_run": {
+   "x": 48,
+   "y": 63,
+   "w": 9,
+   "h": 5,
+   "frames": 4,
+   "fps": 12,
+   "ax": 4,
+   "ay": 4,
+   "eye": [
+    3,
+    -2
+   ]
+  },
+  "stork_idle": {
+   "x": 75,
+   "y": 31,
+   "w": 7,
+   "h": 8,
+   "frames": 1,
+   "fps": 0,
+   "ax": 3,
+   "ay": 7
+  },
+  "stork_graze": {
+   "x": 46,
+   "y": 31,
+   "w": 7,
+   "h": 8,
+   "frames": 4,
+   "fps": 2,
+   "ax": 3,
+   "ay": 7
+  },
+  "stork_walk": {
+   "x": 83,
+   "y": 31,
+   "w": 7,
+   "h": 8,
+   "frames": 4,
+   "fps": 7,
+   "ax": 3,
+   "ay": 7
+  },
+  "stork_run": {
+   "x": 1,
+   "y": 75,
+   "w": 9,
+   "h": 5,
+   "frames": 4,
+   "fps": 8,
+   "ax": 4,
+   "ay": 4
+  },
+  "goose_idle": {
+   "x": 34,
+   "y": 41,
+   "w": 8,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 4,
+   "ay": 6
+  },
+  "goose_graze": {
+   "x": 1,
+   "y": 41,
+   "w": 8,
+   "h": 7,
+   "frames": 4,
+   "fps": 2,
+   "ax": 4,
+   "ay": 6
+  },
+  "goose_walk": {
+   "x": 43,
+   "y": 41,
+   "w": 8,
+   "h": 7,
+   "frames": 4,
+   "fps": 7,
+   "ax": 4,
+   "ay": 6
+  },
+  "goose_run": {
+   "x": 59,
+   "y": 56,
+   "w": 10,
+   "h": 6,
+   "frames": 2,
+   "fps": 6,
+   "ax": 5,
+   "ay": 5
+  },
+  "fox_stalk": {
+   "x": 85,
+   "y": 63,
+   "w": 9,
+   "h": 5,
+   "frames": 4,
+   "fps": 4,
+   "ax": 4,
+   "ay": 4
+  },
+  "fox_carry": {
+   "x": 80,
+   "y": 56,
+   "w": 9,
+   "h": 5,
+   "frames": 4,
+   "fps": 7,
+   "ax": 4,
+   "ay": 4
+  }
+ }
+}

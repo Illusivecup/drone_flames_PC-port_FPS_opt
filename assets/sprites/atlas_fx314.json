@@ -1,0 +1,373 @@
+{
+ "image": "atlas_fx314.png",
+ "size": [
+  1262,
+  361
+ ],
+ "note": "R314 VFX-B calibre blasts, rings, turret toss, debris, facade marks",
+ "sprites": {
+  "x_fpv": {
+   "x": 1,
+   "y": 1,
+   "w": 22,
+   "h": 22,
+   "frames": 10,
+   "fps": 16,
+   "ax": 11,
+   "ay": 18,
+   "kind": "fx"
+  },
+  "x_mine": {
+   "x": 222,
+   "y": 1,
+   "w": 24,
+   "h": 32,
+   "frames": 10,
+   "fps": 16,
+   "ax": 12,
+   "ay": 28,
+   "kind": "fx"
+  },
+  "x_shell": {
+   "x": 463,
+   "y": 1,
+   "w": 32,
+   "h": 34,
+   "frames": 11,
+   "fps": 16,
+   "ax": 16,
+   "ay": 29,
+   "kind": "fx"
+  },
+  "x_mlrs": {
+   "x": 1,
+   "y": 36,
+   "w": 40,
+   "h": 30,
+   "frames": 12,
+   "fps": 18,
+   "ax": 20,
+   "ay": 24,
+   "kind": "fx"
+  },
+  "x_kab": {
+   "x": 482,
+   "y": 36,
+   "w": 60,
+   "h": 62,
+   "frames": 12,
+   "fps": 14,
+   "ax": 30,
+   "ay": 54,
+   "kind": "fx"
+  },
+  "x_cruise": {
+   "x": 1,
+   "y": 99,
+   "w": 56,
+   "h": 46,
+   "frames": 13,
+   "fps": 15,
+   "ax": 28,
+   "ay": 40,
+   "kind": "fx"
+  },
+  "x_ball": {
+   "x": 1,
+   "y": 146,
+   "w": 84,
+   "h": 66,
+   "frames": 15,
+   "fps": 14,
+   "ax": 42,
+   "ay": 56,
+   "kind": "fx"
+  },
+  "x_hyper": {
+   "x": 1,
+   "y": 213,
+   "w": 84,
+   "h": 66,
+   "frames": 15,
+   "fps": 15,
+   "ax": 42,
+   "ay": 56,
+   "kind": "fx"
+  },
+  "ring_s": {
+   "x": 1,
+   "y": 280,
+   "w": 24,
+   "h": 13,
+   "frames": 4,
+   "fps": 14,
+   "ax": 12,
+   "ay": 6,
+   "kind": "fx"
+  },
+  "ring_m": {
+   "x": 98,
+   "y": 280,
+   "w": 38,
+   "h": 19,
+   "frames": 5,
+   "fps": 14,
+   "ax": 19,
+   "ay": 9,
+   "kind": "fx"
+  },
+  "ring_l": {
+   "x": 289,
+   "y": 280,
+   "w": 58,
+   "h": 27,
+   "frames": 5,
+   "fps": 14,
+   "ax": 29,
+   "ay": 13,
+   "kind": "fx"
+  },
+  "ring_xl": {
+   "x": 580,
+   "y": 280,
+   "w": 86,
+   "h": 39,
+   "frames": 6,
+   "fps": 14,
+   "ax": 43,
+   "ay": 19,
+   "kind": "fx"
+  },
+  "ring_hx": {
+   "x": 1,
+   "y": 320,
+   "w": 86,
+   "h": 39,
+   "frames": 6,
+   "fps": 14,
+   "ax": 43,
+   "ay": 19,
+   "kind": "fx"
+  },
+  "hyper_streak": {
+   "x": 518,
+   "y": 320,
+   "w": 6,
+   "h": 40,
+   "frames": 2,
+   "fps": 20,
+   "ax": 3,
+   "ay": 39,
+   "kind": "fx"
+  },
+  "cookoff_jet_loop": {
+   "x": 531,
+   "y": 320,
+   "w": 15,
+   "h": 34,
+   "frames": 6,
+   "fps": 14,
+   "ax": 7,
+   "ay": 33,
+   "kind": "fx"
+  },
+  "era_pop": {
+   "x": 622,
+   "y": 320,
+   "w": 14,
+   "h": 16,
+   "frames": 7,
+   "fps": 14,
+   "ax": 7,
+   "ay": 13,
+   "kind": "fx"
+  },
+  "rico_sparks": {
+   "x": 721,
+   "y": 320,
+   "w": 16,
+   "h": 10,
+   "frames": 4,
+   "fps": 18,
+   "ax": 2,
+   "ay": 6,
+   "kind": "fx"
+  },
+  "dmg_smoke_loop": {
+   "x": 786,
+   "y": 320,
+   "w": 10,
+   "h": 18,
+   "frames": 8,
+   "fps": 8,
+   "ax": 4,
+   "ay": 16,
+   "kind": "fx"
+  },
+  "turret_t": {
+   "x": 867,
+   "y": 320,
+   "w": 13,
+   "h": 9,
+   "frames": 8,
+   "fps": 12,
+   "ax": 6,
+   "ay": 4,
+   "kind": "fx"
+  },
+  "turret_i": {
+   "x": 972,
+   "y": 320,
+   "w": 11,
+   "h": 8,
+   "frames": 8,
+   "fps": 12,
+   "ax": 5,
+   "ay": 4,
+   "kind": "fx"
+  },
+  "deb_plank": {
+   "x": 1061,
+   "y": 320,
+   "w": 6,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 3,
+   "ay": 3,
+   "kind": "fx"
+  },
+  "deb_brick": {
+   "x": 1086,
+   "y": 320,
+   "w": 6,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 3,
+   "ay": 3,
+   "kind": "fx"
+  },
+  "deb_slab": {
+   "x": 1111,
+   "y": 320,
+   "w": 6,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 3,
+   "ay": 3,
+   "kind": "fx"
+  },
+  "deb_glass": {
+   "x": 1136,
+   "y": 320,
+   "w": 6,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 3,
+   "ay": 3,
+   "kind": "fx"
+  },
+  "deb_metal": {
+   "x": 1161,
+   "y": 320,
+   "w": 6,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 3,
+   "ay": 3,
+   "kind": "fx"
+  },
+  "deb_clod": {
+   "x": 1186,
+   "y": 320,
+   "w": 6,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 3,
+   "ay": 3,
+   "kind": "fx"
+  },
+  "soot_a": {
+   "x": 1211,
+   "y": 320,
+   "w": 4,
+   "h": 8,
+   "frames": 1,
+   "fps": 1,
+   "ax": 2,
+   "ay": 7,
+   "kind": "fx"
+  },
+  "soot_b": {
+   "x": 1216,
+   "y": 320,
+   "w": 4,
+   "h": 8,
+   "frames": 1,
+   "fps": 1,
+   "ax": 2,
+   "ay": 7,
+   "kind": "fx"
+  },
+  "soot_c": {
+   "x": 1221,
+   "y": 320,
+   "w": 4,
+   "h": 8,
+   "frames": 1,
+   "fps": 1,
+   "ax": 2,
+   "ay": 7,
+   "kind": "fx"
+  },
+  "hole_a": {
+   "x": 1226,
+   "y": 320,
+   "w": 4,
+   "h": 4,
+   "frames": 1,
+   "fps": 1,
+   "ax": 2,
+   "ay": 2,
+   "kind": "fx"
+  },
+  "hole_b": {
+   "x": 1231,
+   "y": 320,
+   "w": 4,
+   "h": 4,
+   "frames": 1,
+   "fps": 1,
+   "ax": 2,
+   "ay": 2,
+   "kind": "fx"
+  },
+  "hole_c": {
+   "x": 1236,
+   "y": 320,
+   "w": 4,
+   "h": 4,
+   "frames": 1,
+   "fps": 1,
+   "ax": 2,
+   "ay": 2,
+   "kind": "fx"
+  },
+  "hole_d": {
+   "x": 1241,
+   "y": 320,
+   "w": 4,
+   "h": 4,
+   "frames": 1,
+   "fps": 1,
+   "ax": 2,
+   "ay": 2,
+   "kind": "fx"
+  }
+ }
+}

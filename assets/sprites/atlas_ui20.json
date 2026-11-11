@@ -1,0 +1,193 @@
+{
+ "cell_px": 4,
+ "image": "atlas_ui20.png",
+ "size": [
+  256,
+  128
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "mi_play": {
+   "x": 76,
+   "y": 50,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "mi_continue": {
+   "x": 222,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "mi_new": {
+   "x": 51,
+   "y": 50,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "mi_tutorial": {
+   "x": 126,
+   "y": 50,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "mi_mp": {
+   "x": 26,
+   "y": 50,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "mi_settings": {
+   "x": 101,
+   "y": 50,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "mi_dice": {
+   "x": 1,
+   "y": 50,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "si_bots": {
+   "x": 185,
+   "y": 50,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_diff": {
+   "x": 219,
+   "y": 50,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_ai": {
+   "x": 168,
+   "y": 50,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_victory": {
+   "x": 120,
+   "y": 75,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_goal": {
+   "x": 1,
+   "y": 75,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_time": {
+   "x": 103,
+   "y": 75,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_size": {
+   "x": 86,
+   "y": 75,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_ore": {
+   "x": 52,
+   "y": 75,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_daynight": {
+   "x": 202,
+   "y": 50,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_fog": {
+   "x": 236,
+   "y": 50,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_mode": {
+   "x": 35,
+   "y": 75,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_rivers": {
+   "x": 69,
+   "y": 75,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "si_lakes": {
+   "x": 18,
+   "y": 75,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_demolish": {
+   "x": 151,
+   "y": 50,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "icon_demolish_24": {
+   "x": 197,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "map_t_normal": {
+   "x": 148,
+   "y": 1,
+   "w": 48,
+   "h": 48,
+   "frames": 1
+  },
+  "map_t_archipelago": {
+   "x": 1,
+   "y": 1,
+   "w": 48,
+   "h": 48,
+   "frames": 1
+  },
+  "map_t_islands": {
+   "x": 99,
+   "y": 1,
+   "w": 48,
+   "h": 48,
+   "frames": 1
+  },
+  "map_t_continents": {
+   "x": 50,
+   "y": 1,
+   "w": 48,
+   "h": 48,
+   "frames": 1
+  }
+ }
+}

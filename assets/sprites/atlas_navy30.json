@@ -1,0 +1,92 @@
+{
+ "cell_px": 4,
+ "image": "atlas_navy30.png",
+ "size": [
+  512,
+  32
+ ],
+ "anchor": "as atlas_world9: buildings draw at (cell_x*4-ax, (cell_y+fd)*4-ay), cell = NW cell of footprint",
+ "anchor_units": "kind unit*: ax, ay = centre pixel (draw at world_px - (ax, ay)); frame = state*dirs + dir, dir k = heading k*step deg clockwise from east",
+ "local_px": "slots/bow/stern = px offsets from the hull anchor per dir (3/4 lift included); berths = frame-local px",
+ "light": "top-left",
+ "palette": "palettes/main_named.json",
+ "gen": "navy26",
+ "sprites": {
+  "mod_art": {
+   "x": 85,
+   "y": 1,
+   "w": 9,
+   "h": 9,
+   "fw": 0,
+   "fd": 0,
+   "ax": 4,
+   "ay": 4,
+   "frames": 32,
+   "fps": 0,
+   "kind": "unit_module",
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "dirs": 16,
+   "states": 2,
+   "note": "frame = state*16 + dir; state 0 idle, 1 firing (recoil + twin muzzle flash)"
+  },
+  "icon_mod_art": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_mod_art_16": {
+   "x": 51,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  },
+  "icon_ship_art": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 24
+  },
+  "icon_ship_art_16": {
+   "x": 68,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "fw": 0,
+   "fd": 0,
+   "ax": 0,
+   "ay": 0,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_icon",
+   "size": 16
+  }
+ }
+}

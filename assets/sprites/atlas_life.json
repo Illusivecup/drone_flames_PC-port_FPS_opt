@@ -1,0 +1,503 @@
+{
+ "image": "atlas_life.png",
+ "size": [
+  128,
+  64
+ ],
+ "palette": "palettes/main_named.json",
+ "anchor": "ax,ay = integer pixel inside the frame; draw frame at (pos.x-ax, pos.y-ay). vehicles: centre (w//2, h//2); pedestrians: middle column, feet row",
+ "directions": "_e east (front right), _n north, _s south; west = flip_h of _e",
+ "lane_offset_px": 1,
+ "sprites": {
+  "car_a_e": {
+   "x": 47,
+   "y": 28,
+   "w": 7,
+   "h": 4,
+   "frames": 1,
+   "fps": 0,
+   "ax": 3,
+   "ay": 2
+  },
+  "car_a_n": {
+   "x": 65,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_a_s": {
+   "x": 70,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_b_e": {
+   "x": 55,
+   "y": 28,
+   "w": 7,
+   "h": 4,
+   "frames": 1,
+   "fps": 0,
+   "ax": 3,
+   "ay": 2
+  },
+  "car_b_n": {
+   "x": 75,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_b_s": {
+   "x": 80,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_c_e": {
+   "x": 63,
+   "y": 28,
+   "w": 7,
+   "h": 4,
+   "frames": 1,
+   "fps": 0,
+   "ax": 3,
+   "ay": 2
+  },
+  "car_c_n": {
+   "x": 85,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_c_s": {
+   "x": 90,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_d_e": {
+   "x": 71,
+   "y": 28,
+   "w": 7,
+   "h": 4,
+   "frames": 1,
+   "fps": 0,
+   "ax": 3,
+   "ay": 2
+  },
+  "car_d_n": {
+   "x": 95,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_d_s": {
+   "x": 100,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_e_e": {
+   "x": 79,
+   "y": 28,
+   "w": 7,
+   "h": 4,
+   "frames": 1,
+   "fps": 0,
+   "ax": 3,
+   "ay": 2
+  },
+  "car_e_n": {
+   "x": 105,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_e_s": {
+   "x": 110,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_f_e": {
+   "x": 87,
+   "y": 28,
+   "w": 7,
+   "h": 4,
+   "frames": 1,
+   "fps": 0,
+   "ax": 3,
+   "ay": 2
+  },
+  "car_f_n": {
+   "x": 115,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "car_f_s": {
+   "x": 120,
+   "y": 1,
+   "w": 4,
+   "h": 7,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 3
+  },
+  "truck_e": {
+   "x": 20,
+   "y": 28,
+   "w": 9,
+   "h": 5,
+   "frames": 1,
+   "fps": 0,
+   "ax": 4,
+   "ay": 2
+  },
+  "truck_n": {
+   "x": 35,
+   "y": 1,
+   "w": 5,
+   "h": 9,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 4
+  },
+  "truck_s": {
+   "x": 41,
+   "y": 1,
+   "w": 5,
+   "h": 9,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 4
+  },
+  "bus_e": {
+   "x": 105,
+   "y": 21,
+   "w": 11,
+   "h": 5,
+   "frames": 1,
+   "fps": 0,
+   "ax": 5,
+   "ay": 2
+  },
+  "bus_n": {
+   "x": 1,
+   "y": 1,
+   "w": 5,
+   "h": 11,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 5
+  },
+  "bus_s": {
+   "x": 7,
+   "y": 1,
+   "w": 5,
+   "h": 11,
+   "frames": 1,
+   "fps": 0,
+   "ax": 2,
+   "ay": 5
+  },
+  "fire_truck_e": {
+   "x": 1,
+   "y": 28,
+   "w": 9,
+   "h": 5,
+   "frames": 2,
+   "fps": 4,
+   "ax": 4,
+   "ay": 2
+  },
+  "fire_truck_n": {
+   "x": 13,
+   "y": 1,
+   "w": 5,
+   "h": 9,
+   "frames": 2,
+   "fps": 4,
+   "ax": 2,
+   "ay": 4
+  },
+  "fire_truck_s": {
+   "x": 24,
+   "y": 1,
+   "w": 5,
+   "h": 9,
+   "frames": 2,
+   "fps": 4,
+   "ax": 2,
+   "ay": 4
+  },
+  "ambulance_e": {
+   "x": 30,
+   "y": 28,
+   "w": 8,
+   "h": 4,
+   "frames": 2,
+   "fps": 4,
+   "ax": 4,
+   "ay": 2
+  },
+  "ambulance_n": {
+   "x": 47,
+   "y": 1,
+   "w": 4,
+   "h": 8,
+   "frames": 2,
+   "fps": 4,
+   "ax": 2,
+   "ay": 4
+  },
+  "ambulance_s": {
+   "x": 56,
+   "y": 1,
+   "w": 4,
+   "h": 8,
+   "frames": 2,
+   "fps": 4,
+   "ax": 2,
+   "ay": 4
+  },
+  "police_car_e": {
+   "x": 95,
+   "y": 28,
+   "w": 7,
+   "h": 4,
+   "frames": 2,
+   "fps": 4,
+   "ax": 3,
+   "ay": 2
+  },
+  "police_car_n": {
+   "x": 1,
+   "y": 13,
+   "w": 4,
+   "h": 7,
+   "frames": 2,
+   "fps": 4,
+   "ax": 2,
+   "ay": 3
+  },
+  "police_car_s": {
+   "x": 10,
+   "y": 13,
+   "w": 4,
+   "h": 7,
+   "frames": 2,
+   "fps": 4,
+   "ax": 2,
+   "ay": 3
+  },
+  "ped_a_s": {
+   "x": 58,
+   "y": 13,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_a_n": {
+   "x": 32,
+   "y": 13,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_a_e": {
+   "x": 19,
+   "y": 13,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_a_run_e": {
+   "x": 45,
+   "y": 13,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_b_s": {
+   "x": 110,
+   "y": 13,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_b_n": {
+   "x": 84,
+   "y": 13,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_b_e": {
+   "x": 71,
+   "y": 13,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_b_run_e": {
+   "x": 97,
+   "y": 13,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_c_s": {
+   "x": 40,
+   "y": 21,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_c_n": {
+   "x": 14,
+   "y": 21,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_c_e": {
+   "x": 1,
+   "y": 21,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_c_run_e": {
+   "x": 27,
+   "y": 21,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_d_s": {
+   "x": 92,
+   "y": 21,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_d_n": {
+   "x": 66,
+   "y": 21,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_d_e": {
+   "x": 53,
+   "y": 21,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 8,
+   "ax": 1,
+   "ay": 5
+  },
+  "ped_d_run_e": {
+   "x": 79,
+   "y": 21,
+   "w": 3,
+   "h": 6,
+   "frames": 4,
+   "fps": 12,
+   "ax": 1,
+   "ay": 5
+  }
+ }
+}

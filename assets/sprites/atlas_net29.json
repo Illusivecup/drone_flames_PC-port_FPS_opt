@@ -1,0 +1,179 @@
+{
+ "cell_px": 4,
+ "image": "atlas_net29.png",
+ "size": [
+  128,
+  128
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "net_lan": {
+   "x": 69,
+   "y": 26,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_globe": {
+   "x": 1,
+   "y": 26,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_lock": {
+   "x": 86,
+   "y": 26,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_public": {
+   "x": 35,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_players": {
+   "x": 18,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_host": {
+   "x": 35,
+   "y": 26,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_you": {
+   "x": 52,
+   "y": 60,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_signal_ok": {
+   "x": 86,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_signal_weak": {
+   "x": 103,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_signal_lost": {
+   "x": 69,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_pause": {
+   "x": 1,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_sync": {
+   "x": 1,
+   "y": 60,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_refresh": {
+   "x": 52,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_paste": {
+   "x": 103,
+   "y": 26,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_copy": {
+   "x": 93,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_edit": {
+   "x": 110,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_warn": {
+   "x": 35,
+   "y": 60,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_wait": {
+   "x": 18,
+   "y": 60,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_kick": {
+   "x": 52,
+   "y": 26,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_handshake": {
+   "x": 18,
+   "y": 26,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_code": {
+   "x": 76,
+   "y": 1,
+   "w": 16,
+   "h": 16,
+   "frames": 1
+  },
+  "net_lan_big": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "net_globe_big": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "net_browser_big": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  }
+ }
+}

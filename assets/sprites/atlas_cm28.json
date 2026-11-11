@@ -1,0 +1,48 @@
+{
+ "cell_px": 4,
+ "image": "atlas_cm28.png",
+ "size": [
+  210,
+  29
+ ],
+ "anchor": "center",
+ "anchor_units": "px",
+ "sprites": {
+  "cm": {
+   "w": 13,
+   "h": 13,
+   "fw": 1,
+   "fd": 1,
+   "ax": 6,
+   "ay": 6,
+   "frames": 16,
+   "fps": 0,
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "x": 1,
+   "y": 1,
+   "kind": "unit"
+  },
+  "cm_shadow": {
+   "w": 13,
+   "h": 13,
+   "fw": 1,
+   "fd": 1,
+   "ax": 6,
+   "ay": 6,
+   "frames": 16,
+   "fps": 0,
+   "anchor": "center",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "clockwise": true,
+   "x": 1,
+   "y": 15,
+   "kind": "unit_shadow",
+   "shadow_of": "cm",
+   "color": "rock_deep"
+  }
+ }
+}

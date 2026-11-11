@@ -1,0 +1,105 @@
+{
+ "sprites": {
+  "ramp_blast": {
+   "x": 1504,
+   "y": 66,
+   "w": 24,
+   "h": 16,
+   "frames": 8,
+   "fps": 16,
+   "ax": 17,
+   "ay": 10
+  },
+  "booster_flame_loop": {
+   "x": 1847,
+   "y": 66,
+   "w": 7,
+   "h": 7,
+   "frames": 3,
+   "fps": 16,
+   "ax": 3,
+   "ay": 3
+  },
+  "trail_s": {
+   "x": 1869,
+   "y": 66,
+   "w": 6,
+   "h": 6,
+   "frames": 6,
+   "fps": 10,
+   "ax": 3,
+   "ay": 3
+  },
+  "tel_flash": {
+   "x": 1282,
+   "y": 66,
+   "w": 32,
+   "h": 32,
+   "frames": 6,
+   "fps": 16,
+   "ax": 16,
+   "ay": 16
+  },
+  "launch_cloud": {
+   "x": 1,
+   "y": 66,
+   "w": 80,
+   "h": 44,
+   "frames": 16,
+   "fps": 8,
+   "ax": 40,
+   "ay": 44
+  },
+  "missile_flame_loop": {
+   "x": 1697,
+   "y": 66,
+   "w": 9,
+   "h": 9,
+   "frames": 4,
+   "fps": 16,
+   "ax": 4,
+   "ay": 4
+  },
+  "trail_puff": {
+   "x": 1734,
+   "y": 66,
+   "w": 8,
+   "h": 8,
+   "frames": 14,
+   "fps": 7,
+   "ax": 4,
+   "ay": 4
+  },
+  "explosion_l": {
+   "x": 1,
+   "y": 1,
+   "w": 64,
+   "h": 64,
+   "frames": 14,
+   "fps": 14,
+   "ax": 32,
+   "ay": 32
+  },
+  "shockwave": {
+   "x": 898,
+   "y": 1,
+   "w": 96,
+   "h": 56,
+   "frames": 8,
+   "fps": 18,
+   "ax": 48,
+   "ay": 28
+  },
+  "crater_l": {
+   "x": 1475,
+   "y": 66,
+   "w": 28,
+   "h": 18,
+   "frames": 1,
+   "fps": 0,
+   "ax": 14,
+   "ay": 9
+  }
+ },
+ "note": "frame i region: (x + i*w, y, w, h); frames contiguous, 1px padding between sprites; ax,ay = anchor in frame px (offset = -anchor); fps 0 = static decal"
+}

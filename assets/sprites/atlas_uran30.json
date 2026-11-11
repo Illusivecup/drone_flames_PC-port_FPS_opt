@@ -1,0 +1,621 @@
+{
+ "cell_px": 4,
+ "image": "atlas_uran30.png",
+ "size": [
+  512,
+  256
+ ],
+ "anchor": "as atlas_world7: draw frame at (cell_x*4-ax, (cell_y+fd)*4-ay), cell = NW cell of footprint",
+ "local_px": "steam / beacon / fire are frame-local px (world px = frame draw position + value)",
+ "note": "v0.30 URAN30: uranium deposits, uranium mine, nuclear power plant (core + cooling tower) per country style",
+ "light": "top-left",
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "npp_core": {
+   "x": 1,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "beacon": [
+    [
+     27,
+     1
+    ]
+   ]
+  },
+  "npp_core_ruin": {
+   "x": 36,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_core",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     12,
+     47
+    ],
+    [
+     18,
+     63
+    ]
+   ]
+  },
+  "npp_core_dmg": {
+   "x": 71,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "beacon": [
+    [
+     27,
+     1
+    ]
+   ],
+   "damaged_of": "npp_core"
+  },
+  "npp_core_dmg_ruin": {
+   "x": 106,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_core_dmg",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     12,
+     47
+    ],
+    [
+     18,
+     63
+    ]
+   ]
+  },
+  "npp_tower": {
+   "x": 169,
+   "y": 82,
+   "w": 20,
+   "h": 35,
+   "fw": 5,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "steam": [
+    [
+     10,
+     6
+    ]
+   ]
+  },
+  "npp_tower_ruin": {
+   "x": 190,
+   "y": 82,
+   "w": 20,
+   "h": 35,
+   "fw": 5,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_tower",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     10,
+     23
+    ]
+   ]
+  },
+  "npp_core_usa": {
+   "x": 421,
+   "y": 1,
+   "w": 34,
+   "h": 55,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 55,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "beacon": [
+    [
+     13,
+     3
+    ]
+   ]
+  },
+  "npp_core_usa_ruin": {
+   "x": 456,
+   "y": 1,
+   "w": 34,
+   "h": 55,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 55,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_core_usa",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     12,
+     22
+    ],
+    [
+     18,
+     38
+    ]
+   ]
+  },
+  "npp_core_usa_dmg": {
+   "x": 1,
+   "y": 82,
+   "w": 34,
+   "h": 55,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 55,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "beacon": [
+    [
+     13,
+     3
+    ]
+   ],
+   "damaged_of": "npp_core_usa"
+  },
+  "npp_core_usa_dmg_ruin": {
+   "x": 36,
+   "y": 82,
+   "w": 34,
+   "h": 55,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 55,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_core_usa_dmg",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     12,
+     22
+    ],
+    [
+     18,
+     38
+    ]
+   ]
+  },
+  "npp_tower_usa": {
+   "x": 211,
+   "y": 82,
+   "w": 20,
+   "h": 35,
+   "fw": 5,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "steam": [
+    [
+     10,
+     6
+    ]
+   ]
+  },
+  "npp_tower_usa_ruin": {
+   "x": 232,
+   "y": 82,
+   "w": 20,
+   "h": 35,
+   "fw": 5,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_tower_usa",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     10,
+     23
+    ]
+   ]
+  },
+  "npp_core_west": {
+   "x": 141,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "beacon": [
+    [
+     27,
+     1
+    ]
+   ]
+  },
+  "npp_core_west_ruin": {
+   "x": 176,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_core_west",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     12,
+     47
+    ],
+    [
+     18,
+     63
+    ]
+   ]
+  },
+  "npp_core_west_dmg": {
+   "x": 211,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "beacon": [
+    [
+     27,
+     1
+    ]
+   ],
+   "damaged_of": "npp_core_west"
+  },
+  "npp_core_west_dmg_ruin": {
+   "x": 246,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_core_west_dmg",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     12,
+     47
+    ],
+    [
+     18,
+     63
+    ]
+   ]
+  },
+  "npp_tower_west": {
+   "x": 253,
+   "y": 82,
+   "w": 20,
+   "h": 35,
+   "fw": 5,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "steam": [
+    [
+     10,
+     6
+    ]
+   ]
+  },
+  "npp_tower_west_ruin": {
+   "x": 274,
+   "y": 82,
+   "w": 20,
+   "h": 35,
+   "fw": 5,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_tower_west",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     10,
+     23
+    ]
+   ]
+  },
+  "npp_core_asia": {
+   "x": 281,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "beacon": [
+    [
+     27,
+     1
+    ]
+   ]
+  },
+  "npp_core_asia_ruin": {
+   "x": 316,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_core_asia",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     12,
+     47
+    ],
+    [
+     18,
+     63
+    ]
+   ]
+  },
+  "npp_core_asia_dmg": {
+   "x": 351,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "beacon": [
+    [
+     27,
+     1
+    ]
+   ],
+   "damaged_of": "npp_core_asia"
+  },
+  "npp_core_asia_dmg_ruin": {
+   "x": 386,
+   "y": 1,
+   "w": 34,
+   "h": 80,
+   "fw": 8,
+   "fd": 11,
+   "ax": 0,
+   "ay": 80,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_core_asia_dmg",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     12,
+     47
+    ],
+    [
+     18,
+     63
+    ]
+   ]
+  },
+  "npp_tower_asia": {
+   "x": 125,
+   "y": 82,
+   "w": 21,
+   "h": 35,
+   "fw": 5,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "steam": [
+    [
+     10,
+     6
+    ]
+   ]
+  },
+  "npp_tower_asia_ruin": {
+   "x": 147,
+   "y": 82,
+   "w": 21,
+   "h": 35,
+   "fw": 5,
+   "fd": 5,
+   "ax": 0,
+   "ay": 35,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "npp_tower_asia",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     10,
+     23
+    ]
+   ]
+  },
+  "umine": {
+   "x": 71,
+   "y": 82,
+   "w": 26,
+   "h": 49,
+   "fw": 6,
+   "fd": 6,
+   "ax": 0,
+   "ay": 48,
+   "frames": 1,
+   "fps": 0,
+   "kind": "building",
+   "shadow": "rock_deep"
+  },
+  "umine_ruin": {
+   "x": 98,
+   "y": 82,
+   "w": 26,
+   "h": 49,
+   "fw": 6,
+   "fd": 6,
+   "ax": 0,
+   "ay": 48,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ruin",
+   "ruin_of": "umine",
+   "shadow": "rock_deep",
+   "fire": [
+    [
+     10,
+     32
+    ]
+   ]
+  },
+  "ore_uranium": {
+   "x": 307,
+   "y": 82,
+   "w": 12,
+   "h": 12,
+   "fw": 3,
+   "fd": 3,
+   "ax": 0,
+   "ay": 12,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ground",
+   "height": 0,
+   "resource": "uranium"
+  },
+  "ore_uranium_small": {
+   "x": 320,
+   "y": 82,
+   "w": 8,
+   "h": 8,
+   "fw": 2,
+   "fd": 2,
+   "ax": 0,
+   "ay": 8,
+   "frames": 1,
+   "fps": 0,
+   "kind": "ground",
+   "height": 0,
+   "resource": "uranium"
+  },
+  "dep_mark_uranium": {
+   "x": 295,
+   "y": 82,
+   "w": 11,
+   "h": 14,
+   "fw": 0,
+   "fd": 0,
+   "ax": 5,
+   "ay": 13,
+   "frames": 1,
+   "fps": 0,
+   "kind": "unit_marker"
+  }
+ }
+}

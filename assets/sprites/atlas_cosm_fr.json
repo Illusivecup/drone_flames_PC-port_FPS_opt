@@ -1,0 +1,249 @@
+{
+ "cell_px": 4,
+ "image": "atlas_cosm_fr.png",
+ "size": [
+  128,
+  256
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "fr_steel": {
+   "x": 101,
+   "y": 126,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_concrete": {
+   "x": 26,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_brick": {
+   "x": 76,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_tin": {
+   "x": 51,
+   "y": 151,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_tape": {
+   "x": 26,
+   "y": 151,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_garage": {
+   "x": 1,
+   "y": 76,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_pipe": {
+   "x": 101,
+   "y": 101,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_sandbag": {
+   "x": 51,
+   "y": 126,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_crate": {
+   "x": 76,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_net": {
+   "x": 51,
+   "y": 101,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_rotor": {
+   "x": 26,
+   "y": 126,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_circuit": {
+   "x": 1,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_searchlight": {
+   "x": 76,
+   "y": 126,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_radar": {
+   "x": 1,
+   "y": 126,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_antenna": {
+   "x": 26,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_barrier": {
+   "x": 51,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_frost": {
+   "x": 101,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_wires": {
+   "x": 76,
+   "y": 151,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_panel": {
+   "x": 76,
+   "y": 101,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_intercept": {
+   "x": 26,
+   "y": 101,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_copper": {
+   "x": 51,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_storm": {
+   "x": 1,
+   "y": 151,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_fire": {
+   "x": 51,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_aerostat": {
+   "x": 1,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_dome": {
+   "x": 26,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_flares": {
+   "x": 76,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_dawn": {
+   "x": 101,
+   "y": 26,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_goldrotor": {
+   "x": 26,
+   "y": 76,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_dev": {
+   "x": 1,
+   "y": 51,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_cbt": {
+   "x": 101,
+   "y": 1,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_hw_web": {
+   "x": 1,
+   "y": 101,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_hw_candles": {
+   "x": 76,
+   "y": 76,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_hw_bats": {
+   "x": 51,
+   "y": 76,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  },
+  "fr_hw_pumpkin": {
+   "x": 101,
+   "y": 76,
+   "w": 24,
+   "h": 24,
+   "frames": 1
+  }
+ }
+}

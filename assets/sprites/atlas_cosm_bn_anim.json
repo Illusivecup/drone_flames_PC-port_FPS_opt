@@ -1,0 +1,351 @@
+{
+ "cell_px": 4,
+ "image": "atlas_cosm_bn_anim.png",
+ "size": [
+  1202,
+  1259
+ ],
+ "palette": "palettes/main_named.json",
+ "sprites": {
+  "bn_steel": {
+   "x": 1,
+   "y": 926,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 6
+  },
+  "bn_dusk": {
+   "x": 1,
+   "y": 260,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 6
+  },
+  "bn_yard": {
+   "x": 1,
+   "y": 1222,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_garages": {
+   "x": 1,
+   "y": 445,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_tec": {
+   "x": 1,
+   "y": 1074,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_field": {
+   "x": 1,
+   "y": 334,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_embankment": {
+   "x": 1,
+   "y": 297,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_tram": {
+   "x": 1,
+   "y": 1148,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_snow": {
+   "x": 1,
+   "y": 889,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_roof": {
+   "x": 1,
+   "y": 852,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_droneport": {
+   "x": 1,
+   "y": 223,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_refinery": {
+   "x": 1,
+   "y": 815,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_workshop": {
+   "x": 1,
+   "y": 1185,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_radar": {
+   "x": 1,
+   "y": 741,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_topo": {
+   "x": 1,
+   "y": 1111,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_night": {
+   "x": 1,
+   "y": 667,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 6
+  },
+  "bn_fog": {
+   "x": 1,
+   "y": 408,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 4
+  },
+  "bn_bridge": {
+   "x": 1,
+   "y": 75,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_airfield": {
+   "x": 1,
+   "y": 1,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_intercept": {
+   "x": 1,
+   "y": 630,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_rebuild": {
+   "x": 1,
+   "y": 778,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_storm": {
+   "x": 1,
+   "y": 963,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 6
+  },
+  "bn_flares": {
+   "x": 1,
+   "y": 371,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_balloons": {
+   "x": 1,
+   "y": 38,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 4
+  },
+  "bn_swarm": {
+   "x": 1,
+   "y": 1037,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_sunset": {
+   "x": 1,
+   "y": 1000,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 6
+  },
+  "bn_orbit": {
+   "x": 1,
+   "y": 704,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 6
+  },
+  "bn_dawn": {
+   "x": 1,
+   "y": 149,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 6
+  },
+  "bn_dev": {
+   "x": 1,
+   "y": 186,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_cbt": {
+   "x": 1,
+   "y": 112,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_hw_pumpkins": {
+   "x": 1,
+   "y": 593,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_hw_ghosts": {
+   "x": 1,
+   "y": 482,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 6
+  },
+  "bn_hw_moon": {
+   "x": 1,
+   "y": 519,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  },
+  "bn_hw_night": {
+   "x": 1,
+   "y": 556,
+   "w": 150,
+   "h": 36,
+   "frames": 8,
+   "fx_dx": 150,
+   "fx_dy": 0,
+   "fps": 8
+  }
+ }
+}

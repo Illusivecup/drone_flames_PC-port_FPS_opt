@@ -116,6 +116,9 @@ var _hmask_cache: Dictionary = {}
 # прежнему GDScript-пути без изменений поведения.
 var _nat: Object = null
 var _nat_u: Dictionary = {}
+# Кадр последней синхронизации нативного снапшота (чтобы не пересобирать
+# его дважды за кадр при нескольких вызовах _nat_sync подряд).
+var _nat_sync_frame: int = -1
 const _NO_UNITS: Array = []
 const _NO_FACS: Array = []
 var _fgrid: Dictionary = {}
@@ -144,6 +147,73 @@ func _init(world: GameWorld) -> void :
 func _nat_init() -> void :
         if ClassDB.class_exists("DfNative"):
                 _nat = ClassDB.instantiate("DfNative")
+
+
+# Свежий снапшот живых не-FPV юнитов для натива (позиции/флаги/типы) + дымы.
+# Вызывается в _build_grid (скан 0.25 c), перед _spot и перед occupy — везде,
+# где нативному пассу нужна живая картина мира.
+func _nat_sync() -> void :
+        if _nat == null:
+                return
+        var fr: int = Engine.get_process_frames()
+        if _nat_sync_frame == fr:
+                return
+        _nat_sync_frame = fr
+        var nat_ids := PackedInt32Array()
+        var nat_xs := PackedFloat32Array()
+        var nat_ys := PackedFloat32Array()
+        var nat_cs := PackedInt32Array()
+        var nat_fl := PackedInt32Array()
+        var nat_ty := PackedInt32Array()
+        _nat_u.clear()
+        for u: Unit in units:
+                if not u.alive() or u.type == Unit.Type.FPV:
+                        continue
+                var fl: int = 0
+                if u.vehicle():
+                        fl |= 1
+                if u.air():
+                        fl |= 2
+                if u.entrenched:
+                        fl |= 4
+                if u.post == null:
+                        fl |= 8
+                if u.op_on:
+                        fl |= 16
+                if u.reinf == 0:
+                        fl |= 32
+                if u.state != Unit.State.SIEGE:
+                        fl |= 64
+                nat_ids.append(u.id)
+                nat_xs.append(u.pos.x)
+                nat_ys.append(u.pos.y)
+                nat_cs.append(u.country_id)
+                nat_fl.append(fl)
+                nat_ty.append(u.type)
+                _nat_u[u.id] = u
+        _nat.push_units(nat_ids, nat_xs, nat_ys, nat_cs, nat_fl, nat_ty)
+        _nat_push_smokes()
+
+
+# Дымы в натив: операции (круги) + армейские (эллипсы 16x9). Вызывается каждый
+# кадр из update — чтобы in_smoke/valid_one видели дым текущего кадра.
+func _nat_push_smokes() -> void :
+        if _nat == null:
+                return
+        var circ := PackedFloat64Array()
+        if gw.ops != null:
+                for z: Dictionary in gw.ops.zones:
+                        if int(z["k"]) == Operations.Order.SMOKE:
+                                var sp: Vector2 = z["pos"]
+                                circ.append(sp.x)
+                                circ.append(sp.y)
+                                circ.append(float(z["r"]))
+        var ell := PackedFloat64Array()
+        for s: Array in smokes:
+                var sp2: Vector2 = s[0]
+                ell.append(sp2.x)
+                ell.append(sp2.y)
+        _nat.push_smokes(circ, ell)
 
 
 func count_units(country_id: int) -> int:
@@ -399,6 +469,9 @@ func _pfv(nm: String, ms: float) -> void :
 
 func update(dt: float) -> void :
 
+        # Свежие дымы для натива (in_smoke/valid_one видят текущий кадр).
+        if _nat != null:
+                _nat_push_smokes()
         var _u0: int = Time.get_ticks_usec()
         _train(dt)
         _pf2("army:_train", _u0)
@@ -593,8 +666,23 @@ func range_of(u: Unit) -> float:
 func _valid(u: Unit, t: Object) -> bool:
         if t is Unit:
                 var tu: Unit = t
-                var td: float = tu.pos.distance_to(u.pos)
+                if not tu.alive():
+                        return false
+                var grd: bool = gw.diplo != null and gw.diplo.rq != null and gw.diplo.rq.guarding(u.country_id)
+                # Нативный путь (Rust): враждебность по маске + дистанция + дым.
+                # Живость цели уже проверена; «охрана» и hm == -1 — GDScript-путь.
+                if not grd and _nat != null:
+                        var hm: int = _hmask(u.country_id)
+                        if hm != -1:
+                                return _nat.valid_one(u.pos.x, u.pos.y, tu.pos.x, tu.pos.y, tu.country_id, range_of(u) * 1.15, hm)
+        return _valid_gd(u, t)
 
+
+# GDScript-эталон _valid (parity + ветки «охраны»/hm == -1).
+func _valid_gd(u: Unit, t: Object) -> bool:
+        if t is Unit:
+                var tu: Unit = t
+                var td: float = tu.pos.distance_to(u.pos)
                 return tu.alive() and (_hostile(u.country_id, tu.country_id) or _guard_foe(u, tu)) and td <= range_of(u) * 1.15 and (td < 28.0 or not in_smoke(tu.pos))
         if t is Facility:
                 return gw.mil.alive(t as Facility) and _hostile(u.country_id, (t as Facility).country_id) and _target_pos(t, u.pos).distance_to(u.pos) <= float(SPEC[u.type]["range"]) * 1.3
@@ -1381,6 +1469,77 @@ func _launch_rocket(u: Unit, t: Object, kind: String, dmg: float, hit: int) -> v
 
 
 func _update_rockets(dt: float) -> void :
+        # Нативный путь (Rust): интегрирование полёта (разворот, шаг, трейл).
+        # Живость цели и попадание — GDScript (нужны живые объекты).
+        if _nat != null:
+                var alive_ids: Array = []
+                var px := PackedFloat64Array()
+                var py := PackedFloat64Array()
+                var hd := PackedFloat64Array()
+                var lf := PackedFloat64Array()
+                var sp := PackedFloat64Array()
+                var tn := PackedFloat64Array()
+                var tx := PackedFloat64Array()
+                var ty := PackedFloat64Array()
+                var tr := PackedFloat64Array()
+                var keep: Array = []
+                for r: Dictionary in rockets:
+                        var t: Object = r["target"]
+                        var alive_t: bool = (t is Unit and (t as Unit).alive()) or (t is Facility and gw.mil.alive(t as Facility))
+                        if not alive_t:
+                                gw.fx.spawn("dirt_burst", (r["pos"] as Vector2).round(), 6)
+                                continue
+                        var pos: Vector2 = r["pos"]
+                        var tp: Vector2 = _target_pos(t, pos)
+                        alive_ids.append(r)
+                        px.append(pos.x)
+                        py.append(pos.y)
+                        hd.append(float(r["heading"]))
+                        lf.append(float(r["life"]))
+                        sp.append(float(ROCKET_SPEED[r["kind"]]))
+                        tn.append(PI * 1.2 if r["kind"] == "atgm" else PI * 0.3)
+                        tx.append(tp.x)
+                        ty.append(tp.y)
+                        tr.append(float(r["trail"]))
+                        keep.append(tp)
+                var res: PackedFloat64Array = _nat.rockets_step(dt, px, py, hd, lf, sp, tn, tx, ty, tr)
+                var out: Array = []
+                for i in alive_ids.size():
+                        var r2: Dictionary = alive_ids[i]
+                        var st: int = int(res[i * 8])
+                        if st == 2:
+                                # жизнь кончилась — взрыв на текущей позиции (как в эталоне)
+                                gw.fx.spawn("dirt_burst", Vector2(res[i * 8 + 2], res[i * 8 + 3]).round(), 6)
+                                continue
+                        var nh: float = res[i * 8 + 1]
+                        var ntr: float = res[i * 8 + 4]
+                        var old_pos: Vector2 = r2["pos"]
+                        if st == 1:
+                                var tp: Vector2 = keep[i]
+                                var ok: bool = Hash32.h2(int(r2["id"]), 3, 57) % 100 < int(r2["hit"])
+                                if ok:
+                                        gw.fx.spawn("atgm_hit" if r2["kind"] == "atgm" else "explosion_s", tp.round(), 6)
+                                        if gw.battle_watch != null:
+                                                gw.battle_watch.note(tp, 1.0, "", int(r2["c"]))
+                                        Sfx.play("atgm_hit" if r2["kind"] == "atgm" else "expl_small", tp)
+                                        _damage(r2["target"], float(r2["dmg"]), int(r2["c"]), old_pos if r2["target"] is Unit else tp)
+                                else:
+                                        gw.fx.spawn("dirt_burst", (tp + Vector2.from_angle(nh) * 6.0).round(), 6)
+                                continue
+                        r2["heading"] = nh
+                        r2["pos"] = Vector2(res[i * 8 + 2], res[i * 8 + 3])
+                        r2["trail"] = ntr
+                        r2["life"] = float(r2["life"]) - dt
+                        if res[i * 8 + 5] != 0.0 and gw._on_screen(old_pos, 60.0):
+                                gw.fx.spawn("trail_s", old_pos.round(), 5)
+                        out.append(r2)
+                rockets = out
+                return
+        _update_rockets_gd(dt)
+
+
+# GDScript-эталон _update_rockets (parity + отказ без натива).
+func _update_rockets_gd(dt: float) -> void :
         for k in range(rockets.size() - 1, -1, -1):
                 var r: Dictionary = rockets[k]
                 r["life"] = float(r["life"]) - dt
@@ -1531,11 +1690,23 @@ func occupy(f: Facility, country_id: int, auto: bool = false, only: Facility = n
                 occupy_why = Loc.src(occupy_m)
                 return 0
         var cand: Array[Unit] = []
-        var posted: int = 0
-        for u: Unit in units:
-                if u.country_id == country_id and u.alive() and u.post != null and (only == null or u.home == only):
-                        posted += 1
-                if u.country_id == country_id and u.alive() and u.post == null and (u.type == Unit.Type.INFANTRY or u.type == Unit.Type.ATGM or u.type == Unit.Type.ASSAULT) and u.state != Unit.State.SIEGE and u.reinf == 0 and ( not u.op_on or ( not auto and _may_leave_op(u, only))):
+        var posted: int = -1 # ленивый подсчёт (нужен только в сообщении при n == 0)
+        # Нативный путь (Rust): префильтр кандидатов по свежему снапшоту —
+        # страна, жив, без поста, тип INFANTRY/ATGM/ASSAULT, не осада, не
+        # подкрепление. Нюансы (op_on/no_post_until/only/home) — GDScript ниже.
+        # Порядок кандидатов = порядок массива units, как в эталоне.
+        var nat_res: PackedInt32Array = PackedInt32Array()
+        if _nat != null:
+                _nat_sync()
+                nat_res = _nat.occupy_candidates(country_id)
+        if not nat_res.is_empty():
+                for i in range(1, nat_res.size()):
+                        var u: Unit = _nat_u.get(nat_res[i])
+                        # цель могла устареть в пределах кадра — перепроверка
+                        if u == null or not u.alive() or u.country_id != country_id or u.post != null:
+                                continue
+                        if not ( not u.op_on or ( not auto and _may_leave_op(u, only))):
+                                continue
                         if only != null and u.home != only:
                                 continue
                         if auto and u.no_post_until - gw.game_time > ORDER_OUT * 0.5:
@@ -1544,6 +1715,26 @@ func occupy(f: Facility, country_id: int, auto: bool = false, only: Facility = n
                         elif auto and (gw.game_time < u.no_post_until or u.target_city >= 0):
                                 continue
                         cand.append(u)
+                if only == null:
+                        posted = nat_res[0]
+        else:
+                for u: Unit in units:
+                        if u.country_id == country_id and u.alive() and u.post != null and (only == null or u.home == only):
+                                posted += 1
+                        if u.country_id == country_id and u.alive() and u.post == null and (u.type == Unit.Type.INFANTRY or u.type == Unit.Type.ATGM or u.type == Unit.Type.ASSAULT) and u.state != Unit.State.SIEGE and u.reinf == 0 and ( not u.op_on or ( not auto and _may_leave_op(u, only))):
+                                if only != null and u.home != only:
+                                        continue
+                                if auto and u.no_post_until - gw.game_time > ORDER_OUT * 0.5:
+                                        if u.op_on or u.pos.distance_to(f.center_px()) > NEAR_POST:
+                                                continue
+                                elif auto and (gw.game_time < u.no_post_until or u.target_city >= 0):
+                                        continue
+                                cand.append(u)
+        if posted < 0:
+                posted = 0
+                for u: Unit in units:
+                        if u.country_id == country_id and u.alive() and u.post != null and (only == null or u.home == only):
+                                posted += 1
         var fc: Vector2 = f.center_px()
         cand.sort_custom( func(a: Unit, b: Unit) -> bool:
                 var pa: float = a.pos.distance_squared_to(fc) - (90000.0 if a.type == Unit.Type.ATGM else 0.0)
@@ -1995,6 +2186,10 @@ func throw_smoke(p: Vector2) -> void :
 
 
 func in_smoke(p: Vector2) -> bool:
+        # Нативный путь (Rust): круги операций + армейские эллипсы — как в
+        # GDScript-эталоне ниже; свежесть дымов — пуш каждый кадр (update).
+        if _nat != null:
+                return _nat.smoke_at(p.x, p.y)
         if gw.ops != null and gw.ops.smoke_at(p):
                 return true
         for s: Array in smokes:
@@ -2327,16 +2522,9 @@ func _build_grid() -> void :
         _gmask.clear()
         _hmask_cache.clear()
         _fpv_fly.clear()
-        # Снапшот для нативного поиска целей (те же фильтры, что и у сетки:
-        # живые, не FPV; порядок — как в массиве units).
-        var nat_on: bool = _nat != null
-        var nat_ids := PackedInt32Array()
-        var nat_xs := PackedFloat32Array()
-        var nat_ys := PackedFloat32Array()
-        var nat_cs := PackedInt32Array()
-        var nat_vs := PackedInt32Array()
-        if nat_on:
-                _nat_u.clear()
+        # Снапшот для натива (живые не-FPV; порядок — как в массиве units).
+        if _nat != null:
+                _nat_sync()
         for u: Unit in units:
                 if not u.alive():
                         continue
@@ -2350,30 +2538,6 @@ func _build_grid() -> void :
                 a.append(u)
                 var cid: int = u.country_id
                 _gmask[k] = int(_gmask.get(k, 0)) | ((1 << cid) if cid >= 0 and cid < 63 else -1)
-                if nat_on:
-                        nat_ids.append(u.id)
-                        nat_xs.append(u.pos.x)
-                        nat_ys.append(u.pos.y)
-                        nat_cs.append(cid)
-                        nat_vs.append(1 if u.vehicle() else 0)
-                        _nat_u[u.id] = u
-        if nat_on:
-                _nat.push_units(nat_ids, nat_xs, nat_ys, nat_cs, nat_vs)
-                # дымы: операции (круги) + армейские (эллипсы 16x9)
-                var circ := PackedFloat64Array()
-                if gw.ops != null:
-                        for z: Dictionary in gw.ops.zones:
-                                if int(z["k"]) == Operations.Order.SMOKE:
-                                        var sp: Vector2 = z["pos"]
-                                        circ.append(sp.x)
-                                        circ.append(sp.y)
-                                        circ.append(float(z["r"]))
-                var ell := PackedFloat64Array()
-                for s: Array in smokes:
-                        var sp2: Vector2 = s[0]
-                        ell.append(sp2.x)
-                        ell.append(sp2.y)
-                _nat.push_smokes(circ, ell)
         if gw.game_time - _fgrid_t < 1.0 and gw.game_time >= _fgrid_t:
                 return
         _fgrid_t = gw.game_time

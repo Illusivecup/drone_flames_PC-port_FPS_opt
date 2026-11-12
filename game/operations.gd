@@ -136,10 +136,23 @@ var _urgent: Array = []
 var _warn_t: float = 0.0
 var _naval_wait: Dictionary = {}
 var _str_cache: Dictionary = {}
+# Нативный ускоритель (Rust, addons/df_native): wd-скан и плотность целей.
+# null, если библиотеки нет под платформу — прежний GDScript-путь.
+var _nat: Object = null
+var _wd_blocked: PackedByteArray = PackedByteArray()
+var _wd_blocked_wh: int = -1
 
 
 func _init(world: GameWorld) -> void :
         gw = world
+        _nat_init()
+
+
+func _nat_init() -> void :
+        if OS.get_environment("DF_NO_NATIVE") == "1":
+                return
+        if ClassDB.class_exists("DfNative"):
+                _nat = ClassDB.instantiate("DfNative")
 
 
 
@@ -676,6 +689,23 @@ func withdraw_start(who: int, land: int, own: bool = false) -> int:
         return us.size()
 
 
+## withdraw без повторного скана юнитов: список уже посчитан нативом
+## (критерии wd_units) и передан из _wd_sweep_nat. Остальное — 1:1 с withdraw_start.
+func withdraw_start_ids(who: int, land: int, us: Array[Unit]) -> int:
+        if who <= 0 or land <= 0 or who == land:
+                return 0
+        var k: String = _wd_k(who, land)
+        if us.is_empty():
+                wd.erase(k)
+                return 0
+        if not wd.has(k):
+                wd[k] = {"t": gw.game_time, "own": false, "a": {}, "u": {}}
+                _wd_note("started")
+        _wd_fronts(who, land)
+        _wd_orders(who, land, us)
+        return us.size()
+
+
 
 func _wd_fronts(who: int, land: int) -> void :
         var c: Country = gw.country_by_id(who)
@@ -922,6 +952,9 @@ var _sw_say: Dictionary = {}
 func _wd_sweep() -> void :
         if gw.diplo == null or gw.army == null or gw.data == null:
                 return
+        if _nat != null:
+                _wd_sweep_nat()
+                return
         var dp: Diplomacy = gw.diplo
         var pairs: Dictionary = {}
         for u: Unit in gw.army.units:
@@ -964,6 +997,149 @@ func _wd_sweep() -> void :
                         else:
                                 gw.say(cw, Loc.mk("Земля под вашими войсками теперь страны %s: они уходят к ближайшей границе (%d ед.)", [Loc.name(cl.name), n]))
                                 gw.say(cl, Loc.mk("Войска страны %s оказались на вашей земле без права: они уходят к границе (%d ед.)", [Loc.name(cw.name), n]))
+
+
+
+
+## Нативный _wd_sweep (Rust df_native.wd_scan): юнит-фильтры (вода/море/
+## отступ+перемирие), владельцы ячеек и полный список юнитов каждой пары
+## считает натив; GDScript остаётся на парных проверках (страны, may_cross,
+## truce-сообщения) и withdraw. Семантика 1:1 с GDScript-путью выше.
+func _wd_sweep_nat() -> void :
+        var dp: Diplomacy = gw.diplo
+        var d: WorldData = gw.data
+        # Сетка «вода без моста» — кэш на партию (биомы/мосты не меняются).
+        var wh: int = d.w * 100000 + d.h
+        if _wd_blocked_wh != wh:
+                var b := PackedByteArray()
+                b.resize(d.w * d.h)
+                for y in d.h:
+                        for x in d.w:
+                                b[y * d.w + x] = 1 if (Biome.is_water(d.get_biome(x, y)) and not d.has_flag(x, y, WorldData.F_BRIDGE)) else 0
+                _wd_blocked = b
+                _wd_blocked_wh = wh
+        _nat.push_wd_grid(d.w, d.h, _wd_blocked, d.owners)
+        # Юниты: живые наземные, в порядке army.units.
+        var ids := PackedInt32Array()
+        var xs := PackedFloat32Array()
+        var ys := PackedFloat32Array()
+        var cs := PackedInt32Array()
+        var hs := PackedInt32Array()
+        for u: Unit in gw.army.units:
+                if not u.alive() or not u.ground():
+                        continue
+                ids.append(u.id)
+                xs.append(u.pos.x)
+                ys.append(u.pos.y)
+                cs.append(u.country_id)
+                hs.append(u.home.id if u.home != null else -1)
+        var sea := PackedInt64Array()
+        if gw.naval != null:
+                for L: Dictionary in gw.naval.landings:
+                        if L.has("home") and (L["home"] as Facility) != null and int(L["stage"]) != 0:
+                                sea.append((L["home"] as Facility).id)
+        if gw.rail != null and gw.rail.troops != null:
+                for r: Dictionary in gw.rail.troops.rides:
+                        if r.has("home") and (r["home"] as Facility) != null and int(r["stage"]) != 0:
+                                sea.append((r["home"] as Facility).id)
+        var retreat := PackedInt64Array()
+        for f0: Facility in list:
+                if list.has(f0) and int(list[f0]["kind"]) == Kind.RETREAT:
+                        retreat.append(f0.id)
+        var truce := PackedInt64Array()
+        for a: Country in gw.countries:
+                for b2: Country in gw.countries:
+                        if a.id != b2.id and dp.truce_on(a.id, b2.id):
+                                truce.append((a.id << 16) | b2.id)
+        var known := PackedInt64Array()
+        for k0: String in wd:
+                var gg0: PackedStringArray = k0.split(">")
+                known.append((int(gg0[0]) << 16) | int(gg0[1]))
+        var blocks: PackedInt64Array = _nat.wd_scan(ids, xs, ys, cs, hs, sea, retreat, truce, known, float(GameWorld.CELL))
+        if OS.get_environment("DF_WD_VERIFY") == "1":
+                _wd_verify(ids, xs, ys, cs, hs, sea, retreat, truce, known, blocks)
+        if blocks.is_empty():
+                return
+        var by_id: Dictionary = {}
+        for u2: Unit in gw.army.units:
+                by_id[u2.id] = u2
+        var i: int = 0
+        while i < blocks.size():
+                var who: int = int(blocks[i])
+                var land: int = int(blocks[i + 1])
+                var nu: int = int(blocks[i + 2])
+                i += 3
+                var us: Array[Unit] = []
+                for j in nu:
+                        var u3: Variant = by_id.get(int(blocks[i + j]))
+                        if u3 != null:
+                                us.append(u3 as Unit)
+                i += nu
+                var k: String = _wd_k(who, land)
+                if wd.has(k):
+                        continue
+                var cw: Country = gw.country_by_id(who)
+                var cl: Country = gw.country_by_id(land)
+                if us.is_empty() or cw == null or cl == null or cw.eliminated or cl.eliminated or dp.may_cross(who, land):
+                        continue
+                var n: int = withdraw_start_ids(who, land, us)
+                if n <= 0:
+                        continue
+                _wd_note("swept")
+                if gw.game_time - float(_sw_say.get(k, -1000000000.0)) >= SWEEP_SAY:
+                        _sw_say[k] = gw.game_time
+                        if dp.truce_on(who, land):
+                                gw.say(cw, Loc.mk("Перемирие со страной %s: ваши войска уходят с её земли к ближайшей границе (%d ед.)", [Loc.name(cl.name), n]))
+                                gw.say(cl, Loc.mk("Перемирие: войска страны %s уходят с вашей земли (%d ед.)", [Loc.name(cw.name), n]))
+                        else:
+                                gw.say(cw, Loc.mk("Земля под вашими войсками теперь страны %s: они уходят к ближайшей границе (%d ед.)", [Loc.name(cl.name), n]))
+                                gw.say(cl, Loc.mk("Войска страны %s оказались на вашей земле без права: они уходят к границе (%d ед.)", [Loc.name(cw.name), n]))
+
+
+
+
+
+## DF_WD_VERIFY=1: контрольный прогон исходного GDScript-скана по тем же
+## данным — наборы пар обязаны совпасть с нативными (миссинг/экстра = баг).
+func _wd_verify(ids: PackedInt32Array, xs: PackedFloat32Array, ys: PackedFloat32Array, cs: PackedInt32Array, hs: PackedInt32Array, sea: PackedInt64Array, retreat: PackedInt64Array, truce: PackedInt64Array, known: PackedInt64Array, blocks: PackedInt64Array) -> void :
+        var known_set: Dictionary = {}
+        for k in known:
+                known_set[int(k)] = true
+        var pairs: Dictionary = {}
+        for i in ids.size():
+                var o: int = _owner_at(Vector2(xs[i], ys[i]))
+                if o <= 0 or o == cs[i]:
+                        continue
+                var key: int = (cs[i] << 16) | o
+                if known_set.has(key) or pairs.has(key):
+                        continue
+                var cx: int = floori(float(xs[i]) / float(GameWorld.CELL))
+                var cy: int = floori(float(ys[i]) / float(GameWorld.CELL))
+                if Biome.is_water(gw.data.get_biome(cx, cy)) and not gw.data.has_flag(cx, cy, WorldData.F_BRIDGE):
+                        continue
+                if hs[i] >= 0 and sea.has(hs[i]):
+                        continue
+                if hs[i] >= 0 and retreat.has(hs[i]) and truce.has(key):
+                        continue
+                pairs[key] = true
+        var nat: Dictionary = {}
+        var i2: int = 0
+        while i2 < blocks.size():
+                nat[(int(blocks[i2]) << 16) | int(blocks[i2 + 1])] = true
+                i2 += 3 + int(blocks[i2 + 2])
+        var miss: Array = []
+        var extra: Array = []
+        for k2: int in pairs:
+                if not nat.has(k2):
+                        miss.append(k2)
+        for k3: int in nat:
+                if not pairs.has(k3):
+                        extra.append(k3)
+        if not miss.is_empty() or not extra.is_empty():
+                push_error("[WD-VERIFY] mismatches: gd-only=%s nat-only=%s" % [miss, extra])
+        else:
+                print("[WD-VERIFY] ok: pairs=", pairs.size())
+
 
 
 
@@ -2491,34 +2667,74 @@ func _ai(c: Country) -> void :
         if cooldown_left(c.id, Order.ARTY) <= 0.0 and gw.army.fire.rf() < (0.3 + 0.5 * aggr) * dk:
                 var best: = Vector2.INF
                 var bn: int = 2
-                # Сетка 45px: соседи считаются по ячейкам 3x3 с точной проверкой
-                # дистанции — семантика прежняя, стоимость O(n) вместо O(n²).
-                var sc: Dictionary = {}
-                for e: Array in spotted:
-                        if not (e[1] is Unit):
-                                continue
-                        var sp0: Vector2 = e[0]
-                        var sk: = Vector2i(floori(sp0.x / 45.0), floori(sp0.y / 45.0))
-                        var sl: Variant = sc.get(sk)
-                        if sl == null:
-                                sl = []
-                                sc[sk] = sl
-                        (sl as Array).append(e)
-                for e: Array in spotted:
-                        if not (e[1] is Unit):
-                                continue
-                        var ep: Vector2 = e[0]
-                        var scx: int = floori(ep.x / 45.0)
-                        var scy: int = floori(ep.y / 45.0)
-                        var n: int = 0
-                        for dy in range(-1, 2):
-                                for dx in range(-1, 2):
-                                        var sl2: Variant = sc.get(Vector2i(scx + dx, scy + dy))
-                                        if sl2 == null:
-                                                continue
-                                        for e2: Array in (sl2 as Array):
-                                                if (e2[0] as Vector2).distance_squared_to(ep) < 2025.0:
-                                                        n += 1
+                # Сетка 45px: соседи считаются в нативе (df_native.spot_density,
+                # f32-паритет с Vector2.distance_squared_to) или, если библиотеки
+                # нет, по ячейкам 3x3 с точной проверкой дистанции — семантика та же.
+                var _dens: Array = []
+                var _poss: Array = []
+                if _nat != null:
+                        var pxs := PackedFloat64Array()
+                        for e0: Array in spotted:
+                                if not (e0[1] is Unit):
+                                        continue
+                                pxs.append((e0[0] as Vector2).x)
+                                pxs.append((e0[0] as Vector2).y)
+                                _poss.append(e0[0] as Vector2)
+                        if pxs.size() > 0:
+                                _dens = _nat.spot_density(pxs)
+                                if OS.get_environment("DF_WD_VERIFY") == "1":
+                                        var g_dens: Array = []
+                                        for ii0 in _poss.size():
+                                                var ep0: Vector2 = _poss[ii0]
+                                                var scx0: int = floori(ep0.x / 45.0)
+                                                var scy0: int = floori(ep0.y / 45.0)
+                                                var n00: int = 0
+                                                for e3: Array in spotted:
+                                                        if not (e3[1] is Unit):
+                                                                continue
+                                                        if (e3[0] as Vector2).distance_squared_to(ep0) < 2025.0:
+                                                                n00 += 1
+                                                g_dens.append(n00)
+                                        var bad: int = 0
+                                        for ii1 in _dens.size():
+                                                if int(_dens[ii1]) != int(g_dens[ii1]):
+                                                        bad += 1
+                                        if bad > 0:
+                                                push_error("[DENS-VERIFY] %d/%d mismatched" % [bad, _dens.size()])
+                                        else:
+                                                print("[DENS-VERIFY] ok: n=", _dens.size())
+                if _nat == null:
+                        var sc: Dictionary = {}
+                        for e: Array in spotted:
+                                if not (e[1] is Unit):
+                                        continue
+                                var sp0: Vector2 = e[0]
+                                var sk: = Vector2i(floori(sp0.x / 45.0), floori(sp0.y / 45.0))
+                                var sl: Variant = sc.get(sk)
+                                if sl == null:
+                                        sl = []
+                                        sc[sk] = sl
+                                (sl as Array).append(e)
+                        for e: Array in spotted:
+                                if not (e[1] is Unit):
+                                        continue
+                                _poss.append(e[0] as Vector2)
+                                var ep0: Vector2 = e[0]
+                                var scx: int = floori(ep0.x / 45.0)
+                                var scy: int = floori(ep0.y / 45.0)
+                                var n0: int = 0
+                                for dy in range(-1, 2):
+                                        for dx in range(-1, 2):
+                                                var sl2: Variant = sc.get(Vector2i(scx + dx, scy + dy))
+                                                if sl2 == null:
+                                                        continue
+                                                for e2: Array in (sl2 as Array):
+                                                        if (e2[0] as Vector2).distance_squared_to(ep0) < 2025.0:
+                                                                n0 += 1
+                                _dens.append(n0)
+                for ii in _poss.size():
+                        var ep: Vector2 = _poss[ii]
+                        var n: int = _dens[ii]
                         if n > bn and gw.hold != null and gw.hold._friend_near(c.id, ep, gw.hold.ARTY_SAFE):
                                 continue
                         if n > bn:

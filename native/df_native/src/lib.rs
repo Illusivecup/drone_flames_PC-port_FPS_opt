@@ -16,7 +16,7 @@
 // их обрабатывает GDScript-путь (полная parity).
 
 use godot::prelude::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const GRID_PX: f64 = 128.0;
 const BLIND_D2: f64 = 784.0; // 28^2 — «в упор сквозь дым»
@@ -84,6 +84,28 @@ fn clampf(v: f64, mn: f64, mx: f64) -> f64 {
     }
 }
 
+// Hash32 (GDScript core/hash32.gd) — побитовая копия, нужна для
+// детерминированных ролей боя (fire_cd, попадания, промахи, fx).
+const M32: u32 = 0xFFFF_FFFF;
+
+#[inline]
+fn mix32(v: u32) -> u32 {
+    let mut x = v;
+    x ^= x >> 16;
+    x = x.wrapping_mul(2_146_121_005);
+    x ^= x >> 15;
+    x = x.wrapping_mul(739_982_445);
+    x ^= x >> 16;
+    x
+}
+
+// Hash32.h2(x, y, s): mix(((x & 65535) | ((y & 65535) << 16) ^ mix(s & M32)) & M32)
+#[inline]
+fn h2_32(x: i64, y: i64, s: i64) -> u32 {
+    let lo = ((x & 0xFFFF) | ((y & 0xFFFF) << 16)) as u32;
+    mix32((lo ^ mix32(s as u32)) as u32)
+}
+
 #[derive(GodotClass)]
 #[class(base=Object, init)]
 struct DfNative {
@@ -94,6 +116,12 @@ struct DfNative {
     // дымы: операции (круг x,y,r) и армия (эллипс x,y)
     smoke_circ: Vec<(f64, f64, f64)>,
     smoke_ell: Vec<(f64, f64)>,
+    // v3: мир для wd-пассов ( Operations._wd_sweep ) — сетки заблокированных
+    // (вода без моста) ячеек и владельцев территории, w*h, Cell = 4 px.
+    wd_w: usize,
+    wd_h: usize,
+    wd_blocked: Vec<u8>,
+    wd_owner: Vec<u8>,
 }
 
 impl Default for DfNative {
@@ -105,6 +133,10 @@ impl Default for DfNative {
             gmask: HashMap::with_capacity(256),
             smoke_circ: Vec::new(),
             smoke_ell: Vec::new(),
+            wd_w: 0,
+            wd_h: 0,
+            wd_blocked: Vec::new(),
+            wd_owner: Vec::new(),
         }
     }
 }
@@ -126,6 +158,31 @@ impl DfNative {
             }
         }
         false
+    }
+
+    // Владелец ячейки (v3): -1 вне карты — семантика operations._owner_at.
+    fn wd_owner_at(&self, cx: i32, cy: i32) -> i64 {
+        if self.wd_w == 0 || cx < 0 || cy < 0 {
+            return -1;
+        }
+        let (w, h) = (self.wd_w, self.wd_h);
+        if (cx as usize) >= w || (cy as usize) >= h {
+            return -1;
+        }
+        self.wd_owner[(cy as usize) * w + (cx as usize)] as i64
+    }
+
+    // Ячейка «вода без моста» (v3) — эквивалент
+    // Biome.is_water(...) and not has_flag(..., F_BRIDGE).
+    fn wd_cell_blocked(&self, cx: i32, cy: i32) -> bool {
+        if self.wd_w == 0 || cx < 0 || cy < 0 {
+            return false;
+        }
+        let (w, h) = (self.wd_w, self.wd_h);
+        if (cx as usize) >= w || (cy as usize) >= h {
+            return false;
+        }
+        self.wd_blocked[(cy as usize) * w + (cx as usize)] != 0
     }
 
     // Кандидаты в ячейках вокруг точки (радиус r) — по снапшот-сетке.
@@ -821,6 +878,312 @@ impl DfNative {
         all.push(posted);
         all.extend(out);
         PackedInt32Array::from(all)
+    }
+
+    // v3: сетки мира для wd-пассов. blocked — ячейка «вода без моста»
+    // (Biome.is_water and not F_BRIDGE, считает GDScript один раз на партию),
+    // owners — снимок owners_dirty из WorldData (PackedByteArray w*h).
+    #[func]
+    fn push_wd_grid(&mut self, w: i32, h: i32, blocked: PackedByteArray, owners: PackedByteArray) {
+        let w = w.max(0) as usize;
+        let h = h.max(0) as usize;
+        self.wd_w = w;
+        self.wd_h = h;
+        self.wd_blocked = (0..blocked.len()).map(|i| blocked[i]).collect();
+        self.wd_owner = (0..owners.len()).map(|i| owners[i]).collect();
+    }
+
+    // v3: Operations._wd_sweep целиком — пары «кто>чья_земля» для вывода войск.
+    //
+    // Вход (юниты в порядке gw.army.units, только живые наземные):
+    //   ids/xs/ys/cs — id, позиция (f32 как в Vector2), страна;
+    //   hs           — id дома (Facility.id) или -1;
+    //   sea          — id домов «в море» (naval/rail, stage != MARCH);
+    //   retreat      — id домов с op.kind == RETREAT;
+    //   truce        — закодированные пары (a<<16|b) с перемирием;
+    //   wd_known     — пары уже в withdrawals (who<<16|land);
+    //   cell_px      — размер ячейки мира (GameWorld.CELL = 4).
+    //
+    // Выход: блоки [who, land, est, n, id...] в порядке обнаружения, где
+    //   est  — 1, если хотя бы один юнит пары прошёл проверки установления
+    //          (не вода-без-моста, не «в море», не отступление+перемирие,
+    //          пара не была известна) — семантика 1:1 с исходным циклом;
+    //   ids  — ПОЛНЫЙ список юнитов пары (критерии wd_units: жив, наземный,
+    //          страна who, _owner_at(pos)==land) — для withdraw без повторного
+    //          скана. Пары из wd_known не возвращаются вовсе.
+    #[func]
+    fn wd_scan(
+        &self,
+        ids: PackedInt32Array,
+        xs: PackedFloat32Array,
+        ys: PackedFloat32Array,
+        cs: PackedInt32Array,
+        hs: PackedInt32Array,
+        sea: PackedInt64Array,
+        retreat: PackedInt64Array,
+        truce: PackedInt64Array,
+        wd_known: PackedInt64Array,
+        cell_px: f64,
+    ) -> PackedInt64Array {
+        let n = ids
+            .len()
+            .min(xs.len())
+            .min(ys.len())
+            .min(cs.len())
+            .min(hs.len());
+        let known: HashSet<i64> = (0..wd_known.len()).map(|i| wd_known[i]).collect();
+        let sea_set: HashSet<i64> = (0..sea.len()).map(|i| sea[i]).collect();
+        let ret_set: HashSet<i64> = (0..retreat.len()).map(|i| retreat[i]).collect();
+        let truce_set: HashSet<i64> = (0..truce.len()).map(|i| truce[i]).collect();
+        // key → (who, land, established, full_ids); порядок обнаружения — order.
+        let mut acc: HashMap<i64, (i64, i64, bool, Vec<i64>)> = HashMap::new();
+        let mut order: Vec<i64> = Vec::new();
+        let cell = if cell_px > 0.0 { cell_px } else { 4.0 };
+        for i in 0..n {
+            let x = xs[i] as f64;
+            let y = ys[i] as f64;
+            let cid = cs[i] as i64;
+            let home = hs[i] as i64;
+            let cx = (x / cell).floor() as i32;
+            let cy = (y / cell).floor() as i32;
+            let o = self.wd_owner_at(cx, cy);
+            if o <= 0 || o == cid {
+                continue;
+            }
+            let key = (cid << 16) | o;
+            let entry = acc.entry(key).or_insert_with(|| {
+                order.push(key);
+                (cid, o, false, Vec::new())
+            });
+            // Полный список юнитов пары (критерии wd_units — независимо от
+            // проверок установления, как исходный wd_units).
+            entry.3.push(ids[i] as i64);
+            if known.contains(&key) || entry.2 {
+                continue;
+            }
+            // Проверки установления — в порядке исходного _wd_sweep.
+            if self.wd_cell_blocked(cx, cy) {
+                continue;
+            }
+            if home >= 0 && sea_set.contains(&home) {
+                continue;
+            }
+            if home >= 0 && ret_set.contains(&home) && truce_set.contains(&key) {
+                continue;
+            }
+            entry.2 = true;
+        }
+        let mut out: Vec<i64> = Vec::with_capacity(16);
+        for key in order {
+            let (who, land, est, full) = &acc[&key];
+            if !*est || known.contains(&key) {
+                continue;
+            }
+            out.push(*who);
+            out.push(*land);
+            out.push(full.len() as i64);
+            out.extend_from_slice(full);
+        }
+        PackedInt64Array::from(out)
+    }
+
+    // v3: Operations._ai — подсчёт «соседей» для арт-цели. Вход poss — пары
+    // (x, y) замеченных юнит-целей в порядке spotted; выход counts[i] — число
+    // точек (включая саму точку) с дистанцией² < 2025 (45px), сетка 45px 3×3.
+    // Ячейки — floor(f64(x)/45.0) как в GDScript (floori(sp0.x / 45.0));
+    // дистанция — f32-арифметика Vector2.distance_squared_to, сравнение с
+    // f64-литералом 2025.0.
+    #[func]
+    fn spot_density(&self, poss: PackedFloat64Array) -> PackedInt32Array {
+        const CELLF: f64 = 45.0;
+        let n = poss.len() / 2;
+        let fx: Vec<f32> = (0..n).map(|i| poss[i * 2] as f32).collect();
+        let fy: Vec<f32> = (0..n).map(|i| poss[i * 2 + 1] as f32).collect();
+        let mut grid: HashMap<(i32, i32), Vec<usize>> = HashMap::with_capacity(n.max(1));
+        let mut cell_of = vec![(0i32, 0i32); n];
+        for i in 0..n {
+            let c = (
+                ((fx[i] as f64) / CELLF).floor() as i32,
+                ((fy[i] as f64) / CELLF).floor() as i32,
+            );
+            cell_of[i] = c;
+            grid.entry(c).or_default().push(i);
+        }
+        let mut out = vec![0i32; n];
+        for i in 0..n {
+            let (cx, cy) = cell_of[i];
+            let mut c = 0i32;
+            for dy in -1..=1 {
+                for dx in -1..=1 {
+                    if let Some(b) = grid.get(&(cx + dx, cy + dy)) {
+                        for &j in b {
+                            let ddx = fx[j] - fx[i];
+                            let ddy = fy[j] - fy[i];
+                            if ((ddx * ddx + ddy * ddy) as f64) < 2025.0 {
+                                c += 1;
+                            }
+                        }
+                    }
+                }
+            }
+            out[i] = c;
+        }
+        PackedInt32Array::from(out)
+    }
+
+    // v3: армейское ядро решений боя — Army._fight + Army._shoot БЕЗ эффектов.
+    // Ряды стрелков (все массивы одной длины, порядок = порядок юнит-цикла):
+    //   ids/types — id и Unit.Type;
+    //   pos       — 4 f32 на стрелка: x, y стрелка и x, y цели (_target_pos);
+    //   state     — 4 f64: supp, fire_cd, gren_cd, rpg_cd;
+    //   flags     — бит0 aimed, бит1 pinned, бит2 kit&KIT_GREN,
+    //               бит3 entrenched, бит4 «цель — машина (Unit.vehicle())»;
+    //   spec      — 3 f64 на тип (16 типов): cd, dmg, hit — Army.SPEC;
+    //   game_time — gw.game_time (float).
+    // Дымы уже запушены push_smokes — in_smoke работает.
+    // Выход: на стрелка 9 float: [op, cd, xcd, dmg, hit, ok, mx, my, fx],
+    //   op: 1 rifle, 2 tank, 3 grenade, 4 rocket atgm, 5 rocket rpg;
+    //   cd/xcd — новые fire_cd/gren_cd|rpg_cd; hit — итоговый hit после
+    //   дымов/подавления (int в float); ok — роля попадания; mx/my — смещение
+    //   промаха танка; fx — роля «искры» при попадании. Роли — Hash32.h2,
+    //   побитово равные GDScript.
+    #[func]
+    fn fight_decide(
+        &self,
+        ids: PackedInt32Array,
+        types: PackedInt32Array,
+        pos: PackedFloat32Array,
+        state: PackedFloat64Array,
+        flags: PackedInt32Array,
+        spec: PackedFloat64Array,
+        game_time: f64,
+    ) -> PackedFloat64Array {
+        const F_TANK: i32 = 0;
+        const F_INF: i32 = 1;
+        const F_ATGM: i32 = 3;
+        const F_ASSAULT: i32 = 4;
+        const GREN_R: f64 = 32.0;
+        const GREN_CD: f64 = 9.0;
+        const RPG_R: f64 = 70.0;
+        const RPG_CD: f64 = 7.0;
+        const RPG_DMG: f64 = 55.0;
+        const PIN_SLOW: f64 = 3.3;
+        const TRENCH_RANGE: f64 = 1.08;
+        let n = ids
+            .len()
+            .min(types.len())
+            .min(flags.len())
+            .min(pos.len() / 4)
+            .min(state.len() / 4);
+        let g3 = (game_time * 3.0).trunc() as i64;
+        let g5 = (game_time * 5.0).trunc() as i64;
+        let g7 = (game_time * 7.0).trunc() as i64;
+        let g9 = (game_time * 9.0).trunc() as i64;
+        let gi = game_time.trunc() as i64;
+        let mut out: Vec<f64> = Vec::with_capacity(n * 9);
+        for i in 0..n {
+            let id = ids[i] as i64;
+            let ty = types[i];
+            let fl = flags[i];
+            let x = pos[i * 4] as f32;
+            let y = pos[i * 4 + 1] as f32;
+            let tx = pos[i * 4 + 2] as f32;
+            let tyf = pos[i * 4 + 3] as f32;
+            let st = i * 4;
+            let sp = ((ty as usize) * 3 + 2) < spec.len();
+            let sp_cd = if sp { spec[ty as usize * 3] } else { 0.0 };
+            let sp_dmg = if sp { spec[ty as usize * 3 + 1] } else { 0.0 };
+            let sp_hit = if sp { spec[ty as usize * 3 + 2] as i64 } else { 0 };
+            let pinned = fl & 2 != 0;
+            let kit_gren = fl & 4 != 0;
+            let ent = fl & 8 != 0;
+            let tgt_veh = fl & 16 != 0;
+            let ddx = x - tx;
+            let ddy = y - tyf;
+            let dist = (ddx * ddx + ddy * ddy).sqrt() as f64;
+            let sup = state[st];
+            let mut cd = sp_cd
+                * (0.8 + (h2_32(id, g3, 9) % 40) as f64 / 100.0)
+                * (1.0 + sup);
+            if pinned {
+                cd *= PIN_SLOW;
+            }
+            if kit_gren && state[st + 2] <= 0.0 && dist <= GREN_R {
+                out.extend_from_slice(&[3.0, cd, GREN_CD, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
+                continue;
+            }
+            if ty == F_ATGM {
+                out.extend_from_slice(&[
+                    4.0,
+                    cd,
+                    0.0,
+                    sp_dmg,
+                    sp_hit as f64,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ]);
+                continue;
+            }
+            if (ty == F_INF || ty == F_ASSAULT)
+                && tgt_veh
+                && state[st + 3] <= 0.0
+                && dist <= RPG_R * (if ent { TRENCH_RANGE } else { 1.0 })
+            {
+                out.extend_from_slice(&[
+                    5.0,
+                    cd,
+                    RPG_CD,
+                    RPG_DMG,
+                    60.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ]);
+                continue;
+            }
+            if ty == F_TANK {
+                let ok = (h2_32(id, g7, 23) % 100) < sp_hit as u32;
+                let (mut mx, mut my) = (0.0f64, 0.0f64);
+                if !ok {
+                    mx = (h2_32(id, 1, gi) % 17) as f64 - 8.0;
+                    my = (h2_32(id, 2, gi) % 17) as f64 - 8.0;
+                }
+                out.extend_from_slice(&[
+                    2.0,
+                    cd,
+                    0.0,
+                    sp_dmg,
+                    sp_hit as f64,
+                    if ok { 1.0 } else { 0.0 },
+                    mx,
+                    my,
+                    0.0,
+                ]);
+                continue;
+            }
+            let mut hit = sp_hit;
+            if self.in_smoke(tx as f64, tyf as f64) || self.in_smoke(x as f64, y as f64) {
+                hit = hit * 2 / 5;
+            }
+            hit = (hit as f64 * (1.0 - 0.4 * sup)).trunc() as i64;
+            let ok = (h2_32(id, g9, 29) % 100) < hit as u32;
+            let fx = (h2_32(id, g5, 3) % 3) == 0;
+            out.extend_from_slice(&[
+                1.0,
+                cd,
+                0.0,
+                sp_dmg,
+                hit as f64,
+                if ok { 1.0 } else { 0.0 },
+                0.0,
+                0.0,
+                if fx { 1.0 } else { 0.0 },
+            ]);
+        }
+        PackedFloat64Array::from(out)
     }
 }
 

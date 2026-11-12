@@ -145,8 +145,25 @@ func _init(world: GameWorld) -> void :
 # под текущую платформу; ClassDB.instantiate, чтобы скрипт не ломался при
 # отсутствии библиотеки.
 func _nat_init() -> void :
+        if OS.get_environment("DF_NO_NATIVE") == "1":
+                return
         if ClassDB.class_exists("DfNative"):
                 _nat = ClassDB.instantiate("DfNative")
+                _spec_fill()
+
+
+# SPEC по индексу типа для нативного fight_decide (упаковка по 3: cd, dmg, hit).
+var _spec := PackedFloat64Array()
+var _fv_dbg: Array = []
+
+
+func _spec_fill() -> void :
+        _spec.resize(16 * 3)
+        _spec.fill(0.0)
+        for t in mini(SPEC.size(), 16):
+                _spec[t * 3] = float(SPEC[t]["cd"])
+                _spec[t * 3 + 1] = float(SPEC[t]["dmg"])
+                _spec[t * 3 + 2] = float(SPEC[t]["hit"])
 
 
 # Свежий снапшот живых не-FPV юнитов для натива (позиции/флаги/типы) + дымы.
@@ -495,6 +512,20 @@ func update(dt: float) -> void :
         var acc_fig: float = 0.0
         var acc_fpv: float = 0.0
         var t0i: int = 0
+        # Сбор стрелков для нативного fight_decide (натив включён — см. ветку ниже).
+        var f_ids := PackedInt32Array()
+        var f_ty := PackedInt32Array()
+        var f_x := PackedFloat32Array()
+        var f_y := PackedFloat32Array()
+        var f_tx := PackedFloat32Array()
+        var f_tyv := PackedFloat32Array()
+        var f_fl := PackedInt32Array()
+        var f_supp := PackedFloat64Array()
+        var f_fcd := PackedFloat64Array()
+        var f_gcd := PackedFloat64Array()
+        var f_rcd := PackedFloat64Array()
+        var f_us: Array[Unit] = []
+        var f_tgt: Array = []
         for u: Unit in units:
                 if not u.alive():
                         continue
@@ -522,7 +553,39 @@ func update(dt: float) -> void :
                                 tgt = null
                         if tgt != null and not u.op_move and not (u.post != null and not u.entrenched and u.pi < u.path.size()):
                                 t0i = Time.get_ticks_usec()
-                                _fight(u, tgt, dt)
+                                if _nat != null:
+                                        # Нативный путь: _turn/статус — здесь (дешёвые, мутируют
+                                        # объект), сбор строки стрелка; саму математику ролей
+                                        # считает df_native.fight_decide одним батчем после цикла.
+                                        var ftp: Vector2 = _target_pos(tgt, u.pos)
+                                        var fa: bool = _turn(u, (ftp - u.pos).angle(), PI * dt)
+                                        if u.state != Unit.State.SIEGE:
+                                                u.state = Unit.State.FIGHT
+                                        if fa and u.fire_cd <= 0.0:
+                                                f_ids.append(u.id)
+                                                f_ty.append(u.type)
+                                                f_x.append(u.pos.x)
+                                                f_y.append(u.pos.y)
+                                                f_tx.append(ftp.x)
+                                                f_tyv.append(ftp.y)
+                                                var fl: int = 1
+                                                if pinned(u):
+                                                        fl |= 2
+                                                if (u.kit & Unit.KIT_GREN) != 0:
+                                                        fl |= 4
+                                                if u.entrenched:
+                                                        fl |= 8
+                                                if tgt is Unit and (tgt as Unit).vehicle():
+                                                        fl |= 16
+                                                f_fl.append(fl)
+                                                f_supp.append(u.supp)
+                                                f_fcd.append(u.fire_cd)
+                                                f_gcd.append(u.gren_cd)
+                                                f_rcd.append(u.rpg_cd)
+                                                f_us.append(u)
+                                                f_tgt.append(tgt)
+                                else:
+                                        _fight(u, tgt, dt)
                                 acc_fig += float(Time.get_ticks_usec() - t0i) / 1000.0
                         else:
                                 t0i = Time.get_ticks_usec()
@@ -539,6 +602,51 @@ func update(dt: float) -> void :
                         t0i = Time.get_ticks_usec()
                         _maybe_fpv(u, dt)
                         acc_fpv += float(Time.get_ticks_usec() - t0i) / 1000.0
+        if _nat != null and f_ids.size() > 0:
+                t0i = Time.get_ticks_usec()
+                # Упаковка: pos = 4 f32 (x,y стрелка + x,y цели), state = 4 f64.
+                var f_pos := PackedFloat32Array()
+                var f_state := PackedFloat64Array()
+                f_pos.resize(f_ids.size() * 4)
+                f_state.resize(f_ids.size() * 4)
+                for fi in f_ids.size():
+                        f_pos[fi * 4] = f_x[fi]
+                        f_pos[fi * 4 + 1] = f_y[fi]
+                        f_pos[fi * 4 + 2] = f_tx[fi]
+                        f_pos[fi * 4 + 3] = f_tyv[fi]
+                        f_state[fi * 4] = f_supp[fi]
+                        f_state[fi * 4 + 1] = f_fcd[fi]
+                        f_state[fi * 4 + 2] = f_gcd[fi]
+                        f_state[fi * 4 + 3] = f_rcd[fi]
+                var dec: PackedFloat64Array = _nat.fight_decide(f_ids, f_ty, f_pos, f_state, f_fl, _spec, gw.game_time)
+                var verify: bool = OS.get_environment("DF_WD_VERIFY") == "1"
+                var mis: int = 0
+                for fi in f_ids.size():
+                        var d0: int = fi * 9
+                        var u9: Unit = f_us[fi]
+                        var tp9: Vector2 = Vector2(f_tx[fi], f_tyv[fi])
+                        var t9: Object = f_tgt[fi]
+                        if verify:
+                                # Теневая сверка: те же входы, что получил натив (состояние
+                                # на момент сбора, до эффектов пачки), затем исполнение.
+                                var gd: Array = _fight_decide(u9, tp9, t9, f_supp[fi], f_gcd[fi], f_rcd[fi])
+                                if int(dec[d0]) != int(gd[0]) or not is_equal_approx(float(dec[d0 + 1]), float(gd[1]))\
+                                or int(dec[d0 + 4]) != int(gd[4]) or bool(dec[d0 + 5]) != bool(gd[5])\
+                                or bool(dec[d0 + 8]) != bool(gd[8]):
+                                        mis += 1
+                                        if _fv_dbg.size() < 6:
+                                                _fv_dbg.append("id=%d ty=%d op %d/%d cd %.6f/%.6f hit %d/%d ok %s/%s fx %s/%s" % [u9.id, u9.type, int(dec[d0]), int(gd[0]), dec[d0 + 1], float(gd[1]), int(dec[d0 + 4]), int(gd[4]), str(bool(dec[d0 + 5])), str(bool(gd[5])), str(bool(dec[d0 + 8])), str(bool(gd[8]))])
+                                _fight_exec_arr(u9, tp9, t9, gd)
+                        else:
+                                _fight_exec(u9, tp9, t9, int(dec[d0]), dec[d0 + 1], dec[d0 + 2], dec[d0 + 3], int(dec[d0 + 4]), dec[d0 + 5] > 0.5, dec[d0 + 6], dec[d0 + 7], dec[d0 + 8] > 0.5)
+                if verify and mis > 0:
+                        push_error("[FIGHT-VERIFY] %d/%d mismatched" % [mis, f_ids.size()])
+                        for s: String in _fv_dbg:
+                                print("  ", s)
+                        _fv_dbg.clear()
+                elif verify:
+                        print("[FIGHT-VERIFY] ok: n=", f_ids.size())
+                acc_fig += float(Time.get_ticks_usec() - t0i) / 1000.0
         _pfv("army:_advance", acc_adv)
         _pfv("army:_fight", acc_fig)
         _pfv("army:_maybe_fpv", acc_fpv)
@@ -830,6 +938,17 @@ func _turn(u: Unit, want: float, rate: float) -> bool:
         return absf(dd) < 0.3
 
 
+# Разделение «решение / эффект» боя. _fight_decide/_shoot rolls — чистая
+# математика (роли Hash32, дымы, подавление) — она продублирована в Rust
+# (df_native.fight_decide) и сверяется теневым режимом DF_WD_VERIFY=1;
+# _fight_exec/_shoot_exec — эффекты (fx/sfx/снаряды/урон), общие для обоих путей.
+const FOP_RIFLE: int = 1
+const FOP_TANK: int = 2
+const FOP_GREN: int = 3
+const FOP_ATGM: int = 4
+const FOP_RPG: int = 5
+
+
 func _fight(u: Unit, t: Object, dt: float) -> void :
         var tp: Vector2 = _target_pos(t, u.pos)
         var aimed: bool = _turn(u, (tp - u.pos).angle(), PI * dt)
@@ -837,25 +956,71 @@ func _fight(u: Unit, t: Object, dt: float) -> void :
                 u.state = Unit.State.FIGHT
         if not aimed or u.fire_cd > 0.0:
                 return
-        var sp: Dictionary = SPEC[u.type]
-        u.fire_cd = float(sp["cd"]) * (0.8 + float(Hash32.h2(u.id, int(gw.game_time * 3.0), 9) % 40) / 100.0) * (1.0 + u.supp)
-        if pinned(u):
-                u.fire_cd *= PIN_SLOW
-        if (u.kit & Unit.KIT_GREN) != 0 and u.gren_cd <= 0.0 and u.pos.distance_to(tp) <= GREN_R:
-                u.gren_cd = GREN_CD
+        _fight_exec_arr(u, tp, t, _fight_decide(u, tp, t))
+
+
+func _fight_exec_arr(u: Unit, tp: Vector2, t: Object, dec: Array) -> void :
+        _fight_exec(u, tp, t, int(dec[0]), float(dec[1]), float(dec[2]), float(dec[3]), int(dec[4]), bool(dec[5]), float(dec[6]), float(dec[7]), bool(dec[8]))
+
+
+func _fight_exec(u: Unit, tp: Vector2, t: Object, op: int, cd: float, xcd: float, dmg: float, hit: int, ok: bool, mx: float, my: float, fx: bool) -> void :
+        u.fire_cd = cd
+        if op == FOP_GREN:
+                u.gren_cd = xcd
                 _throw_grenade(u, tp)
                 return
-        if u.type == Unit.Type.ATGM:
-                _launch_rocket(u, t, "atgm", float(sp["dmg"]), int(sp["hit"]))
+        if op == FOP_ATGM:
+                _launch_rocket(u, t, "atgm", dmg, hit)
                 return
-        if (u.type == Unit.Type.INFANTRY or u.type == Unit.Type.ASSAULT) and t is Unit and (t as Unit).vehicle() and u.rpg_cd <= 0.0 and u.pos.distance_to(tp) <= RPG_R * (TRENCH_RANGE if u.entrenched else 1.0):
-                u.rpg_cd = RPG_CD
+        if op == FOP_RPG:
+                u.rpg_cd = xcd
                 _launch_rocket(u, t, "rpg", RPG_DMG, 60)
                 return
-        _shoot(u, tp, t, float(sp["dmg"]), int(sp["hit"]))
+        _shoot_exec(u, tp, t, dmg, hit, ok, mx, my, fx)
 
 
-func _shoot(u: Unit, tp: Vector2, t: Object, dmg: float, hit: int) -> void :
+# Чистое решение боя (без эффектов): возврат [op, cd, xcd, dmg, hit, ok, mx, my, fx].
+# 1:1 с Rust fight_decide (df_native) — изменения синхронизировать.
+# supp/gren/rpg < 0 — взять с юнита; иначе это захваченное на сборе состояние
+# (теневая сверка проверяет Rust-математику на тех же входах, до эффектов пачки).
+func _fight_decide(u: Unit, tp: Vector2, t: Object, supp: float = -1.0, gren: float = -1.0, rpg: float = -1.0) -> Array:
+        if supp < 0.0:
+                supp = u.supp
+        if gren < 0.0:
+                gren = u.gren_cd
+        if rpg < 0.0:
+                rpg = u.rpg_cd
+        var sp: Dictionary = SPEC[u.type]
+        var cd: float = float(sp["cd"]) * (0.8 + float(Hash32.h2(u.id, int(gw.game_time * 3.0), 9) % 40) / 100.0) * (1.0 + supp)
+        if pinned(u):
+                cd *= PIN_SLOW
+        if (u.kit & Unit.KIT_GREN) != 0 and gren <= 0.0 and u.pos.distance_to(tp) <= GREN_R:
+                return [FOP_GREN, cd, GREN_CD, 0.0, 0, false, 0.0, 0.0, false]
+        if u.type == Unit.Type.ATGM:
+                return [FOP_ATGM, cd, 0.0, float(sp["dmg"]), int(sp["hit"]), false, 0.0, 0.0, false]
+        if (u.type == Unit.Type.INFANTRY or u.type == Unit.Type.ASSAULT) and t is Unit and (t as Unit).vehicle() and rpg <= 0.0 and u.pos.distance_to(tp) <= RPG_R * (TRENCH_RANGE if u.entrenched else 1.0):
+                return [FOP_RPG, cd, RPG_CD, RPG_DMG, 60, false, 0.0, 0.0, false]
+        var dmg: float = float(sp["dmg"])
+        var hit: int = int(sp["hit"])
+        if u.type == Unit.Type.TANK:
+                var ok: bool = Hash32.h2(u.id, int(gw.game_time * 7.0), 23) % 100 < hit
+                var mx: float = 0.0
+                var my: float = 0.0
+                if not ok:
+                        mx = float(Hash32.h2(u.id, 1, int(gw.game_time)) % 17) - 8.0
+                        my = float(Hash32.h2(u.id, 2, int(gw.game_time)) % 17) - 8.0
+                return [FOP_TANK, cd, 0.0, dmg, hit, ok, mx, my, false]
+        var hit2: int = hit
+        if in_smoke(tp) or in_smoke(u.pos):
+                hit2 = hit2 * 2 / 5
+        hit2 = int(float(hit2) * (1.0 - 0.4 * supp))
+        var ok2: bool = Hash32.h2(u.id, int(gw.game_time * 9.0), 29) % 100 < hit2
+        var fx: bool = Hash32.h2(u.id, int(gw.game_time * 5.0), 3) % 3 == 0
+        return [FOP_RIFLE, cd, 0.0, dmg, hit2, ok2, 0.0, 0.0, fx]
+
+
+# Эффекты выстрела (fx/sfx/трассеры/снаряды/урон) по готовому решению.
+func _shoot_exec(u: Unit, tp: Vector2, t: Object, dmg: float, hit: int, ok: bool, mx: float, my: float, fx: bool) -> void :
         if gw.battle_watch != null:
                 gw.battle_watch.note(u.pos, 0.4 if u.type == Unit.Type.TANK else 0.15, "", u.country_id)
         var dir: Vector2 = (tp - u.pos).normalized()
@@ -866,9 +1031,8 @@ func _shoot(u: Unit, tp: Vector2, t: Object, dmg: float, hit: int) -> void :
                         gw.fx.spawn("tank_shot", muzzle.round(), 6)
                 Sfx.play("tank_cannon", muzzle)
                 var miss: = Vector2.ZERO
-                var ok: bool = Hash32.h2(u.id, int(gw.game_time * 7.0), 23) % 100 < hit
                 if not ok:
-                        miss = Vector2(float(Hash32.h2(u.id, 1, int(gw.game_time)) % 17) - 8.0, float(Hash32.h2(u.id, 2, int(gw.game_time)) % 17) - 8.0)
+                        miss = Vector2(mx, my)
                 shells.append({"from": muzzle, "to": tp + miss, "t": 0.0, "dur": maxf(0.12, muzzle.distance_to(tp) / 260.0), "dmg": dmg if ok else 0.0, "target": t, "c": u.country_id})
         else:
                 var ifv: bool = u.type == Unit.Type.IFV
@@ -881,12 +1045,9 @@ func _shoot(u: Unit, tp: Vector2, t: Object, dmg: float, hit: int) -> void :
                 Sfx.play("mg_burst" if u.id % 3 == 0 or ifv else "rifle_burst", u.pos)
                 if t is Unit:
                         (t as Unit).supp = minf(1.0, (t as Unit).supp + 0.12)
-                if in_smoke(tp) or in_smoke(u.pos):
-                        hit = hit * 2 / 5
-                hit = int(float(hit) * (1.0 - 0.4 * u.supp))
-                if Hash32.h2(u.id, int(gw.game_time * 9.0), 29) % 100 < hit:
+                if ok:
                         _damage(t, dmg, u.country_id, u.pos if t is Unit else Vector2.INF)
-                        if on and Hash32.h2(u.id, int(gw.game_time * 5.0), 3) % 3 == 0:
+                        if on and fx:
                                 gw.fx.spawn("hit_small", (tp + Vector2(randi_range(-2, 2), randi_range(-2, 2))).round(), 6)
 
 
@@ -2142,6 +2303,27 @@ func _fire_moving(u: Unit, t: Object) -> void :
                 return
         var tp: Vector2 = _target_pos(t, u.pos)
         _shoot(u, tp, t, float(sp["dmg"]), int(sp["hit"]) * 2 / 3)
+
+
+# «Стрельба на ходу»/осада: решаем GDScript-ом (роли те же), эффекты общие.
+func _shoot(u: Unit, tp: Vector2, t: Object, dmg: float, hit: int) -> void :
+        var ok: bool
+        var mx: float = 0.0
+        var my: float = 0.0
+        var fx: bool = false
+        if u.type == Unit.Type.TANK:
+                ok = Hash32.h2(u.id, int(gw.game_time * 7.0), 23) % 100 < hit
+                if not ok:
+                        mx = float(Hash32.h2(u.id, 1, int(gw.game_time)) % 17) - 8.0
+                        my = float(Hash32.h2(u.id, 2, int(gw.game_time)) % 17) - 8.0
+        else:
+                var hit2: int = hit
+                if in_smoke(tp) or in_smoke(u.pos):
+                        hit2 = hit2 * 2 / 5
+                hit2 = int(float(hit2) * (1.0 - 0.4 * u.supp))
+                ok = Hash32.h2(u.id, int(gw.game_time * 9.0), 29) % 100 < hit2
+                fx = Hash32.h2(u.id, int(gw.game_time * 5.0), 3) % 3 == 0
+        _shoot_exec(u, tp, t, dmg, hit, ok, mx, my, fx)
 
 
 func _throw_grenade(u: Unit, tp: Vector2) -> void :

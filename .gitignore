@@ -27,3 +27,6 @@ Thumbs.db
 .idea/
 .vscode/
 godot_bin/
+
+# Rust
+native/df_rust/target/

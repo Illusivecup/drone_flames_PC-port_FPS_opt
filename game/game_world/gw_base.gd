@@ -34,36 +34,36 @@ const KIND_PROP: int = 2
 
 
 const COUNTRY_STYLES: Array = [
-	{"base": "roof_blue", "light": "water_coast", "dark": "water_ocean", "map": "3a86ff"}, 
-	{"base": "roof_red", "light": "fire_orange", "dark": "brick_dark", "map": "ff3b30"}, 
-	{"base": "roof_green", "light": "grass_light", "dark": "forest", "map": "3fdc6a"}, 
-	{"base": "amber", "light": "window_light", "dark": "amber_dark", "map": "ffc21a"}, 
-	{"base": "ui_rubber", "map": "a35cff"}, 
-	{"base": "white", "map": "f4f4f4"}, 
-	{"base": "intercept_cyan", "map": "2fd8e6"}, 
-	{"base": "brick_dark", "map": "ff5fb0"}, 
+        {"base": "roof_blue", "light": "water_coast", "dark": "water_ocean", "map": "3a86ff"}, 
+        {"base": "roof_red", "light": "fire_orange", "dark": "brick_dark", "map": "ff3b30"}, 
+        {"base": "roof_green", "light": "grass_light", "dark": "forest", "map": "3fdc6a"}, 
+        {"base": "amber", "light": "window_light", "dark": "amber_dark", "map": "ffc21a"}, 
+        {"base": "ui_rubber", "map": "a35cff"}, 
+        {"base": "white", "map": "f4f4f4"}, 
+        {"base": "intercept_cyan", "map": "2fd8e6"}, 
+        {"base": "brick_dark", "map": "ff5fb0"}, 
 ]
 
 enum MapMode{NORMAL, POLITICAL, MY_LAND, ORES, LOGISTICS, MILITARY, ALLIANCES, AD_COVER}
 const MAP_MODE_NAMES: Array = ["ОБЫЧНАЯ", "ПОЛИТИКА", "МОЯ ЗЕМЛЯ", "РУДЫ", "ЛОГИСТИКА", "ВОЕННАЯ", "АЛЬЯНСЫ", "ПВО"]
 const MAP_MODE_ICONS: Array = ["icon_map_normal", "icon_map_political", "icon_map_mine", "icon_map_ores", "icon_map_logistics", "icon_map_military", "icon_map_alliance", "icon_ad_sam"]
 const MAP_MODE_INFO: Array = [
-	["Обычная карта", "Местность, города и границы стран"], 
-	["Политическая карта", "Страны крупно своими цветами, местность бледная"], 
-	["Моя земля", "Только ваша страна, всё чужое серое"], 
-	["Карта руд", "Залежи по видам: яркие — свободные, тусклые — заняты"], 
-	["Логистика", "Дороги, ЖД, мосты, станции, грузовики, поезда, корабли и торговые пути"], 
-	["Военная карта", "Объекты стран по типам, зоны ПВО, линии фронта"], 
-	["Альянсы", "Цвет, знак и название альянса; вне альянсов — серые"], 
-	["Покрытие ПВО", "Где стреляет ПВО: ваша всегда, чужая — только разведанная"], 
+        ["Обычная карта", "Местность, города и границы стран"], 
+        ["Политическая карта", "Страны крупно своими цветами, местность бледная"], 
+        ["Моя земля", "Только ваша страна, всё чужое серое"], 
+        ["Карта руд", "Залежи по видам: яркие — свободные, тусклые — заняты"], 
+        ["Логистика", "Дороги, ЖД, мосты, станции, грузовики, поезда, корабли и торговые пути"], 
+        ["Военная карта", "Объекты стран по типам, зоны ПВО, линии фронта"], 
+        ["Альянсы", "Цвет, знак и название альянса; вне альянсов — серые"], 
+        ["Покрытие ПВО", "Где стреляет ПВО: ваша всегда, чужая — только разведанная"], 
 ]
 const TREE_DENSITY: Dictionary = {7: 78, 8: 92, 6: 6, 9: 3, 10: 14}
 const TREE_NAMES: Dictionary = {
-	7: ["tree_oak_a", "tree_oak_b", "tree_birch_a", "tree_oak_a", "tree_oak_b"], 
-	8: ["tree_pine_a", "tree_pine_b"], 
-	6: ["tree_oak_a", "tree_birch_a", "bush_a", "tree_oak_b"], 
-	9: ["bush_a"], 
-	10: ["tree_pine_a", "bush_a", "tree_pine_b"], 
+        7: ["tree_oak_a", "tree_oak_b", "tree_birch_a", "tree_oak_a", "tree_oak_b"], 
+        8: ["tree_pine_a", "tree_pine_b"], 
+        6: ["tree_oak_a", "tree_birch_a", "bush_a", "tree_oak_b"], 
+        9: ["bush_a"], 
+        10: ["tree_pine_a", "bush_a", "tree_pine_b"], 
 }
 
 var settings: WorldSettings
@@ -168,6 +168,7 @@ var aftermath: RefCounted
 var nature: RefCounted
 var pstat: PowerStatus
 var drama = null
+var candy_events = null
 var obj_arch: PackedByteArray = PackedByteArray()
 var arch_tab: Array = []
 var labels: LabelsLayer
@@ -307,9 +308,9 @@ var _job_first: Dictionary = {}
 
 
 const _NET_STATIC: Dictionary = {
-	"groups": ["create", "add", "remove", "disband", "edit", "set_stance", "group_set_stance", "order_fids", "group_order", "trench_in", "trench_out", "trench_in_fids", "trench_out_fids"], 
-	"front": ["set_front", "clear_front", "set_plan", "cancel_plan", "attack_now", "set_auto"], 
-	"ship_cr": ["launch", "dock_order", "dock_attack", "dock_salvo", "dock_sink", "dock_service"], 
+        "groups": ["create", "add", "remove", "disband", "edit", "set_stance", "group_set_stance", "order_fids", "group_order", "trench_in", "trench_out", "trench_in_fids", "trench_out_fids"], 
+        "front": ["set_front", "clear_front", "set_plan", "cancel_plan", "attack_now", "set_auto"], 
+        "ship_cr": ["launch", "dock_order", "dock_attack", "dock_salvo", "dock_sink", "dock_service"], 
 }
 
 

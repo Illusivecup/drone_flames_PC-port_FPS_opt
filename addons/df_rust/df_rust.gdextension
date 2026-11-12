@@ -1,0 +1,20 @@
+; df_rust — нативная логика DroneFlames Reborn (Reborn Team).
+; DfFlyingCandy (летающая конфетка) + DfSpatialHash2D (пространственная сетка).
+; macOS/Android/iOS/Web отключены: там работает GDScript-фолбэк
+; (game/flying_candy_gd.gd), игра остаётся полностью функциональной.
+
+[configuration]
+
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.4
+
+exclude_tags = ["android", "ios", "web", "macos"]
+
+[libraries]
+
+linux.editor.x86_64 = "lib/libdf_rust.linux.template_debug.x86_64.so"
+linux.template_debug.x86_64 = "lib/libdf_rust.linux.template_debug.x86_64.so"
+linux.template_release.x86_64 = "lib/libdf_rust.linux.template_release.x86_64.so"
+windows.editor.x86_64 = "lib/libdf_rust.windows.template_debug.x86_64.dll"
+windows.template_debug.x86_64 = "lib/libdf_rust.windows.template_debug.x86_64.dll"
+windows.template_release.x86_64 = "lib/libdf_rust.windows.template_release.x86_64.dll"

@@ -25,17 +25,6 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Setup Rust (df_rust GDExtension)
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build df_rust (Windows x64)
-        shell: pwsh
-        run: |
-          cargo build --release --manifest-path native/df_rust/Cargo.toml
-          New-Item -ItemType Directory -Force -Path addons/df_rust/lib | Out-Null
-          Copy-Item native/df_rust/target/release/df_rust.dll addons/df_rust/lib/libdf_rust.windows.template_release.x86_64.dll -Force
-          Get-Item addons/df_rust/lib/libdf_rust.windows.template_release.x86_64.dll | Select-Object Name, Length
-
       - name: Install Inno Setup
         run: |
           choco install innosetup --no-progress

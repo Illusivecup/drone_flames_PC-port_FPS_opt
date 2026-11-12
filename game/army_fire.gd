@@ -490,7 +490,9 @@ func _impact(s: Dictionary) -> void :
 	if kind == KIND_ARTY or ri(3) == 0:
 		add_decal("crater_s", p.round())
 		army.tac.add_crater(p)
-	for u: Unit in army.units:
+	# Сетка вместо полного перебора: ударная волна действует в радиусе r*2.5,
+	# _near(p, r*2.5) покрывает его с запасом на лаг сетки (0.25 c).
+	for u: Unit in army._near(p, r * 2.5):
 		if not u.alive() or not u.ground() or not army._hostile(c, u.country_id):
 			continue
 		var d: float = u.pos.distance_to(p)

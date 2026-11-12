@@ -1,0 +1,11 @@
+[configuration]
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = "4.2"
+
+[libraries]
+linux.debug.x86_64 = "res://addons/df_native/bin/libdf_native.so"
+linux.release.x86_64 = "res://addons/df_native/bin/libdf_native.so"
+windows.debug.x86_64 = "res://addons/df_native/bin/df_native.dll"
+windows.release.x86_64 = "res://addons/df_native/bin/df_native.dll"
+macos.debug = "res://addons/df_native/bin/libdf_native.dylib"
+macos.release = "res://addons/df_native/bin/libdf_native.dylib"

@@ -111,6 +111,11 @@ var _grid: Dictionary = {}
 # Пересобираются вместе с _grid (раз в скан), поэтому всегда согласованы с ним.
 var _gmask: Dictionary = {}
 var _hmask_cache: Dictionary = {}
+# Нативный ускоритель поиска целей (addons/df_native, Rust GDExtension).
+# null, если расширение не собрано под платформу — тогда игра идёт по
+# прежнему GDScript-пути без изменений поведения.
+var _nat: Object = null
+var _nat_u: Dictionary = {}
 const _NO_UNITS: Array = []
 const _NO_FACS: Array = []
 var _fgrid: Dictionary = {}
@@ -130,6 +135,15 @@ func _init(world: GameWorld) -> void :
         gw = world
         tac = ArmyTac.new(self)
         fire = ArmyFire.new(self)
+        _nat_init()
+
+
+# Подключение нативного ускорителя (Rust). Только если GDExtension собран
+# под текущую платформу; ClassDB.instantiate, чтобы скрипт не ломался при
+# отсутствии библиотеки.
+func _nat_init() -> void :
+        if ClassDB.class_exists("DfNative"):
+                _nat = ClassDB.instantiate("DfNative")
 
 
 func count_units(country_id: int) -> int:
@@ -621,32 +635,21 @@ func _acquire(u: Unit) -> bool :
         var ucid: int = u.country_id
         var upos: Vector2 = u.pos
         var hm: int = _hmask(ucid)
-        # Ячейку без юнитов враждебных стран можно пропустить целиком (если не «охрана»,
-        # при ней подходят и не враждебные). Результат идентичен полному перебору.
-        var skip_ok: bool = hm != -1 and not grd
-        var gx0: int = floori((upos.x - r) / GRID_PX)
-        var gx1: int = floori((upos.x + r) / GRID_PX)
-        var gy0: int = floori((upos.y - r) / GRID_PX)
-        var gy1: int = floori((upos.y + r) / GRID_PX)
-        for cy in range(gy0, gy1 + 1):
-                for cx in range(gx0, gx1 + 1):
-                        var ck: = Vector2i(cx, cy)
-                        if skip_ok and (int(_gmask.get(ck, 0)) & hm) == 0:
-                                continue
-                        for o: Unit in _grid.get(ck, _NO_UNITS):
-                                if o.state == Unit.State.DEAD or o.type == Unit.Type.FPV or o.country_id == ucid:
-                                        continue
-                                if at and not o.vehicle():
-                                        continue
-                                var d2: float = o.pos.distance_squared_to(upos)
-                                if d2 >= bd:
-                                        continue
-                                var oc: int = o.country_id
-                                var foe: bool = ((hm >> oc) & 1) == 1 if (hm != -1 and oc >= 0 and oc < 63) else _hostile(ucid, oc)
-                                if (foe or (grd and _guard_foe(u, o))) and (d2 < 784.0 or not (blind or in_smoke(o.pos))):
-                                        bd = d2
-                                        best = o
-
+        # Нативный путь (Rust, addons/df_native): юнит-пасс по снапшоту из _build_grid.
+        # nat: <=-2 — нужен полный GDScript-проход, -1 — юнитов-целей нет, >=0 — id цели.
+        var nat: int = -3
+        if _nat != null and not grd and hm != -1:
+                nat = _nat.acquire_one(u.id, r, hm, at, blind)
+                if nat >= 0:
+                        var tu: Unit = _nat_u.get(nat)
+                        # цель могла умереть после снапшота — тогда честный перепросмотр
+                        if tu != null and tu.state != Unit.State.DEAD:
+                                best = tu
+                        else:
+                                nat = -3
+        if nat <= -2:
+                best = _acq_units_gd(u, r, at, blind, ucid, upos, hm, grd)
+        # ——— здания: только если юнит-цель не найдена (как раньше) ———
         var storming: bool = u.op_on and ( not u.op_hold or u.pi < u.path.size())
         if best == null and not storming and (u.type == Unit.Type.TANK or u.type == Unit.Type.IFV or at or (u.kit & Unit.KIT_GREN) != 0):
                 bd = r * r * 1.3
@@ -688,6 +691,39 @@ func _acquire(u: Unit) -> bool :
                                                                 best = f
         u.target = best
         return best != null
+
+
+# Юнит-пасс поиска цели-юнита на GDScript: fallback без натива и эталон parity
+# для bench-acq. Тело 1:1 с прежним _acquire (до зданий).
+func _acq_units_gd(u: Unit, r: float, at: bool, blind: bool, ucid: int, upos: Vector2, hm: int, grd: bool) -> Object:
+        var best: Object = null
+        var bd: float = r * r
+        # Ячейку без юнитов враждебных стран можно пропустить целиком (если не «охрана»,
+        # при ней подходят и не враждебные). Результат идентичен полному перебору.
+        var skip_ok: bool = hm != -1 and not grd
+        var gx0: int = floori((upos.x - r) / GRID_PX)
+        var gx1: int = floori((upos.x + r) / GRID_PX)
+        var gy0: int = floori((upos.y - r) / GRID_PX)
+        var gy1: int = floori((upos.y + r) / GRID_PX)
+        for cy in range(gy0, gy1 + 1):
+                for cx in range(gx0, gx1 + 1):
+                        var ck: = Vector2i(cx, cy)
+                        if skip_ok and (int(_gmask.get(ck, 0)) & hm) == 0:
+                                continue
+                        for o: Unit in _grid.get(ck, _NO_UNITS):
+                                if o.state == Unit.State.DEAD or o.type == Unit.Type.FPV or o.country_id == ucid:
+                                        continue
+                                if at and not o.vehicle():
+                                        continue
+                                var d2: float = o.pos.distance_squared_to(upos)
+                                if d2 >= bd:
+                                        continue
+                                var oc: int = o.country_id
+                                var foe: bool = ((hm >> oc) & 1) == 1 if (hm != -1 and oc >= 0 and oc < 63) else _hostile(ucid, oc)
+                                if (foe or (grd and _guard_foe(u, o))) and (d2 < 784.0 or not (blind or in_smoke(o.pos))):
+                                        bd = d2
+                                        best = o
+        return best
 
 
 func _target_pos(t: Object, from: = Vector2.INF) -> Vector2:
@@ -2291,6 +2327,16 @@ func _build_grid() -> void :
         _gmask.clear()
         _hmask_cache.clear()
         _fpv_fly.clear()
+        # Снапшот для нативного поиска целей (те же фильтры, что и у сетки:
+        # живые, не FPV; порядок — как в массиве units).
+        var nat_on: bool = _nat != null
+        var nat_ids := PackedInt32Array()
+        var nat_xs := PackedFloat32Array()
+        var nat_ys := PackedFloat32Array()
+        var nat_cs := PackedInt32Array()
+        var nat_vs := PackedInt32Array()
+        if nat_on:
+                _nat_u.clear()
         for u: Unit in units:
                 if not u.alive():
                         continue
@@ -2304,6 +2350,30 @@ func _build_grid() -> void :
                 a.append(u)
                 var cid: int = u.country_id
                 _gmask[k] = int(_gmask.get(k, 0)) | ((1 << cid) if cid >= 0 and cid < 63 else -1)
+                if nat_on:
+                        nat_ids.append(u.id)
+                        nat_xs.append(u.pos.x)
+                        nat_ys.append(u.pos.y)
+                        nat_cs.append(cid)
+                        nat_vs.append(1 if u.vehicle() else 0)
+                        _nat_u[u.id] = u
+        if nat_on:
+                _nat.push_units(nat_ids, nat_xs, nat_ys, nat_cs, nat_vs)
+                # дымы: операции (круги) + армейские (эллипсы 16x9)
+                var circ := PackedFloat64Array()
+                if gw.ops != null:
+                        for z: Dictionary in gw.ops.zones:
+                                if int(z["k"]) == Operations.Order.SMOKE:
+                                        var sp: Vector2 = z["pos"]
+                                        circ.append(sp.x)
+                                        circ.append(sp.y)
+                                        circ.append(float(z["r"]))
+                var ell := PackedFloat64Array()
+                for s: Array in smokes:
+                        var sp2: Vector2 = s[0]
+                        ell.append(sp2.x)
+                        ell.append(sp2.y)
+                _nat.push_smokes(circ, ell)
         if gw.game_time - _fgrid_t < 1.0 and gw.game_time >= _fgrid_t:
                 return
         _fgrid_t = gw.game_time

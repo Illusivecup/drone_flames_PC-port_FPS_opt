@@ -2418,7 +2418,8 @@ func _barrage(z: Dictionary) -> void :
 
         if now >= float(z["t0"]) + WARN_T + 1.0:
                 var pr: float = float(z["r"]) * 1.25
-                for u: Unit in gw.army.units:
+                # Сетка вместо полного перебора юнитов (радиус pr с запасом).
+                for u: Unit in gw.army._near(z["pos"], pr):
                         if u.alive() and u.ground() and gw.army._hostile(int(z["c"]), u.country_id) and u.pos.distance_squared_to(z["pos"]) <= pr * pr:
                                 u.supp = maxf(u.supp, 0.5 if u.type == Unit.Type.TANK else 0.85)
         if not bool(z["hit"]) and now >= float(z["t0"]) + WARN_T + 1.2:

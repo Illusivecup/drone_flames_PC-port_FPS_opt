@@ -98,6 +98,10 @@ func _ready() -> void :
                         var bn: RefCounted = (load("res://dev/bench_late.gd") as GDScript).new()
                         set_meta("bench_late", bn)
                         bn.call("run", self)
+                elif a == "--bench-acq":
+                        var ba: RefCounted = (load("res://dev/bench_acq.gd") as GDScript).new()
+                        set_meta("bench_acq", ba)
+                        ba.call("run", self)
                 elif a == "--verify":
                         var v: RefCounted = (load("res://dev/verify_game.gd") as GDScript).new()
                         set_meta("verify_game", v)

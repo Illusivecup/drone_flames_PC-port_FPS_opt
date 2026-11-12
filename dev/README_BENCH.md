@@ -4,11 +4,23 @@
 
     git apply dev/bench_hooks.patch        # или patch -p1 < dev/bench_hooks.patch
 
-## 1. Вся симуляция (A/B двух версий `army.gd`)
+Сид мира фиксирован: `--bench` задаёт `424242` (или `DF_SEED=<число>`) — прогоны
+сравнимы от запуска к запуску. Переменные-переключатели:
+
+    DF_NO_NATIVE=1   # принудительный GDScript-путь (базовая линия A/B)
+    DF_WD_VERIFY=1   # теневая сверка натива и GDScript (миссинг = ошибка в логе)
+
+## 1. Вся симуляция (A/B натива и GDScript)
     BENCH_HOME=1 BENCH_UNITS=250 godot --headless --path . -- --bench
 Печатает каждые 40 игровых секунд: кадр, число юнитов, затраты `perf_sys` по системам (мс за кадр).
 Переменные: `BENCH_UNITS` (юнитов на страну), `BENCH_HOME=1` (армии у столиц), `BENCH_RAID=1` (часть армии у чужих баз),
 `BENCH_FRONT=1` (две коалиции у линии фронта). Без переменных — все со всеми, юниты перемешаны.
+
+Пример A/B (один и тот же мир, сид 424242):
+
+    godot --headless --path . -- --bench > /tmp/nat.log
+    DF_NO_NATIVE=1 godot --headless --path . -- --bench > /tmp/gd.log
+    diff /tmp/gd.log /tmp/nat.log
 
 ## 2. Эквивалентность и скорость `_acquire`
 Нужна эталонная копия оригинала (временно, в игру не входит):

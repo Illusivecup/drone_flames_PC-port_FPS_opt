@@ -194,6 +194,46 @@ func run(main: Node) -> void:
                 oc += ref_ids.size()
         total_mism += om
         print("[NAT2] occupy: candidates=", oc, " mismatches=", om)
+        # ——— 6. aim_pick против _pick_gd (ветки 1–3; город — GDScript в обоих путях)
+        var am: int = 0
+        var an: int = 0
+        fire._aim_build_flats()
+        var so_backup: Dictionary = fire.support_off.duplicate()
+        fire.support_off.clear()
+        for u5: Unit in army.units:
+                if not u5.alive() or not u5.indirect():
+                        continue
+                var sp5: Dictionary = Army.SPEC[u5.type]
+                var rmin5: float = float(sp5["min"])
+                var rmax5: float = float(sp5["range"])
+                var tc0: int = u5.target_city
+                u5.target_city = -1
+                var dg_list: Array = [false]
+                if u5.type == Unit.Type.MORTAR or u5.type == Unit.Type.ARTY:
+                        dg_list = [true, false]
+                for dgl: bool in dg_list:
+                        var served0: Array = []
+                        for rq6: Dictionary in fire.requests:
+                                served0.append(int(rq6["served"]))
+                        var ref6: Array = fire._pick_gd(u5, rmin5, rmax5, dgl)
+                        for qi in fire.requests.size():
+                                fire.requests[qi]["served"] = served0[qi]
+                        var nat6: Array = fire._pick_nat(u5, rmin5, rmax5, dgl)
+                        for qi2 in fire.requests.size():
+                                fire.requests[qi2]["served"] = served0[qi2]
+                        an += 1
+                        var ok6: bool = ref6.is_empty() and nat6.is_empty()
+                        if ref6.size() == 2 and nat6.size() == 2:
+                                ok6 = bool(ref6[1]) == bool(nat6[1]) and (ref6[0] as Vector2).distance_squared_to(nat6[0]) <= 1e-8
+                        if not ok6:
+                                am += 1
+                                if am <= 5:
+                                        var dsc: float = (ref6[0] as Vector2).distance_squared_to(nat6[0]) if ref6.size() >= 1 and nat6.size() >= 1 else -1.0
+                                        print("[NAT2]   aim mismatch: unit=", u5.id, " sizes=", ref6.size(), "/", nat6.size(), " d2=", dsc, " recon ", ref6[1] if ref6.size() >= 2 else "-", "/", nat6[1] if nat6.size() >= 2 else "-", " ref=", ref6, " nat=", nat6)
+                u5.target_city = tc0
+        fire.support_off = so_backup
+        total_mism += am
+        print("[NAT2] aim: picks=", an, " mismatches=", am)
         print("[NAT2] TOTAL mismatches=", total_mism)
         if total_mism == 0:
                 print("[NAT2] PASS")

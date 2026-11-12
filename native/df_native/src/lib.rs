@@ -333,7 +333,9 @@ impl DfNative {
             let hm = hms[ci];
             let ng = eye_groups_per_country[ci] as usize;
             let naval = naval_n[ci] as i64;
-            // бокс: Rect2 по позициям глаз + grow(RECON_R)
+            // Точная эмуляция Rect2 (f32): expand по глазам, grow(RECON_R).
+            // begin/end — точные координаты глаз; size = end - begin (f32);
+            // граница has_point — position + size (f32-сложение).
             let mut bx0 = f64::INFINITY;
             let mut by0 = f64::INFINITY;
             let mut bx1 = f64::NEG_INFINITY;
@@ -355,10 +357,13 @@ impl DfNative {
                     by1 = ey;
                 }
             }
-            bx0 -= RECON_R;
-            by0 -= RECON_R;
-            bx1 += RECON_R;
-            by1 += RECON_R;
+            let grow = RECON_R as f32;
+            let bpx = (bx0 as f32) - grow; // position после grow
+            let bpy = (by0 as f32) - grow;
+            let bsx = ((bx1 as f32) - (bx0 as f32)) + grow * 2.0f32; // size после grow
+            let bsy = ((by1 as f32) - (by0 as f32)) + grow * 2.0f32;
+            let brx = bpx + bsx; // правая/нижняя граница (как has_point)
+            let bry = bpy + bsy;
 
             // ——— юниты: глаза во внешнем цикле, первый подходящий глаз фиксирует
             // recon-флаг (1:1 с GDScript: for o { for e { if ... append; break } })
@@ -366,7 +371,9 @@ impl DfNative {
             for (ei, gi) in eg.clone().enumerate() {
                 let b = gi * 4;
                 let (ex, ey, r2, recon) = (eyes[b], eyes[b + 1], eyes[b + 2], eyes[b + 3] != 0.0);
-                let rr = r2.sqrt();
+                // супермножество кандидатов: чуть шире точного радиуса (запас
+                // на f32-округление дистанции), точный фильтр ниже по f32-d2
+                let rr = r2.sqrt() * 1.001 + 1.0;
                 for oi in self.near_candidates(ex, ey, rr) {
                     let oi = oi as usize;
                     if best_eye[oi] >= 0 {
@@ -382,8 +389,8 @@ impl DfNative {
                     }
                     let ox = o.x;
                     let oy = o.y;
-                    // Rect2.has_point — полуоткрытый интервал [min, max)
-                    if ox < bx0 || ox >= bx1 || oy < by0 || oy >= by1 {
+                    // Rect2.has_point — полуоткрытый [min, max), f32-сравнение
+                    if (ox as f32) < bpx || (ox as f32) >= brx || (oy as f32) < bpy || (oy as f32) >= bry {
                         continue;
                     }
                     if self.in_smoke(ox, oy) {
@@ -422,8 +429,13 @@ impl DfNative {
                     let ext = fac_ext[fi];
                     let trench = fac_flags[fi] & 1 != 0;
                     let is_line = fac_flags[fi] & 2 != 0;
-                    // box.grow(ext).has_point(fc) — полуоткрытый интервал
-                    if fx >= bx0 - ext && fx < bx1 + ext && fy >= by0 - ext && fy < by1 + ext {
+                    // box.grow(ext).has_point(fc): второй grow поверх первого,
+                    // f32-арифметика, полуоткрытый интервал
+                    let fpx = bpx - (ext as f32);
+                    let fpy = bpy - (ext as f32);
+                    let fsx = bsx + (ext as f32) * 2.0f32;
+                    let fsy = bsy + (ext as f32) * 2.0f32;
+                    if (fx as f32) >= fpx && (fx as f32) < fpx + fsx && (fy as f32) >= fpy && (fy as f32) < fpy + fsy {
                         let mut fe: i32 = -1;
                         for (ei, gi) in eg.clone().enumerate() {
                             let b = gi * 4;
@@ -562,6 +574,218 @@ impl DfNative {
             out.push(spawn);
             out.push(tgt_x[i]);
             out.push(tgt_y[i]);
+        }
+        PackedFloat64Array::from(out)
+    }
+
+    // ArmyFire._update_shells — тайминги полёта снарядов: t += dt, свист перед
+    // падением, трейл-тик РСЗО, прибытие. Возвращает 4 double на снаряд:
+    //   [new_t, whistle_now(0/1), arrived(0/1), trail_tick(0/1)]
+    // Эффекты/урон/pts/сброс whistle — GDScript (RNG и _impact там же).
+    #[func]
+    fn shells_step(
+        &self,
+        dt: f64,
+        t: PackedFloat64Array,
+        dur: PackedFloat64Array,
+        kind: PackedInt32Array, // KIND_ROCKET == 2
+        whistle: PackedInt32Array,
+        trail: PackedFloat64Array,
+    ) -> PackedFloat64Array {
+        let n = t.len().min(dur.len()).min(kind.len()).min(whistle.len()).min(trail.len());
+        let mut out: Vec<f64> = Vec::with_capacity(n * 4);
+        for i in 0..n {
+            let nt = t[i] + dt;
+            let is_rocket = kind[i] == 2;
+            let mut w = 0.0;
+            if !is_rocket && whistle[i] == 0 && dur[i] - nt < 0.9 {
+                w = 1.0;
+            }
+            let mut tick = 0.0;
+            if is_rocket {
+                let tr = trail[i] + dt;
+                if tr >= 0.05 {
+                    tick = 1.0;
+                }
+            }
+            let arrived = if nt >= dur[i] { 1.0 } else { 0.0 };
+            out.push(nt);
+            out.push(w);
+            out.push(arrived);
+            out.push(tick);
+        }
+        PackedFloat64Array::from(out)
+    }
+
+    // ArmyFire._pick — выбор точки огня для артиллерии/миномётов/РСЗО.
+    // Ветки 1:1 с GDScript: окопанные юниты (если GDScript разрешил dugin),
+    // запросы огня (d*0.5 + served*60), spotted с бонусами по типу стрелка.
+    // spot_flat: 7 double на запись: [x, y, is_unit, vehicle, mortar_soft,
+    //   entrenched, recon]; юнит-диапазон [s0, s1) — записи его страны.
+    // Возвращает 5 double на стрелка: [kind, vx, vy, recon, aux]
+    //   kind 0 — цели нет (GDScript пробует осаду города),
+    //   kind 1 — spotted (vx,vy — точка), kind 2 — запрос (aux — индекс).
+    #[func]
+    fn aim_pick(
+        &self,
+        u_type: PackedInt32Array,
+        u_x: PackedFloat64Array,
+        u_y: PackedFloat64Array,
+        u_cid: PackedInt32Array,
+        u_rmin: PackedFloat64Array,
+        u_rmax: PackedFloat64Array,
+        u_s0: PackedInt32Array,
+        u_s1: PackedInt32Array,
+        u_dugin: PackedInt32Array,
+        u_hasreq: PackedInt32Array,
+        spot_flat: PackedFloat64Array,
+        req_xy: PackedFloat64Array,
+        req_c: PackedInt32Array,
+        req_served: PackedFloat64Array,
+    ) -> PackedFloat64Array {
+        const MORTAR: i32 = 6;
+        const ARTY: i32 = 7;
+        const MLRS: i32 = 8;
+        let n = u_type
+            .len()
+            .min(u_x.len())
+            .min(u_y.len())
+            .min(u_cid.len())
+            .min(u_rmin.len())
+            .min(u_rmax.len())
+            .min(u_s0.len())
+            .min(u_s1.len())
+            .min(u_dugin.len())
+            .min(u_hasreq.len());
+        let nent = spot_flat.len() / 7;
+        let nr = (req_xy.len() / 2).min(req_c.len()).min(req_served.len());
+        let req_x = |rq: usize| req_xy[rq * 2];
+        let req_y = |rq: usize| req_xy[rq * 2 + 1];
+        let mut out: Vec<f64> = Vec::with_capacity(n * 5);
+        for i in 0..n {
+            let (ux, uy) = (u_x[i], u_y[i]);
+            let (rmin, rmax) = (u_rmin[i], u_rmax[i]);
+            let ty = u_type[i];
+            let s0 = u_s0[i] as usize;
+            let s1 = (u_s1[i] as usize).min(nent);
+            let mut bs = f64::INFINITY;
+            let mut best_e: i64 = -1;
+            let mut best_r: i64 = -1;
+            // ——— ветка 1: окопанные юниты
+            if u_dugin[i] == 1 {
+                for e in s0..s1 {
+                    let b = e * 7;
+                    if spot_flat[b + 2] == 0.0 || spot_flat[b + 5] == 0.0 {
+                        continue;
+                    }
+                    let ex = spot_flat[b];
+                    let ey = spot_flat[b + 1];
+                    let dx = (ex as f32) - (ux as f32);
+                    let dy = (ey as f32) - (uy as f32);
+                    let d0 = ((dx * dx + dy * dy).sqrt()) as f64;
+                    if d0 >= rmin && d0 <= rmax && d0 < bs {
+                        bs = d0;
+                        best_e = e as i64;
+                        best_r = -1;
+                    }
+                }
+            }
+            if best_e >= 0 {
+                let b = best_e as usize * 7;
+                out.push(1.0);
+                out.push(spot_flat[b]);
+                out.push(spot_flat[b + 1]);
+                out.push(spot_flat[b + 6]);
+                out.push(-1.0);
+                continue;
+            }
+            // ——— ветка 2: запросы огня (только своей страны)
+            if u_hasreq[i] == 1 {
+                let mut best_rq: i64 = -1;
+                for rq in 0..nr {
+                    if req_c[rq] != u_cid[i] {
+                        continue;
+                    }
+                    let dx = (req_x(rq) as f32) - (ux as f32);
+                    let dy = (req_y(rq) as f32) - (uy as f32);
+                    let d = ((dx * dx + dy * dy).sqrt()) as f64;
+                    if d < rmin || d > rmax {
+                        continue;
+                    }
+                    let s = d * 0.5 + req_served[rq] * 60.0;
+                    if s < bs {
+                        bs = s;
+                        best_rq = rq as i64;
+                    }
+                }
+                if best_rq >= 0 {
+                    out.push(2.0);
+                    out.push(req_x(best_rq as usize));
+                    out.push(req_y(best_rq as usize));
+                    out.push(0.0);
+                    out.push(best_rq as f64);
+                    continue;
+                }
+            }
+            // ——— ветка 3: spotted с бонусами
+            for e in s0..s1 {
+                let b = e * 7;
+                let (ex, ey) = (spot_flat[b], spot_flat[b + 1]);
+                let dx = (ex as f32) - (ux as f32);
+                let dy = (ey as f32) - (uy as f32);
+                let d2 = ((dx * dx + dy * dy).sqrt()) as f64;
+                if d2 < rmin || d2 > rmax {
+                    continue;
+                }
+                let mut s2 = d2;
+                if spot_flat[b + 2] != 0.0 {
+                    if ty == ARTY && spot_flat[b + 3] != 0.0 {
+                        s2 -= 250.0;
+                    }
+                    if ty == MORTAR && spot_flat[b + 4] != 0.0 {
+                        s2 -= 120.0;
+                    }
+                    if ty == MLRS {
+                        let mut near = 0i64;
+                        for e2 in s0..s1 {
+                            let b2 = e2 * 7;
+                            let fx = spot_flat[b2];
+                            let fy = spot_flat[b2 + 1];
+                            let ddx = (fx as f32) - (ex as f32);
+                            let ddy = (fy as f32) - (ey as f32);
+                            let dd = (ddx * ddx + ddy * ddy) as f64;
+                            if dd < 900.0 {
+                                near += 1;
+                            }
+                        }
+                        s2 -= (near as f64) * 120.0;
+                        if near < 3 {
+                            continue;
+                        }
+                    }
+                } else if ty == MLRS {
+                    continue;
+                }
+                if s2 < bs {
+                    bs = s2;
+                    best_e = e as i64;
+                    best_r = -1;
+                }
+            }
+            if best_e >= 0 {
+                let b = best_e as usize * 7;
+                out.push(1.0);
+                out.push(spot_flat[b]);
+                out.push(spot_flat[b + 1]);
+                out.push(spot_flat[b + 6]);
+                out.push(-1.0);
+            } else {
+                out.push(0.0);
+                out.push(0.0);
+                out.push(0.0);
+                out.push(0.0);
+                out.push(-1.0);
+            }
         }
         PackedFloat64Array::from(out)
     }

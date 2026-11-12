@@ -2522,9 +2522,16 @@ func _build_grid() -> void :
         _gmask.clear()
         _hmask_cache.clear()
         _fpv_fly.clear()
-        # Снапшот для натива (живые не-FPV; порядок — как в массиве units).
-        if _nat != null:
-                _nat_sync()
+        # Один проход: GDScript-сетка + снапшот натива (живые не-FPV, порядок units).
+        var nat_on: bool = _nat != null
+        var nat_ids := PackedInt32Array()
+        var nat_xs := PackedFloat32Array()
+        var nat_ys := PackedFloat32Array()
+        var nat_cs := PackedInt32Array()
+        var nat_fl := PackedInt32Array()
+        var nat_ty := PackedInt32Array()
+        if nat_on:
+                _nat_u.clear()
         for u: Unit in units:
                 if not u.alive():
                         continue
@@ -2538,6 +2545,34 @@ func _build_grid() -> void :
                 a.append(u)
                 var cid: int = u.country_id
                 _gmask[k] = int(_gmask.get(k, 0)) | ((1 << cid) if cid >= 0 and cid < 63 else -1)
+                if nat_on:
+                        var fl: int = 0
+                        if u.vehicle():
+                                fl |= 1
+                        if u.air():
+                                fl |= 2
+                        if u.entrenched:
+                                fl |= 4
+                        if u.post == null:
+                                fl |= 8
+                        if u.op_on:
+                                fl |= 16
+                        if u.reinf == 0:
+                                fl |= 32
+                        if u.state != Unit.State.SIEGE:
+                                fl |= 64
+                        nat_ids.append(u.id)
+                        nat_xs.append(u.pos.x)
+                        nat_ys.append(u.pos.y)
+                        nat_cs.append(cid)
+                        nat_fl.append(fl)
+                        nat_ty.append(u.type)
+                        _nat_u[u.id] = u
+        if nat_on:
+                _nat.push_units(nat_ids, nat_xs, nat_ys, nat_cs, nat_fl, nat_ty)
+                _nat_push_smokes()
+                # снапшот этого кадра уже свежий — _nat_sync не будет пересобирать
+                _nat_sync_frame = Engine.get_process_frames()
         if gw.game_time - _fgrid_t < 1.0 and gw.game_time >= _fgrid_t:
                 return
         _fgrid_t = gw.game_time

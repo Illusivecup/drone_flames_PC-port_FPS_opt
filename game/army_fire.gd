@@ -46,6 +46,15 @@ var _fired: Dictionary = {}
 var _rid: int = 1
 var _news_t: Dictionary = {}
 var rng_state: int = 0
+# Плоские данные spotted для нативного _pick (собираются в _aim_all раз за вызов):
+# 7 double на запись [x, y, is_unit, vehicle, mortar_soft, entrenched, recon]
+# и диапазоны записей по странам; запросы огня пересобираются на каждый pick
+# (живые позиции и served на момент вызова — как в эталоне).
+var _aim_spot_flat := PackedFloat64Array()
+var _aim_spot_range: Dictionary = {}
+var _aim_req_xy := PackedFloat64Array()
+var _aim_req_c := PackedInt32Array()
+var _aim_req_served := PackedFloat64Array()
 
 
 func _init(a: Army) -> void :
@@ -376,6 +385,8 @@ func can_reach(country_id: int, p: Vector2) -> bool:
 
 
 func _aim_all() -> void :
+        if army._nat != null:
+                _aim_build_flats()
         for u: Unit in army.units:
                 if not u.alive() or not u.indirect() or u.fire_cd > 0.0 or u.salvo > 0:
                         continue
@@ -408,11 +419,94 @@ func _aim_all() -> void :
 
 
 func _pick(u: Unit, rmin: float, rmax: float) -> Array:
+        # Гейт окопанных целей потребляет rf() — порядок RNG как в эталоне.
+        var use_dugin: bool = (u.type == Unit.Type.MORTAR or u.type == Unit.Type.ARTY) and rf() < DUG_IN_PICK
+        # Нативный путь (Rust): ветки 1–3 выбора точки огня.
+        if army._nat != null:
+                var got: Array = _pick_nat(u, rmin, rmax, use_dugin)
+                if not got.is_empty():
+                        return got
+        return _pick_gd(u, rmin, rmax, use_dugin)
+
+
+# Плоские spotted для нативного _pick (spotted не меняется за время _aim_all).
+func _aim_build_flats() -> void :
+        _aim_spot_flat.clear()
+        _aim_spot_range.clear()
+        for cid: int in spotted:
+                var st: int = _aim_spot_flat.size() / 7
+                for e: Array in spotted[cid]:
+                        var p: Vector2 = e[0]
+                        var o: Object = e[1]
+                        if o is Unit:
+                                var ou: Unit = o
+                                _aim_spot_flat.append(p.x)
+                                _aim_spot_flat.append(p.y)
+                                _aim_spot_flat.append(1.0)
+                                _aim_spot_flat.append(1.0 if ou.vehicle() else 0.0)
+                                _aim_spot_flat.append(1.0 if (ou.entrenched or ou.dug or ou.foot()) else 0.0)
+                                _aim_spot_flat.append(1.0 if ou.entrenched else 0.0)
+                        else:
+                                _aim_spot_flat.append(p.x)
+                                _aim_spot_flat.append(p.y)
+                                _aim_spot_flat.append(0.0)
+                                _aim_spot_flat.append(0.0)
+                                _aim_spot_flat.append(0.0)
+                                _aim_spot_flat.append(0.0)
+                        _aim_spot_flat.append(1.0 if bool(e[2]) else 0.0)
+                _aim_spot_range[cid] = Vector2i(st, _aim_spot_flat.size() / 7)
+
+
+# Живые данные requests на момент pick (позиции и served, как в эталоне).
+func _aim_build_reqs() -> void :
+        _aim_req_xy.clear()
+        _aim_req_c.clear()
+        _aim_req_served.clear()
+        for rq: Dictionary in requests:
+                var p: Vector2 = rq["p"]
+                var o: Object = rq["obj"]
+                if o is Unit and (o as Unit).alive():
+                        p = (o as Unit).pos
+                _aim_req_xy.append(p.x)
+                _aim_req_xy.append(p.y)
+                _aim_req_c.append(int(rq["c"]))
+                _aim_req_served.append(float(rq["served"]))
+
+
+# Нативный _pick: плоские данные spotted/requests готовит _aim_all (раз в вызов).
+func _pick_nat(u: Unit, rmin: float, rmax: float, use_dugin: bool) -> Array:
+        var c: int = u.country_id
+        var rng: Vector2i = _aim_spot_range.get(c, Vector2i.ZERO)
+        _aim_build_reqs() # живые позиции и served на момент вызова
+        var ut := PackedInt32Array([u.type])
+        var ux := PackedFloat64Array([u.pos.x])
+        var uy := PackedFloat64Array([u.pos.y])
+        var uc := PackedInt32Array([c])
+        var rn := PackedFloat64Array([rmin])
+        var rx := PackedFloat64Array([rmax])
+        var s0 := PackedInt32Array([rng.x])
+        var s1 := PackedInt32Array([rng.y])
+        var dg := PackedInt32Array([1 if use_dugin else 0])
+        var hr := PackedInt32Array([0 if support_off.has(c) else 1])
+        var res: PackedFloat64Array = army._nat.aim_pick(ut, ux, uy, uc, rn, rx, s0, s1, dg, hr, _aim_spot_flat, _aim_req_xy, _aim_req_c, _aim_req_served)
+        var kind: int = int(res[0])
+        if kind == 1:
+                return [Vector2(res[1], res[2]), res[3] != 0.0]
+        if kind == 2:
+                var rq: Dictionary = requests[int(res[4])]
+                _serve(rq, u)
+                return [Vector2(res[1], res[2]), false]
+        return []
+
+
+# GDScript-эталон _pick (parity + отказ без натива). use_dugin — результат
+# гейта rf(), передаётся снаружи, чтобы RNG-последовательность совпадала.
+func _pick_gd(u: Unit, rmin: float, rmax: float, use_dugin: bool) -> Array:
         var c: int = u.country_id
         var best: Array = []
         var bs: float = INF
 
-        if (u.type == Unit.Type.MORTAR or u.type == Unit.Type.ARTY) and rf() < DUG_IN_PICK:
+        if use_dugin:
                 for e0: Array in spotted.get(c, []):
                         if not (e0[1] is Unit and (e0[1] as Unit).entrenched):
                                 continue
@@ -557,6 +651,56 @@ static func shell_pos(s: Dictionary) -> Vector2:
 
 
 func _update_shells(dt: float) -> void :
+        # Нативный путь (Rust): тайминги (t, свист, трейл-тик, прибытие).
+        # RNG свиста, pts и _impact — GDScript (нужны живые объекты и randi()).
+        if army._nat != null:
+                var st := PackedFloat64Array()
+                var sd := PackedFloat64Array()
+                var sk := PackedInt32Array()
+                var sw := PackedInt32Array()
+                var sl := PackedFloat64Array()
+                for s: Dictionary in shells:
+                        st.append(float(s["t"]))
+                        sd.append(float(s["dur"]))
+                        sk.append(int(s["k"]))
+                        sw.append(1 if bool(s["whistle"]) else 0)
+                        sl.append(float(s["trail"]))
+                var res: PackedFloat64Array = army._nat.shells_step(dt, st, sd, sk, sw, sl)
+                var out: Array = []
+                for i in shells.size():
+                        var s: Dictionary = shells[i]
+                        var nt: float = res[i * 4]
+                        var w: float = res[i * 4 + 1]
+                        var arr: float = res[i * 4 + 2]
+                        var tick: float = res[i * 4 + 3]
+                        s["t"] = nt
+                        var kind: int = int(s["k"])
+                        if kind == KIND_ROCKET:
+                                var ntr: float = float(s["trail"]) + dt
+                                if tick != 0.0:
+                                        s["trail"] = 0.0
+                                        var pts: PackedVector2Array = s["pts"]
+                                        pts.append(shell_pos(s))
+                                        if pts.size() > 12:
+                                                pts.remove_at(0)
+                                        s["pts"] = pts
+                                else:
+                                        s["trail"] = ntr
+                        if w != 0.0:
+                                s["whistle"] = true
+                                if gw._on_screen(s["to"], 40.0) and randi() % 2 == 0:
+                                        Sfx.play("shell_whistle_in", s["to"], -4.0)
+                        if arr == 0.0:
+                                out.append(s)
+                        else:
+                                _impact(s)
+                shells = out
+                return
+        _update_shells_gd(dt)
+
+
+# GDScript-эталон _update_shells (parity + отказ без натива).
+func _update_shells_gd(dt: float) -> void :
         for k in range(shells.size() - 1, -1, -1):
                 var s: Dictionary = shells[k]
                 s["t"] = float(s["t"]) + dt

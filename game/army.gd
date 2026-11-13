@@ -62,6 +62,11 @@ const PIN_MAX: float = 6.0
 const PIN_SLOW: float = 3.3
 const FLANK_COS: float = 0.5
 var pin_until: Dictionary = {}
+# v5: кэш угроз для _react (раз в секунду). Полный скан _near(450) выполняется
+# только если кэш устарел (0.5 с) или записанная угроза перестала быть валидной;
+# между сканами угроза проверяется O(1). Порядок выбора угрозы и состав
+# посылаемых юнитов не меняются — сетевая детерминированность сохранена.
+var _react_cache: Dictionary = {}
 const ORDER_OUT: float = 10000000.0
 const NEAR_POST: float = 260.0
 const TRENCH_RANGE: float = 1.08
@@ -2174,7 +2179,10 @@ func _check_posts() -> void :
 
 func _posts(dt: float) -> void :
         var mil: Military = gw.mil
+        var t_dig: int = Time.get_ticks_usec()
         mil.dig_tick(dt)
+        _pf2("army:_posts.dig", t_dig)
+        var t_occ: int = Time.get_ticks_usec()
         _occ.clear()
         for u0: Unit in units:
                 if u0.post != null and u0.alive():
@@ -2185,7 +2193,11 @@ func _posts(dt: float) -> void :
         for f0: Facility in mil.facilities:
                 if is_trench(f0.kind) and not _occ.has(f0):
                         _occ[f0] = []
+        _pf2("army:_posts.occ", t_occ)
+        var t_chk: int = Time.get_ticks_usec()
         _check_posts()
+        _pf2("army:_posts.check", t_chk)
+        var t_trench: int = Time.get_ticks_usec()
         for f: Facility in mil.facilities:
                 if not is_trench(f.kind):
                         continue
@@ -2203,7 +2215,11 @@ func _posts(dt: float) -> void :
                         for u: Unit in occ:
                                 if u.entrenched:
                                         u.hp = minf(u.max_hp, u.hp + 1.5)
+        _pf2("army:_posts.trench", t_trench)
+        var t_digb: int = Time.get_ticks_usec()
         _dig_in_builds()
+        _pf2("army:_posts.digb", t_digb)
+        var t_react: int = Time.get_ticks_usec()
         for c: Country in gw.countries:
                 if c.eliminated or not c.army_defend:
                         continue
@@ -2213,19 +2229,31 @@ func _posts(dt: float) -> void :
                                 if occupy(f2, c.id, true) == 0:
                                         break
                 _react(c)
+        _pf2("army:_posts.react", t_react)
         _occ.clear()
 
 
 
 func _react(c: Country) -> void :
+        var now: float = gw.game_time
         for city_id in c.city_ids:
                 var city: City = gw.cities[city_id]
                 var cp: Vector2 = Vector2(city.center * GameWorld.CELL)
                 var threat: Unit = null
-                for o: Unit in _near(cp, 450.0):
-                        if o.alive() and o.ground() and _hostile(c.id, o.country_id) and o.pos.distance_squared_to(cp) < 450.0 * 450.0 and (c.is_player or fire.sees(c.id, o)):
-                                threat = o
-                                break
+                # v5: сначала O(1)-проверка закешированной угрозы.
+                var key: int = city_id * 64 + c.id
+                var ent: Variant = _react_cache.get(key)
+                if ent is Array:
+                        var th: Unit = ent[1] as Unit
+                        if th != null and is_instance_valid(th) and th.alive() and th.ground() and _hostile(c.id, th.country_id) and th.pos.distance_squared_to(cp) < 450.0 * 450.0 and (c.is_player or fire.sees(c.id, th)):
+                                threat = th
+                if threat == null and (ent == null or not (ent is Array) or now >= float((ent as Array)[0])):
+                        # Полный скан — тот же порядок обхода, что и раньше.
+                        for o: Unit in _near(cp, 450.0):
+                                if o.alive() and o.ground() and _hostile(c.id, o.country_id) and o.pos.distance_squared_to(cp) < 450.0 * 450.0 and (c.is_player or fire.sees(c.id, o)):
+                                        threat = o
+                                        break
+                        _react_cache[key] = [now + 0.5, threat]
                 if threat == null:
                         continue
                 var sent: int = 0

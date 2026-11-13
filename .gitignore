@@ -33,3 +33,4 @@ godot_bin
 /DroneFlames.exe
 /DroneFlames_Debug.exe
 /DroneFlames_console.exe
+*.dll

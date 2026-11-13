@@ -24,6 +24,7 @@ const ELL_RX2: f64 = 256.0; // 16^2 — армейский дым
 const ELL_RY2: f64 = 81.0; // 9^2
 const TRENCH_SPOT_D2: f64 = 2916.0; // 54^2 — окопанная цель видна только вблизи
 const RECON_R: f64 = 170.0; // радиус сбоку дрона-разведчика (grow бокса)
+const SPOT_R: f64 = 120.0; // v4: базовый радиус глаза-юнита (ArmyFire.SPOT_R)
 const SPOT_LIMIT: i64 = 60; // лимит списка spotted на страну
 
 // Биты flags в push_units.
@@ -38,6 +39,10 @@ const F_NOTSIEGE: i32 = 64; // state != SIEGE
 const OCC_TYPES_MIN: i32 = 1; // Unit.Type.INFANTRY
 const OCC_TYPES_MAX: i32 = 4; // Unit.Type.ASSAULT (кандидаты: 1,3,4)
 
+// v4: бит flags «окопан или вырылся» (u.entrenched || u.dug) — для радиуса
+// глаз разведки (SPOT_R * 1.3). Не путать с F_ENT (только entrenched).
+const F_DUG: i32 = 128;
+
 struct UnitRow {
     id: i64,
     x: f64,
@@ -46,6 +51,7 @@ struct UnitRow {
     veh: bool,
     air: bool,
     ent: bool,
+    dug: bool,
     nopost: bool,
     op_on: bool,
     reinf0: bool,
@@ -246,6 +252,7 @@ impl DfNative {
                 veh: fl & F_VEH != 0,
                 air: fl & F_AIR != 0,
                 ent: fl & F_ENT != 0,
+                dug: fl & F_DUG != 0,
                 nopost: fl & F_NOPOST != 0,
                 op_on: fl & F_OPON != 0,
                 reinf0: fl & F_REINF0 != 0,
@@ -286,6 +293,12 @@ impl DfNative {
             Some(&i) => i as usize,
             None => return -2, // ищущего нет в снапшоте => caller уходит в GDScript
         };
+        self.acq_search(si, r, hm, at, blind)
+    }
+
+    // v4: тело поиска цели-юнита (общее для acquire_one и acquire_batch).
+    // si — индекс ищущего в снапшоте. Семантика 1:1 с acquire_one.
+    fn acq_search(&self, si: usize, r: f64, hm: i64, at: bool, blind: bool) -> i64 {
         let (ux, uy, ucid) = {
             let u = &self.units[si];
             (u.x, u.y, u.cid)
@@ -330,6 +343,92 @@ impl DfNative {
             }
         }
         best
+    }
+
+    // v4: батч-валидация текущей цели + батч-поиск новой. Один вызов заменяет
+    // до ~2×N вызовов acquire_one/valid_one за scan-тик.
+    //
+    // Ряды (все массивы одной длины, порядок = порядок юнит-цикла):
+    //   ids      — id ищущего (есть в снапшоте);
+    //   rngs     — range_of(u)       (радиус поиска, как acquire_one);
+    //   rvs      — range_of(u)*1.15  (радиус валидации, как valid_one);
+    //   hms      — маска враждебности (hm != -1 гарантируется GDScript);
+    //   ats      — флаг «только машины» (ATGM);
+    //   blinds   — ищущий сам в дыму;
+    //   cur_ids  — id текущей цели-юнита или -1;
+    //   srch     — 1 = искать новую, если текущая невалидна/отсутствует
+    //              (чётные/нечётные id — как стаггеринг _acquire).
+    //
+    // Ответ на ряд: >=0 — id (сохранённой или новой) цели; -1 — юнита-цели нет
+    // (GDScript чистит цель и пробует здания на своей стороне); -2 — ищущего
+    // нет в снапшоте (GDScript уходит в полный _acquire).
+    #[func]
+    fn acquire_batch(
+        &self,
+        ids: PackedInt32Array,
+        rngs: PackedFloat64Array,
+        rvs: PackedFloat64Array,
+        hms: PackedInt64Array,
+        ats: PackedInt32Array,
+        blinds: PackedInt32Array,
+        cur_ids: PackedInt32Array,
+        srch: PackedInt32Array,
+    ) -> PackedInt64Array {
+        let n = ids
+            .len()
+            .min(rngs.len())
+            .min(rvs.len())
+            .min(hms.len())
+            .min(ats.len())
+            .min(blinds.len())
+            .min(cur_ids.len())
+            .min(srch.len());
+        let mut out: Vec<i64> = Vec::with_capacity(n);
+        for i in 0..n {
+            let sid = ids[i] as i64;
+            let r = rngs[i];
+            let rv = rvs[i];
+            let hm = hms[i];
+            let at = ats[i] != 0;
+            let blind = blinds[i] != 0;
+            let cur = cur_ids[i] as i64;
+            let search = srch[i] != 0;
+            let si = match self.id_to_idx.get(&sid) {
+                Some(&x) => x as usize,
+                None => {
+                    out.push(-2);
+                    continue;
+                }
+            };
+            // ——— 1) валидация текущей цели (семантика valid_one) ———
+            let mut kept = false;
+            if cur >= 0 {
+                if let Some(&ti) = self.id_to_idx.get(&cur) {
+                    let t = &self.units[ti as usize];
+                    let tc = t.cid;
+                    let foe = tc >= 0 && tc < 63 && (hm >> tc) & 1 == 1;
+                    if foe {
+                        let dx = (t.x as f32) - (self.units[si].x as f32);
+                        let dy = (t.y as f32) - (self.units[si].y as f32);
+                        let d2 = (dx * dx + dy * dy) as f64; // f32-дистанция
+                        if d2 <= rv * rv && (d2 < BLIND_D2 || !self.in_smoke(t.x, t.y)) {
+                            kept = true;
+                        }
+                    }
+                }
+            }
+            if kept {
+                out.push(cur);
+                continue;
+            }
+            if !search {
+                out.push(-1);
+                continue;
+            }
+            // ——— 2) свежий поиск (семантика acquire_one) ———
+            out.push(self.acq_search(si, r, hm, at, blind));
+        }
+        PackedInt64Array::from(out)
     }
 
     // Юнит-ветка Army._valid: живость цели и «охрана» — на стороне GDScript.
@@ -548,6 +647,264 @@ impl DfNative {
             eye_base += ng;
         }
         PackedInt32Array::from(out)
+    }
+
+    // v4: _spot с построением глаз ВНУТРИ Rust из снапшота. GDScript больше не
+    // материализует ~N глаз-массивов (главная стоимость _spot на пике боя).
+    //
+    // Глаза страны cid строятся в порядке: (1) свои живые наземные юниты
+    // снапшота (r2 = (SPOT_R * (1.3 если ent||dug))^2, recon=false);
+    // (2) разведчики — recon_flat по стране (RECON_R^2, recon=true); GDScript
+    // передаёт только живых и не заглушенных (jam_t <= 0);
+    // (3) города — city_flat по стране ((radius*CELL + CITY_SPOT_R)^2,
+    // recon=false). Ровно как _spot_eyes: юниты → разведчики → города.
+    //
+    // data_flat — склейка по стране: разведчики (x, y), города (x, y, r2),
+    // катера (x, y); counts — 3 int на страну (nr, nc, nb). Катера — landing-
+    // лодки с префильтром SAIL/BOARD/враждебность/живость на стороне GDScript;
+    // проверка как naval.spotted_for: первый глаз с d2 <= r2*1.7 фиксирует
+    // запись (bi, ei); без бокса/дыма.
+    //
+    // Здания — как в v3 (fac_*). Лимит 60: cnt = n_u + n_b + n_f, брейк после
+    // добавления здания (1:1 с `if list.size() > 60: break`).
+    //
+    // Ответ: Array из двух массивов:
+    //   [0] PackedInt32Array: на страну
+    //       [n_eu, n_er, n_ec, n_u, (uid, ei)*, n_b, (bi, ei)*, n_f, (fi, ei)*]
+    //       n_eu/n_er/n_ec — число глаз-юнитов/разведчиков/городов (для decode
+    //       recon-флага: ei в [n_eu, n_eu+n_er) — разведчик);
+    //   [1] PackedFloat64Array: 2 double на здание (tpx, tpy — точка прицела,
+    //       для линий — ближайшая к глазу ячейка; GDScript не пересчитывает
+    //       line_point).
+    #[func]
+    fn spot_all_v2(
+        &self,
+        cids: PackedInt32Array,
+        hms: PackedInt64Array,
+        data_flat: PackedFloat64Array,
+        counts: PackedInt32Array,
+        fac_ids: PackedInt32Array,
+        fac_cs: PackedInt32Array,
+        fac_xy: PackedFloat64Array,
+        fac_ext: PackedFloat64Array,
+        fac_flags: PackedInt32Array,
+        line_off: PackedInt32Array,
+        line_xy: PackedFloat64Array,
+    ) -> PackedFloat64Array {
+        let mut out: Vec<f64> = Vec::with_capacity(64);
+        let mut fac_tps: Vec<f64> = Vec::with_capacity(16);
+        let ncid = cids.len().min(hms.len()).min(counts.len() / 3);
+        let mut base: usize = 0;
+        for ci in 0..ncid {
+            let cid = cids[ci] as i64;
+            let hm = hms[ci];
+            let nr = counts[ci * 3] as usize;
+            let nc = counts[ci * 3 + 1] as usize;
+            let nb = counts[ci * 3 + 2] as usize;
+
+            // ——— глаза: юниты снапшота → разведчики → города (порядок 1:1) ———
+            let mut eyes: Vec<(f64, f64, f64, bool)> = Vec::with_capacity(64);
+            let mut n_eu: i32 = 0;
+            for o in &self.units {
+                if o.cid != cid || o.air {
+                    continue;
+                }
+                let r = SPOT_R * (if o.ent || o.dug { 1.3 } else { 1.0 });
+                eyes.push((o.x, o.y, r * r, false));
+                n_eu += 1;
+            }
+            let n_er: i32 = nr as i32;
+            for k in 0..nr {
+                let b = base + k * 2;
+                eyes.push((data_flat[b], data_flat[b + 1], RECON_R * RECON_R, true));
+            }
+            let n_ec: i32 = nc as i32;
+            let cit = base + nr * 2;
+            for k in 0..nc {
+                let b = cit + k * 3;
+                eyes.push((data_flat[b], data_flat[b + 1], data_flat[b + 2], false));
+            }
+
+            // ——— бокс: Rect2 expand по глазам + grow(RECON_R), f32 (1:1) ———
+            let mut bx0 = f64::INFINITY;
+            let mut by0 = f64::INFINITY;
+            let mut bx1 = f64::NEG_INFINITY;
+            let mut by1 = f64::NEG_INFINITY;
+            for e in &eyes {
+                if e.0 < bx0 {
+                    bx0 = e.0;
+                }
+                if e.1 < by0 {
+                    by0 = e.1;
+                }
+                if e.0 > bx1 {
+                    bx1 = e.0;
+                }
+                if e.1 > by1 {
+                    by1 = e.1;
+                }
+            }
+            let grow = RECON_R as f32;
+            let bpx = (bx0 as f32) - grow;
+            let bpy = (by0 as f32) - grow;
+            let bsx = ((bx1 as f32) - (bx0 as f32)) + grow * 2.0f32;
+            let bsy = ((by1 as f32) - (by0 as f32)) + grow * 2.0f32;
+            let brx = bpx + bsx;
+            let bry = bpy + bsy;
+
+            // ——— юниты: первый подходящий глаз фиксирует recon-флаг ———
+            let mut best_eye: Vec<i32> = vec![-1; self.units.len()];
+            for (ei, e) in eyes.iter().enumerate() {
+                let (ex, ey, r2, recon) = (e.0, e.1, e.2, e.3);
+                let rr = r2.sqrt() * 1.001 + 1.0;
+                for oi in self.near_candidates(ex, ey, rr) {
+                    let oi = oi as usize;
+                    if best_eye[oi] >= 0 {
+                        continue;
+                    }
+                    let o = &self.units[oi];
+                    if o.air || o.cid == cid {
+                        continue;
+                    }
+                    let foe = if o.cid >= 0 && o.cid < 63 { (hm >> o.cid) & 1 == 1 } else { false };
+                    if !foe {
+                        continue;
+                    }
+                    let ox = o.x;
+                    let oy = o.y;
+                    if (ox as f32) < bpx || (ox as f32) >= brx || (oy as f32) < bpy || (oy as f32) >= bry {
+                        continue;
+                    }
+                    if self.in_smoke(ox, oy) {
+                        continue;
+                    }
+                    let lim = if o.ent && !recon { r2.min(TRENCH_SPOT_D2) } else { r2 };
+                    let dx = (ox as f32) - (ex as f32);
+                    let dy = (oy as f32) - (ey as f32);
+                    let d2 = (dx * dx + dy * dy) as f64;
+                    if d2 <= lim {
+                        best_eye[oi] = ei as i32;
+                    }
+                }
+            }
+            let mut n_u: i32 = 0;
+            let mut blk: Vec<f64> = Vec::with_capacity(32);
+            for (oi, o) in self.units.iter().enumerate() {
+                let e = best_eye[oi];
+                if e >= 0 {
+                    blk.push(o.id as f64);
+                    blk.push(e as f64);
+                    n_u += 1;
+                }
+            }
+
+            // ——— катера: первый глаз с d2 <= r2*1.7 (1:1 spotted_for) ———
+            let mut n_b: i32 = 0;
+            let bot = base + nr * 2 + nc * 3;
+            for k in 0..nb {
+                let b = bot + k * 2;
+                let (px, py) = (data_flat[b], data_flat[b + 1]);
+                for (ei, e) in eyes.iter().enumerate() {
+                    let dx = (px as f32) - (e.0 as f32);
+                    let dy = (py as f32) - (e.1 as f32);
+                    let d2 = (dx * dx + dy * dy) as f64;
+                    if d2 <= e.2 * 1.7 {
+                        blk.push(k as f64);
+                        blk.push(ei as f64);
+                        n_b += 1;
+                        break;
+                    }
+                }
+            }
+            base += nr * 2 + nc * 3 + nb * 2;
+
+            // ——— здания: как в v3, лимит учитывает юнитов + катера ———
+            // Брейк лимита — 1:1 с GDScript: после глаз-цикла КАЖДОГО здания,
+            // прошедшего префильтры (враждебность + бокс), с матчем или без.
+            let mut n_f: i32 = 0;
+            let mut cnt: i64 = n_u as i64 + n_b as i64;
+            let nf = fac_ids.len();
+            for fi in 0..nf {
+                let fc0 = fac_cs[fi] as i64;
+                let foe = if fc0 >= 0 && fc0 < 63 { (hm >> fc0) & 1 == 1 } else { false };
+                if foe {
+                    let fx = fac_xy[fi * 2];
+                    let fy = fac_xy[fi * 2 + 1];
+                    let ext = fac_ext[fi];
+                    let trench = fac_flags[fi] & 1 != 0;
+                    let is_line = fac_flags[fi] & 2 != 0;
+                    let fpx = bpx - (ext as f32);
+                    let fpy = bpy - (ext as f32);
+                    let fsx = bsx + (ext as f32) * 2.0f32;
+                    let fsy = bsy + (ext as f32) * 2.0f32;
+                    if (fx as f32) >= fpx && (fx as f32) < fpx + fsx && (fy as f32) >= fpy && (fy as f32) < fpy + fsy {
+                        let mut fe: i32 = -1;
+                        let mut tpx = fx;
+                        let mut tpy = fy;
+                        for (ei, e) in eyes.iter().enumerate() {
+                            let (ex, ey, r2, recon) = (e.0, e.1, e.2, e.3);
+                            let (lpx, lpy) = if is_line {
+                                let lo = line_off[fi] as usize;
+                                let hi = line_off[fi + 1] as usize;
+                                let mut bd = f64::INFINITY;
+                                let mut px = fx;
+                                let mut py = fy;
+                                for li in lo..hi {
+                                    let cx = line_xy[li * 2];
+                                    let cy = line_xy[li * 2 + 1];
+                                    let ddx = (cx as f32) - (ex as f32);
+                                    let ddy = (cy as f32) - (ey as f32);
+                                    let dd = ((ddx * ddx + ddy * ddy) as f64);
+                                    if dd < bd {
+                                        bd = dd;
+                                        px = cx;
+                                        py = cy;
+                                    }
+                                }
+                                (px, py)
+                            } else {
+                                (fx, fy)
+                            };
+                            let lim = if trench && !recon { r2.min(TRENCH_SPOT_D2) } else { r2 };
+                            let dx = (lpx as f32) - (ex as f32);
+                            let dy = (lpy as f32) - (ey as f32);
+                            let d2 = (dx * dx + dy * dy) as f64;
+                            if d2 <= lim {
+                                fe = ei as i32;
+                                tpx = lpx;
+                                tpy = lpy;
+                                break;
+                            }
+                        }
+                        if fe >= 0 {
+                            blk.push(fi as f64);
+                            blk.push(fe as f64);
+                            fac_tps.push(tpx);
+                            fac_tps.push(tpy);
+                            n_f += 1;
+                            cnt += 1;
+                        }
+                        if cnt > SPOT_LIMIT {
+                            break;
+                        }
+                    }
+                }
+            }
+            // Блок страны: заголовок глаз + счётчики, ряды юнитов/катеров/зданий.
+            out.push(n_eu as f64);
+            out.push(n_er as f64);
+            out.push(n_ec as f64);
+            out.push(n_u as f64);
+            out.extend_from_slice(&blk[..(n_u as usize) * 2]);
+            out.push(n_b as f64);
+            out.extend_from_slice(&blk[(n_u as usize) * 2..((n_u + n_b) as usize) * 2]);
+            out.push(n_f as f64);
+            out.extend_from_slice(&blk[((n_u + n_b) as usize) * 2..]);
+        }
+        // Ряды как f64 (i32 представим точно) + маркер -1.0 + точки зданий.
+        out.push(-1.0);
+        out.extend_from_slice(&fac_tps);
+        PackedFloat64Array::from(out)
     }
 
     // Army._update_rockets — интегрирование полёта: разворот к цели, шаг,

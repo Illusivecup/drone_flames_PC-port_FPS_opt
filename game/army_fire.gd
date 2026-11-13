@@ -143,10 +143,26 @@ func _spot() -> void :
         spotted.clear()
         seen.clear()
         var eyes: Dictionary = _spot_eyes()
-        # Нативный путь (Rust): весь перебор «глаза × цели» в df_native.
-        if army._nat != null and _spot_native(eyes):
+        if OS.get_environment("DF_WD_VERIFY") == "1" and army._nat != null:
+                # Теневая сверка v4 (глаза в Rust, spot_all_v2) против GDScript-эталона:
+                # нативный результат сохраняется, активным остаётся эталон.
+                var ok: bool = _spot_native()
+                var res_n: Dictionary = spotted.duplicate(true)
+                spotted.clear()
+                seen.clear()
+                _spot_gd(eyes)
+                var mis: int = _spot_verify(res_n)
+                if mis == 0:
+                        print("[SPOT-VERIFY] ok: cids=", res_n.size())
                 return
-        # GDScript-эталон (parity + отказ без натива).
+        # Нативный путь (Rust): глаза строит df_native из снапшота (v4).
+        if army._nat != null and _spot_native():
+                return
+        _spot_gd(eyes)
+
+
+# GDScript-эталон _spot (parity + отказ без натива) — тело прежней _spot.
+func _spot_gd(eyes: Dictionary) -> void :
         for cid: int in eyes:
                 var ey: Array = eyes[cid]
                 var hostility: Dictionary = {}
@@ -224,39 +240,83 @@ func _spot_eyes() -> Dictionary:
         return eyes
 
 
-# Нативный _spot: возвращает false, если нужен GDScript-путь (hm == -1).
-# Глаза считаются в GDScript (живые), перебор «глаза × юниты/здания» — Rust.
-func _spot_native(eyes: Dictionary) -> bool:
-        army._nat_sync()
+# Нативный _spot v4 (df_native.spot_all_v2): глаза (юниты/разведчики/города)
+# строит Rust из снапшота, GDScript передаёт только разведчиков, города,
+# катера и префильтрованные здания. Возвращает false, если нужен
+# GDScript-путь (hm == -1 — страна вне 0..63).
+func _spot_native() -> bool:
+        # Принудительная свежесть снапшота: глаза строятся в Rust из позиций
+        # текущего тика — 1:1 с GDScript-эталоном (units move между _build_grid
+        # и _spot при нескольких sim-шагах в кадре).
+        army._nat_sync(true)
+        # Порядок стран: первое появление наземного юнита, затем страны «только
+        # города» (в порядке gw.countries) — 1:1 с порядком ключей _spot_eyes.
         var cids := PackedInt32Array()
+        var gseen := {}
+        for u: Unit in army.units:
+                if u.alive() and u.ground() and not gseen.has(u.country_id):
+                        gseen[u.country_id] = true
+                        cids.append(u.country_id)
+        for cc: Country in gw.countries:
+                if cc.eliminated or cc.at_war.is_empty() or gseen.has(cc.id):
+                        continue
+                gseen[cc.id] = true
+                cids.append(cc.id)
         var hms := PackedInt64Array()
-        var eyes_flat := PackedFloat64Array()
-        var groups := PackedInt32Array()
-        var naval_n := PackedInt32Array()
-        var naval_res: Array = []
-        for cid: int in eyes:
+        var counts := PackedInt32Array()
+        var data := PackedFloat64Array()
+        var boat_meta: Array = []
+        for cid: int in cids:
                 var hm: int = army._hmask(cid)
                 if hm == -1:
                         return false
-                var ey: Array = eyes[cid]
-                cids.append(cid)
                 hms.append(hm)
-                groups.append(ey.size())
-                for e: Array in ey:
-                        var p: Vector2 = e[0]
-                        eyes_flat.append(p.x)
-                        eyes_flat.append(p.y)
-                        eyes_flat.append(float(e[1]))
-                        eyes_flat.append(1.0 if bool(e[2]) else 0.0)
-                var nr: Array = gw.naval.spotted_for(cid, ey) if gw.naval != null else []
-                naval_res.append(nr)
-                naval_n.append(nr.size())
+                # разведчики: живые, не заглушенные (порядок fire.recon)
+                var nr: int = 0
+                for d: Unit in recon:
+                        if d.alive() and d.jam_t <= 0.0 and d.country_id == cid:
+                                data.append(d.pos.x)
+                                data.append(d.pos.y)
+                                nr += 1
+                # города своей страны (в порядке cc.city_ids)
+                var nc: int = 0
+                for cc2: Country in gw.countries:
+                        if cc2.id != cid or cc2.eliminated or cc2.at_war.is_empty():
+                                continue
+                        for city_id in cc2.city_ids:
+                                var city: City = gw.cities[city_id]
+                                var cr: float = float(city.radius * GameWorld.CELL) + CITY_SPOT_R
+                                var cp: Vector2 = Vector2(city.center * GameWorld.CELL)
+                                data.append(cp.x)
+                                data.append(cp.y)
+                                data.append(cr * cr)
+                                nc += 1
+                # катера naval-высадок: SAIL/BOARD, живые, враждебные (порядок landings)
+                var nb: int = 0
+                var bm: Array = []
+                if gw.naval != null:
+                        for L: Dictionary in gw.naval.landings:
+                                if int(L["stage"]) != Naval.Stage.SAIL and int(L["stage"]) != Naval.Stage.BOARD:
+                                        continue
+                                if not army._hostile(cid, int(L["c"])):
+                                        continue
+                                for b: Dictionary in L["boats"]:
+                                        if bool(b["sunk"]) or bool(b["done"]):
+                                                continue
+                                        var p: Vector2 = b["pos"]
+                                        data.append(p.x)
+                                        data.append(p.y)
+                                        bm.append([p, float(b["heading"]), float(b["delay"])])
+                                        nb += 1
+                counts.append(nr)
+                counts.append(nc)
+                counts.append(nb)
+                boat_meta.append(bm)
         # Здания: префильтр MIL_KINDS/parent/moving/alive в GDScript (порядок
         # gw.mil.facilities сохраняется), матчинг с глазами — Rust.
         var fac_ids := PackedInt32Array()
         var fac_cs := PackedInt32Array()
-        var fac_x := PackedFloat64Array()
-        var fac_y := PackedFloat64Array()
+        var fac_xy := PackedFloat64Array()
         var fac_ext := PackedFloat64Array()
         var fac_flags := PackedInt32Array()
         var line_off := PackedInt32Array()
@@ -270,8 +330,8 @@ func _spot_native(eyes: Dictionary) -> bool:
                 fac_ids.append(f.id)
                 fac_cs.append(f.country_id)
                 var fc: Vector2 = f.center_px()
-                fac_x.append(fc.x)
-                fac_y.append(fc.y)
+                fac_xy.append(fc.x)
+                fac_xy.append(fc.y)
                 fac_ext.append(float(maxi(f.size.x, f.size.y)) * 2.0 + (float(f.cells.size()) * 2.0 if f.is_line() else 0.0))
                 fac_flags.append((1 if Army.is_trench(f.kind) else 0) | (2 if f.is_line() else 0))
                 if f.is_line():
@@ -280,39 +340,88 @@ func _spot_native(eyes: Dictionary) -> bool:
                                 line_xy.append(lp.x)
                                 line_xy.append(lp.y)
                 line_off.append(line_xy.size() / 2)
-        var res: PackedInt32Array = army._nat.spot_all(cids, hms, eyes_flat, groups, fac_ids, fac_cs, fac_x, fac_y, fac_ext, fac_flags, line_off, line_xy, naval_n)
-        # Декодирование: [для каждой страны: n_u, (uid, eye)*, n_f, (fid, eye)*]
+        # Единый f64-ответ: ряды (int-значения как f64) до маркера -1.0,
+        # затем хвост tps (2 double на здание).
+        var res: PackedFloat64Array = army._nat.spot_all_v2(cids, hms, data, counts, fac_ids, fac_cs, fac_xy, fac_ext, fac_flags, line_off, line_xy)
+        var mark: int = -1
+        for i in res.size():
+                if res[i] == -1.0:
+                        mark = i
+                        break
+        var tps_at: int = mark + 1
+        # Декодирование: [на страну: n_eu, n_er, n_ec, n_u, (uid, ei)*,
+        # n_b, (bi, ei)*, n_f, (fi, ei)*] + хвост tps (2 double на здание).
         var pos_i: int = 0
+        var tp_i: int = 0
         for ci in cids.size():
                 var cid: int = cids[ci]
-                var ey: Array = eyes[cid]
+                var n_eu: int = int(res[pos_i])
+                var n_er: int = int(res[pos_i + 1])
+                var n_ec: int = int(res[pos_i + 2])
+                var n_u: int = int(res[pos_i + 3])
+                pos_i += 4
+                var rows_end: int = mark
                 var list: Array = []
                 var sd: Dictionary = {}
-                var n_u: int = res[pos_i]
-                pos_i += 1
                 for k in n_u:
-                        var u: Unit = army._nat_u.get(res[pos_i])
-                        var ei: int = res[pos_i + 1]
+                        var u: Unit = army._nat_u.get(int(res[pos_i]))
+                        var ei: int = int(res[pos_i + 1])
                         pos_i += 2
                         if u != null and u.alive():
-                                list.append([u.pos, u, bool(ey[ei][2])])
+                                list.append([u.pos, u, ei >= n_eu and ei < n_eu + n_er])
                                 sd[u] = true
-                list.append_array(naval_res[ci])
-                for ne: Array in naval_res[ci]:
-                        sd[ne[1]] = true
-                var n_f: int = res[pos_i]
+                var n_b: int = int(res[pos_i])
                 pos_i += 1
-                for k2 in n_f:
-                        var f: Facility = fac_objs[res[pos_i]]
-                        var ei2: int = res[pos_i + 1]
+                var bm: Array = boat_meta[ci]
+                var tp_at: int = tps_at + tp_i
+                for k2 in n_b:
+                        var bi: int = int(res[pos_i])
+                        var ei2: int = int(res[pos_i + 1])
                         pos_i += 2
-                        var tp: Vector2 = gw.mil.line_point(f, ey[ei2][0]) if f.is_line() else f.center_px()
-                        list.append([tp, f, bool(ey[ei2][2])])
+                        var meta: Array = bm[bi]
+                        var lead: Vector2 = (meta[0] as Vector2) + Vector2.from_angle(meta[1]) * Naval.BOAT_SPEED * (0.0 if meta[2] > 0.0 else 2.0)
+                        list.append([lead, null, ei2 >= n_eu and ei2 < n_eu + n_er])
+                        sd[null] = true
+                var n_f: int = int(res[pos_i])
+                pos_i += 1
+                for k3 in n_f:
+                        var f: Facility = fac_objs[int(res[pos_i])]
+                        var ei3: int = int(res[pos_i + 1])
+                        pos_i += 2
+                        var tp := Vector2(res[tp_at], res[tp_at + 1])
+                        tp_i += 2
+                        list.append([tp, f, ei3 >= n_eu and ei3 < n_eu + n_er])
                         sd[f] = true
                 spotted[cid] = list
                 seen[cid] = sd
         return true
 
+
+# Теневая сверка spot_all_v2 против GDScript-эталона: длины, объекты,
+# recon-флаги и точки. Возвращает число расхождений (печатает первые 6).
+func _spot_verify(nat_sp: Dictionary) -> int:
+        var mis: int = 0
+        for cid: int in nat_sp:
+                var a: Array = nat_sp[cid]
+                var b: Array = spotted.get(cid, [])
+                if a.size() != b.size():
+                        mis += 1
+                        if mis <= 6:
+                                print("  cid=", cid, " size ", a.size(), "/", b.size())
+                        continue
+                for i in a.size():
+                        var ea: Array = a[i]
+                        var eb: Array = b[i]
+                        var oa: Object = ea[1]
+                        var ob: Object = eb[1]
+                        var same_obj: bool = (oa == ob) or (oa == null and ob == null)
+                        var pa: Vector2 = ea[0]
+                        var pb: Vector2 = eb[0]
+                        if not same_obj or bool(ea[2]) != bool(eb[2]) or not is_equal_approx(pa.x, pb.x) or not is_equal_approx(pa.y, pb.y):
+                                mis += 1
+                                if mis <= 6:
+                                        print("  cid=", cid, " i=", i, " obj=", oa, "/", ob, " recon=", bool(ea[2]), "/", bool(eb[2]), " p=", pa, "/", pb)
+        return mis
 
 
 func sees(country_id: int, o: Object) -> bool:

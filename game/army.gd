@@ -115,6 +115,17 @@ var _hmask_cache: Dictionary = {}
 # null, если расширение не собрано под платформу — тогда игра идёт по
 # прежнему GDScript-пути без изменений поведения.
 var _nat: Object = null
+# v4: строки батча acquire_batch — собираются за юнит-цикл на scan-тике,
+# применяются одним нативным вызовом после цикла (см. update).
+var _a_ids := PackedInt32Array()
+var _a_r := PackedFloat64Array()
+var _a_rv := PackedFloat64Array()
+var _a_hm := PackedInt64Array()
+var _a_at := PackedInt32Array()
+var _a_bl := PackedInt32Array()
+var _a_cur := PackedInt32Array()
+var _a_sr := PackedInt32Array()
+var _a_us: Array[Unit] = []
 var _nat_u: Dictionary = {}
 # Кадр последней синхронизации нативного снапшота (чтобы не пересобирать
 # его дважды за кадр при нескольких вызовах _nat_sync подряд).
@@ -169,11 +180,11 @@ func _spec_fill() -> void :
 # Свежий снапшот живых не-FPV юнитов для натива (позиции/флаги/типы) + дымы.
 # Вызывается в _build_grid (скан 0.25 c), перед _spot и перед occupy — везде,
 # где нативному пассу нужна живая картина мира.
-func _nat_sync() -> void :
+func _nat_sync(force: bool = false) -> void :
         if _nat == null:
                 return
         var fr: int = Engine.get_process_frames()
-        if _nat_sync_frame == fr:
+        if not force and _nat_sync_frame == fr:
                 return
         _nat_sync_frame = fr
         var nat_ids := PackedInt32Array()
@@ -201,6 +212,8 @@ func _nat_sync() -> void :
                         fl |= 32
                 if u.state != Unit.State.SIEGE:
                         fl |= 64
+                if u.dug:
+                        fl |= 128
                 nat_ids.append(u.id)
                 nat_xs.append(u.pos.x)
                 nat_ys.append(u.pos.y)
@@ -497,6 +510,15 @@ func update(dt: float) -> void :
         if scan:
                 _scan_t = 0.25
                 _u0 = Time.get_ticks_usec()
+                _a_ids.clear()
+                _a_r.clear()
+                _a_rv.clear()
+                _a_hm.clear()
+                _a_at.clear()
+                _a_bl.clear()
+                _a_cur.clear()
+                _a_sr.clear()
+                _a_us.clear()
                 _build_grid()
                 _pf2("army:_build_grid", _u0)
                 # Стаггеринг поиска целей: за скан обрабатывается половина юнитов
@@ -542,13 +564,52 @@ func update(dt: float) -> void :
                         acc_adv += float(Time.get_ticks_usec() - t0i) / 1000.0
                 else:
                         var already_valid: bool = false
+                        var acq_row: int = -1
                         if scan:
-                                if u.target != null and _valid(u, u.target):
-                                        already_valid = true
-                                elif (u.id & 1) == (1 if _acq_flip else 0):
-                                        already_valid = _acquire(u)
+                                if u.target != null and u.target is Unit:
+                                        var par: bool = (u.id & 1) == (1 if _acq_flip else 0)
+                                        var grd: bool = gw.diplo != null and gw.diplo.rq != null and gw.diplo.rq.guarding(u.country_id)
+                                        var hm0: int = _hmask(u.country_id)
+                                        # v4: батч-строка — валидация текущей цели (+ поиск при
+                                        # чётности) одним нативным вызовом после цикла. Позиции
+                                        # берутся из снапшота _build_grid этого тика: сам юнит ещё
+                                        # не двигался, чужие — как в per-unit acquire_one.
+                                        if _nat != null and not grd and hm0 != -1 and (u.target as Unit).state != Unit.State.DEAD:
+                                                var r0: float = range_of(u)
+                                                _a_ids.append(u.id)
+                                                _a_r.append(r0)
+                                                _a_rv.append(r0 * 1.15)
+                                                _a_hm.append(hm0)
+                                                _a_at.append(1 if u.type == Unit.Type.ATGM else 0)
+                                                _a_bl.append(1 if in_smoke(u.pos) else 0)
+                                                _a_cur.append((u.target as Unit).id)
+                                                _a_sr.append(1 if par else 0)
+                                                _a_us.append(u)
+                                                acq_row = _a_ids.size() - 1
+                                        elif _valid(u, u.target):
+                                                already_valid = true
+                                        elif par:
+                                                already_valid = _acquire(u)
+                                elif u.target == null and (u.id & 1) == (1 if _acq_flip else 0):
+                                        var grd2: bool = gw.diplo != null and gw.diplo.rq != null and gw.diplo.rq.guarding(u.country_id)
+                                        var me0: Country = gw.country_by_id(u.country_id)
+                                        var hm2: int = _hmask(u.country_id)
+                                        if _nat != null and not grd2 and hm2 != -1 and me0 != null and not me0.at_war.is_empty():
+                                                var r1: float = range_of(u)
+                                                _a_ids.append(u.id)
+                                                _a_r.append(r1)
+                                                _a_rv.append(r1 * 1.15)
+                                                _a_hm.append(hm2)
+                                                _a_at.append(1 if u.type == Unit.Type.ATGM else 0)
+                                                _a_bl.append(1 if in_smoke(u.pos) else 0)
+                                                _a_cur.append(-1)
+                                                _a_sr.append(1)
+                                                _a_us.append(u)
+                                                acq_row = _a_ids.size() - 1
+                                        else:
+                                                already_valid = _acquire(u)
                         var tgt: Object = u.target
-                        if tgt != null and not already_valid and not _valid(u, tgt):
+                        if tgt != null and not already_valid and acq_row < 0 and not _valid(u, tgt):
                                 u.target = null
                                 tgt = null
                         if tgt != null and not u.op_move and not (u.post != null and not u.entrenched and u.pi < u.path.size()):
@@ -647,6 +708,60 @@ func update(dt: float) -> void :
                 elif verify:
                         print("[FIGHT-VERIFY] ok: n=", f_ids.size())
                 acc_fig += float(Time.get_ticks_usec() - t0i) / 1000.0
+        # ——— v4: применение батча целей acquire_batch ———
+        if scan and _a_ids.size() > 0:
+                var ares: PackedInt64Array = _nat.acquire_batch(_a_ids, _a_r, _a_rv, _a_hm, _a_at, _a_bl, _a_cur, _a_sr)
+                var avfy: bool = OS.get_environment("DF_WD_VERIFY") == "1"
+                var amis: int = 0
+                for ri in _a_ids.size():
+                        var u2: Unit = _a_us[ri]
+                        if u2 == null or not u2.alive():
+                                continue
+                        var res: int = int(ares[ri])
+                        if avfy and int(_a_cur[ri]) == -1 and res >= -1:
+                                # Самопроверка батча: тот же поиск через per-unit ядро
+                                # acquire_one (те же входы снапшота — результат обязан
+                                # совпасть бит-в-бит).
+                                var one: int = _nat.acquire_one(u2.id, _a_r[ri], int(_a_hm[ri]), int(_a_at[ri]) == 1, int(_a_bl[ri]) == 1)
+                                if one != res:
+                                        amis += 1
+                                        if amis <= 6:
+                                                print("  acq id=", u2.id, " batch=", res, " one=", one)
+                        if res == -2:
+                                # ищущего нет в снапшоте — полный GDScript-путь
+                                _acquire(u2)
+                                continue
+                        if res >= 0:
+                                var tu: Unit = _nat_u.get(res)
+                                if tu != null and tu.state != Unit.State.DEAD:
+                                        u2.target = tu
+                                else:
+                                        # цель умерла между снапшотом и применением — перепросмотр
+                                        _acquire(u2)
+                                continue
+                        # res == -1: юнита-цели нет
+                        u2.target = null
+                        if int(_a_sr[ri]) == 1:
+                                # здания — как хвост _acquire: только воюющие страны,
+                                # eligible-типы и не-storming (ограничения внутри _acq_fac)
+                                var me2: Country = gw.country_by_id(u2.country_id)
+                                var grd2b: bool = gw.diplo != null and gw.diplo.rq != null and gw.diplo.rq.guarding(u2.country_id)
+                                if me2 != null and (not me2.at_war.is_empty() or grd2b):
+                                        u2.target = _acq_fac(u2, _a_r[ri], int(_a_hm[ri]), int(_a_at[ri]) == 1, u2.country_id, u2.pos)
+                if avfy:
+                        if amis > 0:
+                                push_error("[ACQ-VERIFY] %d/%d mismatched" % [amis, _a_ids.size()])
+                        else:
+                                print("[ACQ-VERIFY] ok: n=", _a_ids.size())
+                _a_ids.clear()
+                _a_r.clear()
+                _a_rv.clear()
+                _a_hm.clear()
+                _a_at.clear()
+                _a_bl.clear()
+                _a_cur.clear()
+                _a_sr.clear()
+                _a_us.clear()
         _pfv("army:_advance", acc_adv)
         _pfv("army:_fight", acc_fig)
         _pfv("army:_maybe_fpv", acc_fpv)
@@ -846,47 +961,60 @@ func _acquire(u: Unit) -> bool :
         if nat <= -2:
                 best = _acq_units_gd(u, r, at, blind, ucid, upos, hm, grd)
         # ——— здания: только если юнит-цель не найдена (как раньше) ———
-        var storming: bool = u.op_on and ( not u.op_hold or u.pi < u.path.size())
-        if best == null and not storming and (u.type == Unit.Type.TANK or u.type == Unit.Type.IFV or at or (u.kit & Unit.KIT_GREN) != 0):
-                bd = r * r * 1.3
-                # Тот же порядок, что у _near_fac (сначала линии, затем ячейки), но без копии массива
-                # и с проверкой вражды по маске страны.
-                var fr: float = r + 64.0
-                var fx0: int = floori((upos.x - fr) / GRID_PX)
-                var fx1: int = floori((upos.x + fr) / GRID_PX)
-                var fy0: int = floori((upos.y - fr) / GRID_PX)
-                var fy1: int = floori((upos.y + fr) / GRID_PX)
-                for pass_i in 2:
-                        if pass_i == 0:
-                                for f: Facility in _flines:
-                                        var fc0: int = f.country_id
-                                        var foe0: bool = ((hm >> fc0) & 1) == 1 if (hm != -1 and fc0 >= 0 and fc0 < 63) else _hostile(ucid, fc0)
-                                        if f.parent != null or f.kind == Facility.Kind.TRENCH_H or not foe0 or not gw.mil.alive(f):
-                                                continue
-                                        var rr0: float = r + float(maxi(f.size.x, f.size.y)) * 4.0
-                                        if f.center_px().distance_squared_to(upos) > rr0 * rr0:
-                                                continue
-                                        var d30: float = _target_pos(f, upos).distance_squared_to(upos)
-                                        if d30 < bd:
-                                                bd = d30
-                                                best = f
-                        else:
-                                for fcy in range(fy0, fy1 + 1):
-                                        for fcx in range(fx0, fx1 + 1):
-                                                for f: Facility in _fgrid.get(Vector2i(fcx, fcy), _NO_FACS):
-                                                        var fc1: int = f.country_id
-                                                        var foe1: bool = ((hm >> fc1) & 1) == 1 if (hm != -1 and fc1 >= 0 and fc1 < 63) else _hostile(ucid, fc1)
-                                                        if f.parent != null or f.kind == Facility.Kind.TRENCH_H or not foe1 or not gw.mil.alive(f):
-                                                                continue
-                                                        var rr1: float = r + float(maxi(f.size.x, f.size.y)) * 4.0
-                                                        if f.center_px().distance_squared_to(upos) > rr1 * rr1:
-                                                                continue
-                                                        var d31: float = _target_pos(f, upos).distance_squared_to(upos)
-                                                        if d31 < bd:
-                                                                bd = d31
-                                                                best = f
+        if best == null:
+                best = _acq_fac(u, r, hm, at, ucid, upos)
         u.target = best
         return best != null
+
+
+# v4: здание-часть _acquire (выделена для батча целей: после acquire_batch
+# ряды без юнита-цели идут сюда напрямую). Условия 1:1 с прежним телом:
+# storming исключён, типы TANK/IFV/ATGM/ГРЕН, порядок линий → ячейки.
+func _acq_fac(u: Unit, r: float, hm: int, at: bool, ucid: int, upos: Vector2) -> Object:
+        var storming: bool = u.op_on and ( not u.op_hold or u.pi < u.path.size())
+        if storming:
+                return null
+        if not (u.type == Unit.Type.TANK or u.type == Unit.Type.IFV or at or (u.kit & Unit.KIT_GREN) != 0):
+                return null
+        var best: Object = null
+        var bd: float = r * r * 1.3
+        # Тот же порядок, что у _near_fac (сначала линии, затем ячейки), но без копии массива
+        # и с проверкой вражды по маске страны.
+        var fr: float = r + 64.0
+        var fx0: int = floori((upos.x - fr) / GRID_PX)
+        var fx1: int = floori((upos.x + fr) / GRID_PX)
+        var fy0: int = floori((upos.y - fr) / GRID_PX)
+        var fy1: int = floori((upos.y + fr) / GRID_PX)
+        for pass_i in 2:
+                if pass_i == 0:
+                        for f: Facility in _flines:
+                                var fc0: int = f.country_id
+                                var foe0: bool = ((hm >> fc0) & 1) == 1 if (hm != -1 and fc0 >= 0 and fc0 < 63) else _hostile(ucid, fc0)
+                                if f.parent != null or f.kind == Facility.Kind.TRENCH_H or not foe0 or not gw.mil.alive(f):
+                                        continue
+                                var rr0: float = r + float(maxi(f.size.x, f.size.y)) * 4.0
+                                if f.center_px().distance_squared_to(upos) > rr0 * rr0:
+                                        continue
+                                var d30: float = _target_pos(f, upos).distance_squared_to(upos)
+                                if d30 < bd:
+                                        bd = d30
+                                        best = f
+                else:
+                        for fcy in range(fy0, fy1 + 1):
+                                for fcx in range(fx0, fx1 + 1):
+                                        for f: Facility in _fgrid.get(Vector2i(fcx, fcy), _NO_FACS):
+                                                var fc1: int = f.country_id
+                                                var foe1: bool = ((hm >> fc1) & 1) == 1 if (hm != -1 and fc1 >= 0 and fc1 < 63) else _hostile(ucid, fc1)
+                                                if f.parent != null or f.kind == Facility.Kind.TRENCH_H or not foe1 or not gw.mil.alive(f):
+                                                        continue
+                                                var rr1: float = r + float(maxi(f.size.x, f.size.y)) * 4.0
+                                                if f.center_px().distance_squared_to(upos) > rr1 * rr1:
+                                                        continue
+                                                var d31: float = _target_pos(f, upos).distance_squared_to(upos)
+                                                if d31 < bd:
+                                                        bd = d31
+                                                        best = f
+        return best
 
 
 # Юнит-пасс поиска цели-юнита на GDScript: fallback без натива и эталон parity
@@ -2743,6 +2871,8 @@ func _build_grid() -> void :
                                 fl |= 32
                         if u.state != Unit.State.SIEGE:
                                 fl |= 64
+                        if u.dug:
+                                fl |= 128
                         nat_ids.append(u.id)
                         nat_xs.append(u.pos.x)
                         nat_ys.append(u.pos.y)

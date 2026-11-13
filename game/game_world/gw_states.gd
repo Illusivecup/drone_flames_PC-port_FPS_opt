@@ -312,13 +312,11 @@ func player_found_town(cell: Vector2i, who: Country = null) -> City:
 	if o != pl.id and not _near_own_land(cell, TOWN_REACH, pl.id):
 		message.emit(Loc.msg(Loc.mk("Слишком далеко от своей страны (макс. %d м)", [TOWN_REACH * CELL])))
 		return null
-	if pl.money < Military.COST_TOWN:
-		message.emit(Loc.msg(Loc.mk("Не хватает денег: город стоит %d", [Military.COST_TOWN])))
+	var price: int = Military.town_cost(pl.towns_founded)
+	if pl.money < price:
+		message.emit(Loc.msg(Loc.mk("Не хватает денег: город стоит %d", [price])))
 		return null
-	var t: City = found_city(cell, pl, City.Kind.TOWN)
-	if t != null:
-		pl.money -= Military.COST_TOWN
-	return t
+	return purchase_town(cell, pl)
 
 
 func _near_own_land(cell: Vector2i, reach: int, cid: int = -1) -> bool:

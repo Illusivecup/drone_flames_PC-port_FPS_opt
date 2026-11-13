@@ -2,7 +2,7 @@
   "id": "fps_ping_overlay",
   "name": "FPS и сетевой ping",
   "version": "1.0.6",
-  "author": "Reborn Team",
+  "author": "@CryptoAngelazaz",
   "description": "Компактный оверлей частоты кадров и реального среднего RTT в сетевой партии.",
   "type": "interface",
   "entry": "mod.gd",

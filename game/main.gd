@@ -100,13 +100,13 @@ func _ready() -> void :
                                 GameConfig.map_seed = int(OS.get_environment("DF_SEED"))
                         else:
                                 GameConfig.map_seed = 424242
-                        var bn: RefCounted = (load("res://dev/bench_late.gd") as GDScript).new()
-                        set_meta("bench_late", bn)
-                        bn.call("run", self)
+                        var bench: RefCounted = (load("res://dev/bench_late.gd") as GDScript).new()
+                        set_meta("bench_late", bench)
+                        bench.call("run", self)
                 elif a == "--bench-acq":
-                        var ba: RefCounted = (load("res://dev/bench_acq.gd") as GDScript).new()
-                        set_meta("bench_acq", ba)
-                        ba.call("run", self)
+                        var bench_acq: RefCounted = (load("res://dev/bench_acq.gd") as GDScript).new()
+                        set_meta("bench_acq", bench_acq)
+                        bench_acq.call("run", self)
                 elif a == "--bench-nat2":
                         var bn2: RefCounted = (load("res://dev/bench_nat2.gd") as GDScript).new()
                         set_meta("bench_nat2", bn2)
@@ -169,10 +169,6 @@ func _main_menu() -> void :
                 await get_tree().process_frame
         var s: = WorldSettings.new()
         s.world_seed = randi() % 100000000
-        if GameConfig.map_seed >= 0:
-                # Фиксированный сид (бенчмарк --bench, DF_SEED) — воспроизводимые замеры.
-                s.world_seed = GameConfig.map_seed
-                GameConfig.map_seed = -1
         s.size = 256
         settings = s
         _deselect()
@@ -326,10 +322,6 @@ func _new_game() -> void :
         hud.visible = true
         var s: = WorldSettings.new()
         s.world_seed = randi() % 100000000
-        if GameConfig.map_seed >= 0:
-                # Фиксированный сид (бенчмарк --bench, DF_SEED) — воспроизводимые замеры.
-                s.world_seed = GameConfig.map_seed
-                GameConfig.map_seed = -1
         s.size = int(GameConfig.SIZES[GameConfig.size_i])
         GameConfig.apply_map(s, true)
         GameConfig.bots = maxi(1, GameConfig.bots)

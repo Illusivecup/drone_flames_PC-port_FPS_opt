@@ -261,7 +261,7 @@ func _goal(out: Array, p: Country, id: String, title: String, why: String, icon:
 	if KEY_KIND.has(key):
 		cost = Economy.build_cost(int(KEY_KIND[key]))
 	elif key == "town":
-		cost = {"money": Military.COST_TOWN}
+		cost = {"money": Military.town_cost(p.towns_founded)}
 	var done: bool = ok or placed or (p == gw.player and claimed.has(id))
 	if not done and not cost.is_empty():
 		why += _lack(p, cost)
@@ -351,7 +351,7 @@ func _goals(p: Country) -> Array:
 	else:
 		_goal(out, p, "trade", Loc.t("Торговля с соседом"), Loc.t("Выхода к морю нет: заключите торговое соглашение — излишки уйдут соседу сами, нехватку можно купить.%s") % [sc_txt], 
 			"icon_trade", "dip_best" if best_neighbour(p) >= 0 else "trade", _has_trade(p), Loc.t("Торговля налажена"))
-	_goal(out, p, "town", Loc.t("Новый город"), Loc.t("Город (%d) расширяет землю — новые залежи и лес, +%d денег в минуту. Ставьте рядом со значком руды.") % [Military.COST_TOWN, Military.INCOME_TOWN * 6], 
+	_goal(out, p, "town", Loc.t("Новый город"), Loc.t("Город (%d) расширяет землю — новые залежи и лес, +%d денег в минуту. Ставьте рядом со значком руды.") % [Military.town_cost(p.towns_founded), Military.INCOME_TOWN * 6],
 		"icon_city", "town", p.city_ids.size() >= 2, Loc.t("Основан новый город"))
 	var has_bar: bool = not _own(p, Facility.Kind.BARRACKS).is_empty()
 	var has_ad: bool = _any(p, AD_KINDS)

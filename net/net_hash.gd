@@ -12,7 +12,7 @@ static func of(gw: GameWorld) -> String:
 	nums.append(float(gw.rng.state))
 	nums.append(float(gw.net_tick))
 	for c: Country in gw.countries:
-		for v: int in [c.id, c.money, c.fuel, c.titanium, c.metal, c.wood, c.oil, c.precious, c.food, c.goods, c.city_ids.size(), 1 if c.eliminated else 0, 1 if c.is_player else 0, c.uranium]:
+		for v: int in [c.id, c.money, c.fuel, c.titanium, c.metal, c.wood, c.oil, c.precious, c.food, c.goods, c.city_ids.size(), c.towns_founded, 1 if c.eliminated else 0, 1 if c.is_player else 0, c.uranium]:
 			nums.append(float(v))
 	nums.append(float(gw.mil.facilities.size()))
 	nums.append(float(gw.mil.drones.size()))
@@ -26,16 +26,16 @@ static func of(gw: GameWorld) -> String:
 	for f: Facility in gw.mil.facilities:
 		hp = (hp * 31 + int(f.hp * 4.0)) & 2147483647
 	for u: Unit in gw.army.units:
-		sx = (sx * 31 + int(u.pos.x * 8.0)) & 2147483647
-		sy = (sy * 31 + int(u.pos.y * 8.0)) & 2147483647
+		sx = (sx * 31 + roundi(u.pos.x * 2.0)) & 2147483647
+		sy = (sy * 31 + roundi(u.pos.y * 2.0)) & 2147483647
 		hp = (hp * 31 + int(u.hp * 4.0)) & 2147483647
 	for a: Aircraft in gw.mil.air.aircraft:
-		sx = (sx * 31 + int(a.pos.x * 8.0)) & 2147483647
-		sy = (sy * 31 + int(a.pos.y * 8.0)) & 2147483647
+		sx = (sx * 31 + roundi(a.pos.x * 2.0)) & 2147483647
+		sy = (sy * 31 + roundi(a.pos.y * 2.0)) & 2147483647
 	nums.append(float(hp))
 	for dr: Drone in gw.mil.drones:
-		sx = (sx * 31 + int(dr.pos.x * 8.0)) & 2147483647
-		sy = (sy * 31 + int(dr.pos.y * 8.0)) & 2147483647
+		sx = (sx * 31 + roundi(dr.pos.x * 2.0)) & 2147483647
+		sy = (sy * 31 + roundi(dr.pos.y * 2.0)) & 2147483647
 	nums.append(float(sx))
 	nums.append(float(sy))
 	nums.append_array(diplo_nums(gw))
@@ -96,14 +96,14 @@ static func parts(gw: GameWorld) -> Dictionary:
 	out["rng"] = str(gw.rng.state)
 	var cs: PackedFloat64Array = PackedFloat64Array()
 	for c: Country in gw.countries:
-		for v: int in [c.money, c.fuel, c.titanium, c.metal, c.wood, c.oil, c.precious, c.food, c.goods, c.city_ids.size(), c.uranium]:
+		for v: int in [c.money, c.fuel, c.titanium, c.metal, c.wood, c.oil, c.precious, c.food, c.goods, c.city_ids.size(), c.towns_founded, c.uranium]:
 			cs.append(float(v))
 	out["countries"] = _h(cs.to_byte_array())
 	out["diplo"] = _h(diplo_nums(gw).to_byte_array())
 
 	var cl: Array = []
 	for c: Country in gw.countries:
-		cl.append([c.id, c.money, c.fuel, c.titanium, c.metal, c.wood, c.oil, c.precious, c.food, c.goods, c.city_ids.size(), c.uranium])
+		cl.append([c.id, c.money, c.fuel, c.titanium, c.metal, c.wood, c.oil, c.precious, c.food, c.goods, c.city_ids.size(), c.towns_founded, c.uranium])
 	out["clist"] = cl
 	var dd: Dictionary = {}
 	var dp: Diplomacy = gw.diplo

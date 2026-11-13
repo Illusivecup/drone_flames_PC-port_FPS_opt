@@ -1,6 +1,6 @@
 extends RefCounted
 ## Модификация «Карта: Оазис в Пустыне»
-## Автор: Reborn Team & @CryptoAngelazaz
+## Автор: @good_boy_irl & @CryptoAngelazaz
 
 var _mod_id: String = "oasis_map"
 var _map_type_id: String = "desert_oasis"

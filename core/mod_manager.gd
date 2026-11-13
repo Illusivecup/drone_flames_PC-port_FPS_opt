@@ -16,6 +16,7 @@ signal catalog_failed(reason: String)
 signal mod_installed(mod_id: String)
 signal mod_uninstalled(mod_id: String)
 signal mod_toggled(mod_id: String, enabled: bool)
+signal mod_download_started(mod_id: String)
 signal mod_download_progress(mod_id: String, received_bytes: int, total_bytes: int, percent: float)
 signal mod_download_completed(mod_id: String)
 signal mod_download_failed(mod_id: String, reason: String)
@@ -51,6 +52,8 @@ var _current_icon_mod_id: String = ""
 var _active_main: Node = null
 var _active_world: Node = null
 var _is_initializing_mod: bool = false
+var multiplayer_suspended: bool = false
+var _multiplayer_map_order: Array = []
 
 func _are_mods_enabled() -> bool:
 	if ResourceLoader.exists("res://game/game_config.gd"):
@@ -63,7 +66,39 @@ func _set_custom_maps_cache(arr: Array) -> void:
 	if ResourceLoader.exists("res://game/game_config.gd"):
 		var cfg = load("res://game/game_config.gd")
 		if cfg != null and "custom_maps_cache" in cfg:
-			cfg.custom_maps_cache = arr
+			cfg.custom_maps_cache = [] if multiplayer_suspended else arr
+
+
+## Temporarily unload mods for multiplayer without changing the saved selections.
+func set_multiplayer_suspended(suspended: bool) -> void:
+	if multiplayer_suspended == suspended:
+		return
+	multiplayer_suspended = suspended
+	if suspended:
+		_multiplayer_map_order = registered_map_types.keys()
+		for mod_id in installed_mods.keys():
+			if is_mod_loaded(String(mod_id)):
+				_unload_mod(String(mod_id))
+		_set_custom_maps_cache([])
+	else:
+		_set_custom_maps_cache(registered_map_types.values())
+		if _are_mods_enabled():
+			for mod_id in installed_mods.keys():
+				if enabled_mod_ids.has(mod_id):
+					_load_mod(String(mod_id))
+		# Re-registering mods must not silently switch a selected custom map.
+		var ordered: Dictionary = {}
+		for key: Variant in _multiplayer_map_order:
+			if registered_map_types.has(key):
+				ordered[key] = registered_map_types[key]
+		for key: Variant in registered_map_types:
+			if not ordered.has(key):
+				ordered[key] = registered_map_types[key]
+		registered_map_types = ordered
+		_multiplayer_map_order.clear()
+		_set_custom_maps_cache(registered_map_types.values())
+	mods_updated.emit()
+	print("[ModManager] Multiplayer suspension: ", suspended)
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -320,7 +355,8 @@ func scan_installed_mods() -> void:
 	_load_config()
 	
 	# 1. Сканируем ТОЛЬКО явно установленные пользователем моды в user://mods/
-	_unpack_pending_dfmods(USER_MODS_DIR)
+	if not multiplayer_suspended:
+		_unpack_pending_dfmods(USER_MODS_DIR)
 	_scan_dir(USER_MODS_DIR, false)
 
 	# 2. Сканируем папку рядом с .exe / .app (портативные моды), если отличается от user:// и res://
@@ -335,7 +371,8 @@ func scan_installed_mods() -> void:
 		var user_mods_global: String = ProjectSettings.globalize_path(USER_MODS_DIR)
 		var builtin_mods_global: String = ProjectSettings.globalize_path(BUILTIN_MODS_DIR)
 		if DirAccess.dir_exists_absolute(exe_mods) and exe_mods != user_mods_global and exe_mods != builtin_mods_global:
-			_unpack_pending_dfmods(exe_mods)
+			if not multiplayer_suspended:
+				_unpack_pending_dfmods(exe_mods)
 			_scan_dir_absolute(exe_mods, false)
 
 	# 3. Активируем ТОЛЬКО те моды, которые пользователь включил! (Если моды разрешены в настройках)
@@ -467,6 +504,72 @@ func is_mod_loaded(mod_id: String) -> bool:
 		return false
 	return bool(installed_mods[mod_id].get("_loaded", false))
 
+const CLIENT_ONLY_MODS: Array[String] = [
+	"fps_ping_overlay",
+	"discord_rpc"
+]
+
+## Возвращает список всех включённых модов, влияющих на геймплей/мир для сетевой игры
+func get_required_mp_mods() -> Array:
+	if multiplayer_suspended:
+		return []
+	var result: Array = []
+	for mod_id in installed_mods.keys():
+		if is_mod_enabled(mod_id):
+			if CLIENT_ONLY_MODS.has(mod_id):
+				continue
+			var m: Dictionary = installed_mods[mod_id]
+			var m_type: String = String(m.get("type", "gameplay")).to_lower()
+			var dl_url: String = String(m.get("url", m.get("download_url", "")))
+			if dl_url == "":
+				for c in catalog_mods:
+					if String(c.get("id", "")) == mod_id:
+						dl_url = String(c.get("url", c.get("download_url", "")))
+						break
+			if dl_url == "":
+				dl_url = "https://raw.githubusercontent.com/makkaX2/DroneFlames-Mods/main/mods/%s/%s.dfmod" % [mod_id, mod_id]
+
+			result.append({
+				"id": mod_id,
+				"name": String(m.get("name", mod_id)),
+				"version": String(m.get("version", "1.0.0")),
+				"type": m_type,
+				"url": dl_url,
+				"description": String(m.get("description", ""))
+			})
+	return result
+
+## Возвращает словарь {mod_id: version} для всех включённых модов на данном клиенте
+func get_installed_mod_versions() -> Dictionary:
+	var res: Dictionary = {}
+	for mod_id in installed_mods.keys():
+		if is_mod_enabled(mod_id):
+			res[mod_id] = String(installed_mods[mod_id].get("version", "1.0.0"))
+	return res
+
+## Проверяет список модов хоста против текущих установленных/включённых у клиента
+func check_missing_mp_mods(host_required_mods: Array, client_mods: Dictionary = {}) -> Array:
+	var missing: Array = []
+	var client_v: Dictionary = client_mods if not client_mods.is_empty() else get_installed_mod_versions()
+	for hm in host_required_mods:
+		if not (hm is Dictionary):
+			continue
+		var mid: String = String(hm.get("id", "")).strip_edges()
+		if mid == "" or CLIENT_ONLY_MODS.has(mid):
+			continue
+		var req_ver: String = String(hm.get("version", "")).strip_edges()
+		var client_ver: String = String(client_v.get(mid, "")).strip_edges()
+		if not client_v.has(mid):
+			var m_copy: Dictionary = hm.duplicate()
+			m_copy["is_installed_disabled"] = is_mod_installed(mid) and not is_mod_enabled(mid)
+			missing.append(m_copy)
+		elif req_ver != "" and client_ver != "" and req_ver != client_ver:
+			var m_copy2: Dictionary = hm.duplicate()
+			m_copy2["version_mismatch"] = true
+			m_copy2["client_version"] = client_ver
+			missing.append(m_copy2)
+	return missing
+
 func _prepare_external_mod_source(source_code: String) -> String:
 	var class_line := RegEx.new()
 	class_line.compile("(?m)^class_name\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\r?\\n")
@@ -504,9 +607,15 @@ func toggle_mod(mod_id: String, enable: bool) -> void:
 	mod_toggled.emit(mod_id, enable)
 	mods_updated.emit()
 
+func enable_mod(mod_id: String, enable: bool = true) -> bool:
+	toggle_mod(mod_id, enable)
+	return is_mod_enabled(mod_id)
+
 func _load_mod(mod_id: String) -> bool:
 	if not installed_mods.has(mod_id):
 		return false
+	if multiplayer_suspended:
+		return true  # Keep the user's enabled selection; activate after multiplayer.
 	var mod: Dictionary = installed_mods[mod_id]
 	if mod.get("_loaded", false):
 		return true
@@ -602,6 +711,8 @@ func unregister_map_type(id: String) -> void:
 		mods_updated.emit()
 
 func get_custom_map_types() -> Array:
+	if multiplayer_suspended:
+		return []
 	return registered_map_types.values()
 
 ## Регистрация или замена текстуры/спрайта
@@ -808,6 +919,8 @@ func _promote_mod_stage(stage_path: String, mod_id: String) -> Dictionary:
 	return {"ok": true, "backup": global_backup if has_old else ""}
 
 func _stage_mod_archive(zip_path: String, mod_id: String) -> Dictionary:
+	if multiplayer_suspended:
+		return {"ok": false, "error": "Установка модов недоступна во время сетевой игры"}
 	if not _valid_mod_id(mod_id):
 		return {"ok": false, "error": "Некорректный ID мода"}
 	var stage_path: String = USER_MODS_DIR.path_join("downloads").path_join(mod_id + ".installing")
@@ -828,6 +941,8 @@ func _stage_mod_archive(zip_path: String, mod_id: String) -> Dictionary:
 	return result
 
 func _stage_mod_folder(source_path: String, mod_id: String) -> Dictionary:
+	if multiplayer_suspended:
+		return {"ok": false, "error": "Установка модов недоступна во время сетевой игры"}
 	if not _valid_mod_id(mod_id):
 		return {"ok": false, "error": "Некорректный ID мода"}
 	var stage_path: String = USER_MODS_DIR.path_join("downloads").path_join(mod_id + ".installing")
@@ -852,7 +967,7 @@ func _activate_promoted_mod(mod_id: String, backup_path: String) -> bool:
 		enabled_mod_ids.append(mod_id)
 	_save_config()
 	scan_installed_mods()
-	if is_mod_loaded(mod_id):
+	if is_mod_loaded(mod_id) or (installed_mods.has(mod_id) and (String(installed_mods[mod_id].get("_load_error", "")) == "" or not _are_mods_enabled())):
 		if backup_path != "" and DirAccess.dir_exists_absolute(backup_path):
 			_delete_recursive_absolute(backup_path)
 		return true
@@ -871,6 +986,9 @@ func _activate_promoted_mod(mod_id: String, backup_path: String) -> bool:
 func install_catalog_mod(cat_mod: Dictionary) -> void:
 	var mod_id: String = String(cat_mod.get("id", "")).strip_edges()
 	if mod_id == "":
+		return
+	if multiplayer_suspended:
+		mod_download_failed.emit(mod_id, "Установка модов недоступна во время сетевой игры")
 		return
 
 	# Если мод доступен локально во встроенных ресурсах (res://mods):
@@ -896,6 +1014,9 @@ func install_catalog_mod(cat_mod: Dictionary) -> void:
 	download_and_install_mod(cat_mod)
 
 func install_builtin_mod(mod_id: String) -> bool:
+	if multiplayer_suspended:
+		mod_download_failed.emit(mod_id, "Установка модов недоступна во время сетевой игры")
+		return false
 	if not _valid_mod_id(mod_id):
 		return false
 	var src_folder: String = BUILTIN_MODS_DIR.path_join(mod_id)
@@ -1045,8 +1166,19 @@ func get_mod_icon(mod_id: String, mod_data: Dictionary = {}) -> Texture2D:
 	return null
 
 func download_and_install_mod(cat_mod: Dictionary) -> void:
-	var mod_id: String = String(cat_mod.get("id", ""))
-	var dl_url: String = String(cat_mod.get("url", cat_mod.get("download_url", "")))
+	var mod_id: String = String(cat_mod.get("id", "")).strip_edges()
+	if multiplayer_suspended:
+		mod_download_failed.emit(mod_id, "Установка модов недоступна во время сетевой игры")
+		return
+	var dl_url: String = String(cat_mod.get("url", cat_mod.get("download_url", ""))).strip_edges()
+	if dl_url == "":
+		for c in catalog_mods:
+			if String(c.get("id", "")).strip_edges() == mod_id:
+				dl_url = String(c.get("url", c.get("download_url", ""))).strip_edges()
+				break
+	if dl_url == "" and mod_id != "":
+		dl_url = "https://raw.githubusercontent.com/makkaX2/DroneFlames-Mods/main/mods/%s/%s.dfmod" % [mod_id, mod_id]
+
 	if not _valid_mod_id(mod_id) or dl_url == "":
 		print("[ModManager] Error: No download URL for mod: ", mod_id, " data: ", cat_mod)
 		mod_download_failed.emit(mod_id, "Некорректный ID мода или не указан URL для скачивания")
@@ -1055,6 +1187,14 @@ func download_and_install_mod(cat_mod: Dictionary) -> void:
 	if _is_downloading:
 		mod_download_failed.emit(mod_id, "Уже выполняется другое скачивание")
 		return
+
+	# Гарантируем наличие целевой папки downloads перед скачиванием
+	var dl_dir: String = ProjectSettings.globalize_path("user://mods/downloads")
+	if not DirAccess.dir_exists_absolute(dl_dir):
+		DirAccess.make_dir_recursive_absolute(dl_dir)
+
+	if _http_download.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		_http_download.cancel_request()
 
 	_is_downloading = true
 	_download_mod_id = mod_id
@@ -1070,6 +1210,10 @@ func download_and_install_mod(cat_mod: Dictionary) -> void:
 		_is_downloading = false
 		_download_mod_id = ""
 		mod_download_failed.emit(mod_id, "Ошибка отправки запроса: %d" % err)
+		return
+
+	mod_download_started.emit(mod_id)
+	mods_updated.emit()
 
 func _on_download_request_completed(result: int, response_code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
 	var mod_id: String = _download_mod_id
@@ -1077,13 +1221,32 @@ func _on_download_request_completed(result: int, response_code: int, _headers: P
 	_is_downloading = false
 	_download_mod_id = ""
 	_download_temp_path = ""
+	if multiplayer_suspended:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
+		mod_download_failed.emit(mod_id, "Установка остановлена на время сетевой игры; повторите после выхода")
+		return
 
-	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+	if result != HTTPRequest.RESULT_SUCCESS:
 		var failed_temp: String = ProjectSettings.globalize_path(temp_path)
 		if FileAccess.file_exists(failed_temp):
 			DirAccess.remove_absolute(failed_temp)
-		mod_download_failed.emit(mod_id, "Ошибка загрузки файла (код %d)" % response_code)
+		var err_msg: String = "Ошибка сети при загрузке"
+		match result:
+			HTTPRequest.RESULT_CANT_CONNECT: err_msg = "Не удалось подключиться к серверу загрузки"
+			HTTPRequest.RESULT_CANT_RESOLVE: err_msg = "Не удалось разрешить адрес сервера"
+			HTTPRequest.RESULT_CONNECTION_ERROR: err_msg = "Сетевое соединение разорвано"
+			HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR: err_msg = "Ошибка SSL/TLS соединения"
+			HTTPRequest.RESULT_TIMEOUT: err_msg = "Превышено время ожидания ответа сервера"
+		mod_download_failed.emit(mod_id, err_msg)
 		return
+
+	if response_code != 200 and response_code != 304:
+		var failed_temp: String = ProjectSettings.globalize_path(temp_path)
+		if FileAccess.file_exists(failed_temp):
+			DirAccess.remove_absolute(failed_temp)
+		mod_download_failed.emit(mod_id, "Сервер вернул ошибку HTTP %d" % response_code)
+		return
+
 	var stage_result: Dictionary = _stage_mod_archive(temp_path, mod_id)
 	var global_temp: String = ProjectSettings.globalize_path(temp_path)
 	if FileAccess.file_exists(global_temp):
@@ -1093,11 +1256,12 @@ func _on_download_request_completed(result: int, response_code: int, _headers: P
 		return
 	var backup_path: String = String(stage_result.get("backup", ""))
 	if not _activate_promoted_mod(mod_id, backup_path):
-		mod_download_failed.emit(mod_id, "Мод не загрузился; предшествующая версия восстановлена, если она была.")
+		mod_download_failed.emit(mod_id, "Мод распакован, но не удалось инициализировать скрипт mod.gd")
 		return
 
 	mod_download_completed.emit(mod_id)
 	mod_installed.emit(mod_id)
+	mods_updated.emit()
 	print("[ModManager] Successfully installed/updated and enabled mod: ", mod_id)
 
 func uninstall_mod(mod_id: String) -> void:

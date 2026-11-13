@@ -43,7 +43,7 @@ const COMMON_TITLES: Array = [
 	"tt_duelist", "tt_wing", "tt_leader", "tt_above", "tt_legend", "tt_eternal"
 ]
 
-const DEV_NICKS: Array = ["reborn_team", "CryptoAngelazaz", "mxka"]
+const DEV_NICKS: Array = ["good_boy_irl", "droneflamesmod", "CryptoAngelazaz", "mxka"]
 const NICK_RULE: String = "НИК: ТОЛЬКО ЛАТИНИЦА И ЦИФРЫ"
 
 const FILE: String = "user://account.bin"
@@ -73,6 +73,8 @@ static var catalog: Dictionary = {}
 static var pending_playtime_s: int = 0
 static var pending_solo_wins: int = 0
 static var _syncing: bool = false
+static var _stat_batch: Dictionary = {}
+static var _parked_stats: Dictionary = {}
 
 static var _avatar_cache: Dictionary = {}
 
@@ -100,11 +102,15 @@ static func load_state() -> void:
 		seen_init = bool(d.get("si", false))
 		pending_playtime_s = int(d.get("pp", 0))
 		pending_solo_wins = int(d.get("psw", 0))
+		_stat_batch = d.get("batch", {})
+		_parked_stats = d.get("parked_stats", {})
+		if access == "":
+			_clear_stats()
 	
 	if not info.has("username") or String(info.get("username", "")).strip_edges() == "":
 		NetConfig.load_cfg()
 		var n: String = NetConfig.nick()
-		info["username"] = n if n != "" else "reborn_player"
+		info["username"] = n if n != "" else "good_boy_irl"
 	
 	info["is_multiplayer_available"] = true
 	
@@ -138,14 +144,14 @@ static func _save() -> void:
 		"s": seen,
 		"si": seen_init,
 		"pp": pending_playtime_s,
-		"psw": pending_solo_wins
+		"psw": pending_solo_wins,
+		"batch": _stat_batch,
+		"parked_stats": _parked_stats
 	}
 	DeviceCheck.secure_store("account", save_dict, FILE, "|droneflames-account-1")
-	# Save human-readable JSON backup as safety fallback
-	var f: = FileAccess.open(JSON_BACKUP, FileAccess.WRITE)
-	if f != null:
-		f.store_string(JSON.stringify(save_dict, "\t"))
-		f.close()
+
+	if FileAccess.file_exists(JSON_BACKUP):
+		DirAccess.remove_absolute(JSON_BACKUP)
 
 
 static func _changed() -> void:
@@ -260,10 +266,13 @@ static func fetch_cosmetics() -> Dictionary:
 static func fetch_info() -> Dictionary:
 	load_state()
 	if access != "":
+		var session: String = access
 		var res: Dictionary = await get_profile(username())
-		if bool(res.get("ok", false)) and res.get("user") is Dictionary:
+		if access == session and bool(res.get("ok", false)) and res.get("user") is Dictionary:
 			var u: Dictionary = res["user"]
 			info.merge(u, true)
+			if u.has("flag"):
+				GameConfig.my_flag = String(u["flag"])
 			_ensure_all_cosmetics()
 			_save()
 			_changed()
@@ -314,6 +323,8 @@ static func call_server(msg: Dictionary, timeout_s: float = 6.0) -> Dictionary:
 	match String(msg.get("t", "")):
 		"auth_register", "auth_login", "auth_token":
 			expected_type = "auth"
+		"auth_logout":
+			expected_type = "logged_out"
 		"get_top":
 			expected_type = "top_data"
 		"get_profile":
@@ -372,11 +383,8 @@ static func register(nick: String, arg2: String, arg3: String = "") -> Dictionar
 	
 	var r: Dictionary = await call_server({"t": "auth_register", "username": nick, "password": password})
 	if String(r.get("t", "")) == "auth_ok":
-		access = String(r.get("token", ""))
-		token = access
-		if r.get("user") is Dictionary:
-			info.merge(r["user"], true)
-		info["username"] = nick
+		_accept_user(r)
+		nick = String(info.get("username", nick))
 		info["is_registered"] = true
 		last_email = email
 		NetConfig.set_nick(nick)
@@ -399,11 +407,8 @@ static func login(nick_or_email: String, password: String) -> Dictionary:
 	
 	var r: Dictionary = await call_server({"t": "auth_login", "username": nick, "password": password})
 	if String(r.get("t", "")) == "auth_ok":
-		access = String(r.get("token", ""))
-		token = access
-		if r.get("user") is Dictionary:
-			info.merge(r["user"], true)
-		info["username"] = nick
+		_accept_user(r)
+		nick = String(info.get("username", nick))
 		info["is_registered"] = true
 		last_email = nick_or_email if "@" in nick_or_email else ""
 		NetConfig.set_nick(nick)
@@ -417,8 +422,64 @@ static func login(nick_or_email: String, password: String) -> Dictionary:
 	return {"ok": false, "err": String(r.get("why", r.get("err", "Неверный логин или пароль"))), "field": "password"}
 
 
+static func _clear_stats() -> void:
+	pending_playtime_s = 0
+	pending_solo_wins = 0
+	_stat_batch = {}
+
+
+static func _park_stats() -> void:
+	var account_id: String = String(info.get("id", ""))
+	if account_id != "" and (pending_playtime_s > 0 or pending_solo_wins > 0):
+		_parked_stats[account_id] = {"playtime": pending_playtime_s, "wins": pending_solo_wins, "batch": _stat_batch}
+	_clear_stats()
+
+
+static func _accept_user(r: Dictionary) -> void:
+	var user: Dictionary = r.get("user", {})
+	var same_account: bool = access != "" and String(info.get("username", "")).nocasecmp_to(String(user.get("username", ""))) == 0 and (not info.has("id") or not user.has("id") or info["id"] == user["id"])
+	var old_flag: String = NetSession.clean_flag(GameConfig.my_flag) if same_account else ""
+	if not same_account:
+		_park_stats()
+		var account_id: String = String(user.get("id", ""))
+		var parked: Dictionary = _parked_stats.get(account_id, {})
+		if not parked.is_empty():
+			pending_playtime_s = int(parked.get("playtime", 0))
+			pending_solo_wins = int(parked.get("wins", 0))
+			_stat_batch = parked.get("batch", {})
+			_parked_stats.erase(account_id)
+	access = String(r.get("token", access))
+	token = access
+	info = user.duplicate(true)
+	if info.has("flag"):
+		if old_flag != "" and not info.get("flag_initialized", false):
+			_restore_local_flag(old_flag)
+		else:
+			GameConfig.my_flag = NetSession.clean_flag(info["flag"])
+	_save()
+	_changed()
+
+
+static func _restore_local_flag(flag: String) -> void:
+	var session: String = access
+	var result: Dictionary = await call_server({"t": "save_profile", "token": session, "flag": flag, "flag_if_unset": true})
+	if access == session and result.get("ok", false):
+		GameConfig.my_flag = NetSession.clean_flag(result["user"].get("flag", ""))
+		info["flag"] = GameConfig.my_flag
+		info["flag_initialized"] = true
+		_save()
+		_changed()
+
+
 static func logout() -> void:
 	load_state()
+	if access != "":
+		call_server({"t": "auth_logout", "token": access})
+	lost_session()
+
+
+static func lost_session() -> void:
+	_park_stats()
 	access = ""
 	token = ""
 	info["is_registered"] = false
@@ -428,7 +489,7 @@ static func logout() -> void:
 
 static func get_top(by: String = "hours", limit: int = 100) -> Dictionary:
 	load_state()
-	var r: Dictionary = await call_server({"t": "get_top", "by": by, "limit": limit})
+	var r: Dictionary = await call_server({"t": "get_top", "by": by, "limit": limit, "token": access})
 	if String(r.get("t", "")) == "top_data":
 		var l: Array = r.get("list", [])
 		return {"ok": true, "by": by, "list": l, "top": l, "total_count": int(r.get("total_count", 0))}
@@ -437,7 +498,7 @@ static func get_top(by: String = "hours", limit: int = 100) -> Dictionary:
 
 static func get_profile(uname: String) -> Dictionary:
 	load_state()
-	var r: Dictionary = await call_server({"t": "get_profile", "username": uname})
+	var r: Dictionary = await call_server({"t": "get_profile", "username": uname, "token": access})
 	if String(r.get("t", "")) == "profile_data" and bool(r.get("ok", false)):
 		return {"ok": true, "user": r.get("user", {})}
 	return {"ok": false, "err": String(r.get("why", r.get("err", "Игрок не найден")))}
@@ -445,7 +506,7 @@ static func get_profile(uname: String) -> Dictionary:
 
 static func search_profiles(query: String) -> Dictionary:
 	load_state()
-	var r: Dictionary = await call_server({"t": "search_profiles", "query": query})
+	var r: Dictionary = await call_server({"t": "search_profiles", "query": query, "token": access})
 	if String(r.get("t", "")) == "search_results":
 		var l: Array = r.get("list", [])
 		return {"ok": true, "list": l, "users": l}
@@ -467,27 +528,32 @@ static func equip(kind: String, code: Variant) -> Dictionary:
 	_save()
 	_changed()
 	
-	if access != "":
-		call_server({
-			"t": "save_profile",
-			"token": access,
-			"cosmetics": cos,
-			"avatar": String(info.get("avatar", ""))
-		})
-	return {"ok": true, "err": "", "code": 200}
+	return await update_profile({"cosmetics": {kind: "" if code == null else str(code)}})
+
+
+static func update_profile(fields: Dictionary) -> Dictionary:
+	load_state()
+	_save()
+	if access == "":
+		return {"ok": true, "err": "", "code": 200}
+	var session: String = access
+	var r: Dictionary = await call_server({"t": "save_profile", "token": session}.merged(fields))
+	if access == session and r.get("ok", false):
+		for key: String in fields:
+			if key == "cosmetics":
+				var cos: Dictionary = info.get("cosmetics", {})
+				for item: String in fields["cosmetics"]:
+					cos[item] = r["user"]["cosmetics"][item]
+				info["cosmetics"] = cos
+			else:
+				info[key] = r["user"].get(key, fields[key])
+		_save()
+		_changed()
+	return {"ok": r.get("ok", false), "err": r.get("why", r.get("err", "")), "code": 200 if r.get("ok", false) else 0}
 
 
 static func save_profile() -> Dictionary:
-	load_state()
-	_save()
-	if access != "":
-		return await call_server({
-			"t": "save_profile",
-			"token": access,
-			"cosmetics": equipped(),
-			"avatar": String(info.get("avatar", ""))
-		})
-	return {"ok": true, "err": ""}
+	return await update_profile({"avatar": avatar_b64})
 
 
 static func save_avatar_file(path: String) -> Dictionary:
@@ -508,14 +574,7 @@ static func save_avatar_file(path: String) -> Dictionary:
 	_save()
 	_changed()
 	
-	if access != "":
-		call_server({
-			"t": "save_profile",
-			"token": access,
-			"cosmetics": equipped(),
-			"avatar": b64
-		})
-	return {"ok": true, "err": ""}
+	return await update_profile({"avatar": b64})
 
 
 static func get_avatar_texture(b64: String) -> Texture2D:
@@ -538,7 +597,8 @@ static func record_solo_win() -> void:
 	load_state()
 	info["solo_wins"] = int(info.get("solo_wins", 0)) + 1
 	info["wins"] = int(info.get("wins", 0))
-	pending_solo_wins += 1
+	if is_authenticated():
+		pending_solo_wins += 1
 	_save()
 	_changed()
 	sync_pending_stats()
@@ -549,9 +609,15 @@ static func record_playtime(seconds: int) -> void:
 	if seconds <= 0:
 		return
 	info["playtime_s"] = int(info.get("playtime_s", 0)) + seconds
-	pending_playtime_s += seconds
+	if is_authenticated():
+		pending_playtime_s += seconds
 	_save()
 	if pending_playtime_s >= 60:
+		sync_pending_stats()
+
+
+static func retry_pending_stats() -> void:
+	if not _stat_batch.is_empty() or pending_playtime_s >= 60 or pending_solo_wins > 0:
 		sync_pending_stats()
 
 
@@ -560,20 +626,19 @@ static func sync_pending_stats() -> void:
 	if access == "" or _syncing or (pending_playtime_s <= 0 and pending_solo_wins <= 0):
 		return
 	_syncing = true
-	var pt: int = pending_playtime_s
-	var sw: int = pending_solo_wins
-	var r: Dictionary = await call_server({
-		"t": "sync_stats",
-		"token": access,
-		"playtime_add_s": pt,
-		"solo_wins_add": sw
-	})
+	var session: String = access
+	if _stat_batch.is_empty():
+		_stat_batch = {"batch": Crypto.new().generate_random_bytes(16).hex_encode(),
+			"playtime_add_s": mini(pending_playtime_s, 86400), "solo_wins_add": mini(pending_solo_wins, 100)}
+		_save()
+	var r: Dictionary = await call_server({"t": "sync_stats", "token": session}.merged(_stat_batch))
 	_syncing = false
-	if String(r.get("t", "")) == "stats_synced" and bool(r.get("ok", false)):
-		pending_playtime_s = maxi(0, pending_playtime_s - pt)
-		pending_solo_wins = maxi(0, pending_solo_wins - sw)
-		if r.get("user") is Dictionary:
-			info.merge(r["user"], true)
+	if access == session and r.get("ok", false):
+		pending_playtime_s -= int(_stat_batch["playtime_add_s"])
+		pending_solo_wins -= int(_stat_batch["solo_wins_add"])
+		_stat_batch = {}
+		for key: String in ["playtime_s", "solo_wins", "wins", "losses", "matches_played", "total_wins"]:
+			info[key] = r["user"].get(key, 0)
 		_save()
 		_changed()
 
@@ -649,10 +714,6 @@ static func ensure_fresh() -> bool:
 
 
 static func mark_banned() -> void:
-	pass
-
-
-static func lost_session() -> void:
 	pass
 
 

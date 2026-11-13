@@ -28,3 +28,8 @@ Thumbs.db
 .vscode/
 godot_bin
 
+
+# Windows engine binaries are staged by build.py
+/DroneFlames.exe
+/DroneFlames_Debug.exe
+/DroneFlames_console.exe

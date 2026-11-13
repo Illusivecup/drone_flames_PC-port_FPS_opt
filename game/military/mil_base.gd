@@ -8,6 +8,8 @@ const INCOME_TOWN: int = 30
 const INCOME_VILLAGE: int = 10
 const START_MONEY: int = 3000
 const COST_TOWN: int = 500
+const TOWN_COST_STEP: int = 250
+const TOWN_COST_MAX: int = 2000
 const COST_FACTORY: int = 600
 const COST_AIRFIELD: int = 800
 const COST_PORT: int = 400
@@ -388,3 +390,7 @@ var stale_drop: int = 0
 const DEMOLISH_REFUND: float = 0.3
 const NO_DEMOLISH: Array = [Facility.Kind.RAIL_STATION]
 var last_demolish_refund: int = 0
+
+
+static func town_cost(towns_founded: int = 0) -> int:
+	return mini(TOWN_COST_MAX, COST_TOWN + maxi(0, towns_founded) * TOWN_COST_STEP)

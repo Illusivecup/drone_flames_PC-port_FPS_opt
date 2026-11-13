@@ -16,7 +16,6 @@ var _id: int = 0
 var _server: bool = false
 var _peers: Dictionary = {}
 var _in: Array = []
-var _cur: Array = []
 var _early: Dictionary = {}  # packets can reach the relay peer before the server's peer notification
 var _target: int = 0
 var _status: int = MultiplayerPeer.CONNECTION_CONNECTED
@@ -45,6 +44,9 @@ func remove(id: int) -> void :
 	if _peers.erase(id):
 		peer_disconnected.emit(id)
 	_early.erase(id)
+	for i: int in range(_in.size() - 1, -1, -1):
+		if int((_in[i] as Array)[0]) == id:
+			_in.remove_at(i)
 	for key: Variant in _parts.keys():
 		if String(key).begins_with("%d:" % id):
 			_parts.erase(key)
@@ -98,12 +100,12 @@ func _get_max_packet_size() -> int:
 func _get_packet_script() -> PackedByteArray:
 	if _in.is_empty():
 		return PackedByteArray()
-	_cur = _in.pop_front()
-	return _cur[1]
+	var packet: Array = _in.pop_front()
+	return packet[1]
 
 
 func _get_packet_peer() -> int:
-	return int(_cur[0]) if not _cur.is_empty() else 0
+	return int((_in[0] as Array)[0]) if not _in.is_empty() else 0
 
 
 func _get_packet_channel() -> int:

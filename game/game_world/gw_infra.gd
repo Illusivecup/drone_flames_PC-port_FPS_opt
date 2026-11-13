@@ -2,6 +2,17 @@ extends "res://game/game_world/gw_map.gd"
 
 
 
+func purchase_town(cell: Vector2i, country: Country, plan: Dictionary = {}) -> City:
+	var price: int = Military.town_cost(country.towns_founded)
+	if country.money < price:
+		return null
+	var town: City = found_city(cell, country, City.Kind.TOWN, plan)
+	if town != null:
+		country.money -= price
+		country.towns_founded += 1
+	return town
+
+
 func found_city(cell: Vector2i, country: Country, kind: int, plan_in: Dictionary = {}) -> City:
 	var plan: Dictionary = plan_in if not plan_in.is_empty() else can_found_city(cell, kind, kind == City.Kind.CAPITAL)
 	if bool(plan["ok"]) and plan.has("center"):

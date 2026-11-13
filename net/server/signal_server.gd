@@ -9,10 +9,12 @@ const MAX_ROOMS_PER_IP: int = 3
 const MAX_MSG_PER_S: int = 1500
 const MAX_JOINS_PER_MIN: int = 60
 const MAX_PKT_BYTES: int = 262144
+const MAX_OUT_BYTES: int = 8 * 1024 * 1024
+const MAX_OUT_PACKETS: int = 2048
 const IDLE_NO_ROOM_S: float = 60.0
 const IDLE_IN_ROOM_S: float = 70.0
 const DIAG_INTERVAL_S: float = 30.0
-const MAX_CLIENTS: int = 64
+const MAX_CLIENTS: int = 192
 const MAX_ROOMS: int = 24
 const LIST_MAX: int = 30
 const NAME_MAX: int = 24
@@ -31,7 +33,6 @@ var _cf_token: String = ""
 var _cf_api: String = "https://rtc.live.cloudflare.com"
 const CF_STUN: Dictionary = {"urls": ["stun:stun.cloudflare.com:3478"]}
 var _proxied: bool = false
-var _open_auth: bool = false  # dev (--open): no accounts needed (local / CI testing only)
 var _diag_elapsed: float = 0.0
 
 # User database and persistent stats
@@ -40,7 +41,7 @@ var _db_file: String = ""
 var _db_dirty: bool = false
 var _db_save_timer: float = 0.0
 
-const DEV_NICKS: Array = ["reborn_team", "CryptoAngelazaz", "mxka"]
+const DEV_NICKS: Array = ["good_boy_irl", "droneflamesmod", "CryptoAngelazaz", "mxka"]
 
 const COMMON_FRAMES: Array = [
 	"fr_steel", "fr_concrete", "fr_brick", "fr_tin", "fr_tape", "fr_garage", "fr_pipe",
@@ -93,8 +94,6 @@ func _initialize() -> void :
 			_db_file = v
 		elif a == "--behind-proxy":
 			_proxied = true
-		elif a == "--open":
-			_open_auth = true
 	_secret = OS.get_environment("DF_TURN_SECRET")
 	_cf_key = OS.get_environment("DF_CF_TURN_KEY_ID")
 	_cf_token = OS.get_environment("DF_CF_TURN_TOKEN")
@@ -140,52 +139,13 @@ func _init_users_db() -> void:
 				_users = d
 				print("[Signal] Loaded %d users from database: %s" % [_users.size(), _db_file])
 	
-	if _users.is_empty():
-		for p: String in [
-			"/opt/df-relay-test/seed_users.json",
-			"res://net/server/seed_users.json",
-			"res://seed_users.json",
-			"net/server/seed_users.json",
-			"seed_users.json"
-		]:
-			if FileAccess.file_exists(p):
-				var f2: = FileAccess.open(p, FileAccess.READ)
-				if f2 != null:
-					var txt2: String = f2.get_as_text()
-					f2.close()
-					var d2: Variant = JSON.parse_string(txt2)
-					if d2 is Dictionary:
-						_users = d2
-						print("[Signal] Seeded %d users from: %s" % [_users.size(), p])
-						_save_users(true)
-						break
-	
-	for dn: String in DEV_NICKS:
-		if dn.to_lower() == "reborn_team":
-			continue
-		var u: Dictionary = _find_user(dn)
-		if u.is_empty():
-			_users[dn] = {
-				"username": dn,
-				"password_hash": "",
-				"salt": "",
-				"is_registered": false,
-				"is_dev": true,
-				"token": "",
-				"created_at": int(Time.get_unix_time_from_system()),
-				"last_seen": int(Time.get_unix_time_from_system()),
-				"playtime_s": 54000,
-				"matches_played": 35,
-				"wins": 25,
-				"losses": 10,
-				"solo_wins": 15,
-				"avatar": "",
-				"cosmetics": {"frame": "fr_dev", "banner": "bn_dev", "title": "tt_dev_rgb"}
-			}
-			_db_dirty = true
-		else:
-			u["is_dev"] = true
-	
+	for u: Dictionary in _users.values():
+		if bool(u.get("is_registered", false)):
+			if not u.has("id"):
+				u["id"] = Crypto.new().generate_random_bytes(16).hex_encode()
+				_db_dirty = true
+			if _is_dev(String(u.get("username", ""))):
+				u["is_dev"] = true
 	if _db_dirty:
 		_save_users(true)
 
@@ -204,14 +164,10 @@ func _save_users(immediate: bool = false) -> void:
 			var pdir: String = _db_file.get_base_dir()
 			var da: DirAccess = DirAccess.open(pdir if pdir != "" else ".")
 			if da != null:
-				if da.file_exists(_db_file.get_file()):
-					da.remove(_db_file.get_file())
-				da.rename(tmp.get_file(), _db_file.get_file())
+				if da.rename(tmp.get_file(), _db_file.get_file()) != OK:
+					_db_dirty = true
 		else:
-			var f2: = FileAccess.open(_db_file, FileAccess.WRITE)
-			if f2 != null:
-				f2.store_string(JSON.stringify(_users, "\t"))
-				f2.close()
+			_db_dirty = true
 	else:
 		_db_dirty = true
 
@@ -228,9 +184,57 @@ func _find_user_by_token(tok: String) -> Dictionary:
 	if tok == "":
 		return {}
 	for k: String in _users:
-		if String(_users[k].get("token", "")) == tok and bool(_users[k].get("is_registered", false)):
+		if _has_session(_users[k], tok) and bool(_users[k].get("is_registered", false)):
 			return _users[k]
 	return {}
+
+
+func _has_session(u: Dictionary, tok: String) -> bool:
+	return tok != "" and (String(u.get("token", "")) == tok or (u.get("sessions", []) as Array).has(tok))
+
+
+func _bind_account(ck: int, u: Dictionary, tok: String) -> void:
+	var client: Dictionary = _clients[ck]
+	client["auth"] = true
+	client["auth_user"] = u["username"]
+	client["session"] = tok
+	client["name"] = u["username"]
+
+
+func _viewer(ck: int, d: Dictionary = {}) -> Dictionary:
+	return _find_user_by_token(String(d.get("token", _clients[ck].get("session", ""))))
+
+
+func _online_users() -> Dictionary:
+	var online: Dictionary = {}
+	for client: Dictionary in _clients.values():
+		if client.get("social", false) or client.get("room", "") != "":
+			var u: Dictionary = _find_user(String(client.get("auth_user", "")))
+			if _has_session(u, String(client.get("session", ""))):
+				online[u["username"]] = true
+	return online
+
+
+func _online(u: Dictionary) -> bool:
+	for client: Dictionary in _clients.values():
+		if client.get("auth_user") == u.get("username") and (client.get("social", false) or client.get("room", "") != "") and _has_session(u, String(client.get("session", ""))):
+			return true
+	return false
+
+
+func _friends(u: Dictionary, other: Dictionary) -> bool:
+	return not other.is_empty() and (u.get("friends", []) as Array).has(other.get("id", ""))
+
+
+func _can_message(sender: Dictionary, recipient: Dictionary) -> bool:
+	return not sender.is_empty() and sender.get("id") != recipient.get("id") and (_friends(recipient, sender) or recipient.get("message_visibility", "friends") == "all")
+
+
+func _visible_avatar(u: Dictionary, viewer: Dictionary) -> String:
+	var visibility: String = String(u.get("avatar_visibility", "all"))
+	if (not viewer.is_empty() and viewer.get("id") == u.get("id")) or visibility == "all" or (visibility == "friends" and _friends(u, viewer)):
+		return String(u.get("avatar", ""))
+	return ""
 
 
 func _is_dev(uname: String) -> bool:
@@ -241,7 +245,7 @@ func _is_dev(uname: String) -> bool:
 	return false
 
 
-func _public_user(u: Dictionary) -> Dictionary:
+func _public_user(u: Dictionary, viewer: Dictionary = {}) -> Dictionary:
 	return {
 		"username": String(u.get("username", "")),
 		"is_registered": bool(u.get("is_registered", false)),
@@ -255,7 +259,14 @@ func _public_user(u: Dictionary) -> Dictionary:
 		"losses": int(u.get("losses", 0)),
 		"solo_wins": int(u.get("solo_wins", 0)),
 		"total_wins": int(u.get("wins", 0)) + int(u.get("solo_wins", 0)),
-		"avatar": String(u.get("avatar", "")),
+		"id": String(u.get("id", "")),
+		"online": _online(u),
+		"flag": String(u.get("flag", "")),
+		"flag_initialized": u.has("flag"),
+		"avatar_visibility": String(u.get("avatar_visibility", "all")),
+		"message_visibility": String(u.get("message_visibility", "friends")),
+		"can_message": _can_message(viewer, u),
+		"avatar": _visible_avatar(u, viewer),
 		"cosmetics": u.get("cosmetics", {})
 	}
 
@@ -292,7 +303,7 @@ func _process(delta: float) -> bool:
 					continue
 			var ws: = WebSocketPeer.new()
 			ws.inbound_buffer_size = 1048576
-			ws.outbound_buffer_size = 1048576
+			ws.outbound_buffer_size = 4 * 1024 * 1024
 			ws.max_queued_packets = 2048
 			ws.accept_stream(p[0])
 			p[1] = ws
@@ -328,8 +339,14 @@ func _process(delta: float) -> bool:
 		if ws2.get_ready_state() == WebSocketPeer.STATE_CLOSED:
 			_drop(ck, "websocket_closed:%d:%s" % [ws2.get_close_code(), ws2.get_close_reason()])
 			continue
+		if ws2.get_ready_state() != WebSocketPeer.STATE_OPEN:
+			continue
+		if not _flush_outgoing(cl, ws2):
+			ws2.close(-1)
+			_drop(ck, "outbound_queue_failed")
+			continue
 		var now_ms: int = Time.get_ticks_msec()
-		if String(cl["room"]) == "" and now_ms - int(cl["t0"]) > int(IDLE_NO_ROOM_S * 1000.0):
+		if String(cl["room"]) == "" and now_ms - int(cl["last"] if cl.get("social", false) else cl["t0"]) > int(IDLE_NO_ROOM_S * 1000.0):
 			ws2.close(1000, "idle")
 			_drop(ck, "idle_without_room")
 			continue
@@ -382,7 +399,7 @@ func _event(kind: String, data: Dictionary = {}) -> void:
 	print("[RelayEvent] " + JSON.stringify(event))
 
 
-func _player_rows(room: Dictionary) -> Array:
+func _player_rows(room: Dictionary, viewer: Dictionary = {}) -> Array:
 	var out: Array = []
 	for peer_id: int in (room.get("peers", {}) as Dictionary):
 		var client_id: int = int((room["peers"] as Dictionary)[peer_id])
@@ -390,10 +407,9 @@ func _player_rows(room: Dictionary) -> Array:
 			continue
 		var client: Dictionary = _clients[client_id]
 		var uname: String = String(client.get("auth_user", client.get("name", "")))
-		var u: Dictionary = _find_user(uname)
+		var u: Dictionary = _find_user_by_token(String(client.get("session", "")))
 		var is_dev: bool = bool(u.get("is_dev", false)) if not u.is_empty() else _is_dev(uname)
 		var cos: Dictionary = u.get("cosmetics", {}) if not u.is_empty() else {}
-		var av: String = String(u.get("avatar", "")) if not u.is_empty() else ""
 		out.append({
 			"slot": peer_id,
 			"name": uname,
@@ -404,7 +420,7 @@ func _player_rows(room: Dictionary) -> Array:
 			"is_dev": is_dev,
 			"is_registered": bool(u.get("is_registered", false)) if not u.is_empty() else false,
 			"cosmetics": cos,
-			"avatar": av
+			"avatar": _visible_avatar(u, viewer) if not viewer.is_empty() else ""
 		})
 	return out
 
@@ -461,29 +477,58 @@ func _count_ip(ip: String) -> int:
 	return n
 
 
-func _send(ck: int, d: Dictionary) -> void :
-	if _clients.has(ck):
-		(_clients[ck]["ws"] as WebSocketPeer).send_text(JSON.stringify(d))
+func _send(ck: int, d: Dictionary) -> void:
+	if not _clients.has(ck):
+		return
+	var client: Dictionary = _clients[ck]
+	if bool(client.get("out_failed", false)):
+		return
+	var ws: WebSocketPeer = client["ws"]
+	if ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
+		return
+	var packet: PackedByteArray = JSON.stringify(d).to_utf8_buffer()
+	var queue: Array = client.get("out", [])
+	if queue.is_empty() and ws.get_current_outbound_buffered_amount() + packet.size() <= ws.outbound_buffer_size:
+		var err: Error = ws.send(packet, WebSocketPeer.WRITE_MODE_TEXT)
+		if err == OK:
+			return
+		if err != ERR_OUT_OF_MEMORY:
+			client["out_failed"] = true
+			return
+	var bytes: int = int(client.get("out_bytes", 0)) + packet.size()
+	if bytes > MAX_OUT_BYTES or queue.size() >= MAX_OUT_PACKETS or packet.size() > ws.outbound_buffer_size:
+		client["out_failed"] = true
+		return
+	queue.append(packet)
+	client["out"] = queue
+	client["out_bytes"] = bytes
+
+
+func _flush_outgoing(client: Dictionary, ws: WebSocketPeer) -> bool:
+	if bool(client.get("out_failed", false)):
+		return false
+	var queue: Array = client.get("out", [])
+	for i: int in mini(queue.size(), 120):
+		var packet: PackedByteArray = queue[0]
+		if ws.get_current_outbound_buffered_amount() + packet.size() > ws.outbound_buffer_size:
+			break
+		var err: Error = ws.send(packet, WebSocketPeer.WRITE_MODE_TEXT)
+		if err == ERR_OUT_OF_MEMORY:
+			break
+		if err != OK:
+			return false
+		queue.pop_front()
+		client["out_bytes"] = int(client["out_bytes"]) - packet.size()
+	return true
 
 
 func _check_auth(ck: int, d: Dictionary) -> bool:
 	var cl: Dictionary = _clients[ck]
-	if _open_auth:
-		cl["auth"] = true
-		if String(cl.get("auth_user", "")) == "":
-			cl["auth_user"] = String(cl.get("name", "Player"))
+	var tok: String = String(d.get("auth_token", cl.get("session", "")))
+	var u: Dictionary = _find_user_by_token(tok)
+	if not u.is_empty():
+		_bind_account(ck, u, tok)
 		return true
-	if bool(cl.get("auth", false)):
-		return true
-	var tok: String = String(d.get("auth_token", ""))
-	var uname: String = String(d.get("auth_user", cl.get("name", "")))
-	if tok != "" and uname != "":
-		var u: Dictionary = _find_user(uname)
-		if not u.is_empty() and String(u.get("token", "")) == tok and bool(u.get("is_registered", false)):
-			cl["auth"] = true
-			cl["auth_user"] = String(u["username"])
-			cl["name"] = String(u["username"])
-			return true
 	return false
 
 
@@ -491,7 +536,7 @@ func _on_msg(ck: int, d: Dictionary) -> void :
 	var cl: Dictionary = _clients[ck]
 	if d.get("v") is String:
 		cl["version"] = String(d["v"])
-	if d.get("name") is String and String(d["name"]).strip_edges() != "":
+	if not cl.get("auth", false) and d.get("name") is String and String(d["name"]).strip_edges() != "":
 		cl["name"] = _clean_name(String(d["name"]))
 	
 	match String(d.get("t", "")):
@@ -501,6 +546,10 @@ func _on_msg(ck: int, d: Dictionary) -> void :
 			_handle_auth_login(ck, d)
 		"auth_token":
 			_handle_auth_token(ck, d)
+		"auth_logout":
+			_handle_logout(ck, d)
+		"social":
+			_handle_social(ck, d)
 		"get_top":
 			_handle_get_top(ck, d)
 		"get_profile":
@@ -765,46 +814,23 @@ func _handle_auth_register(ck: int, d: Dictionary) -> void:
 	var tok: String = Crypto.new().generate_random_bytes(24).hex_encode()
 	var now: int = int(Time.get_unix_time_from_system())
 	
-	var u: Dictionary
 	if not existing.is_empty():
-		u = existing
-		u["password_hash"] = hash
-		u["salt"] = salt
-		u["is_registered"] = true
-		u["is_dev"] = _is_dev(uname)
-		u["token"] = tok
-		u["last_seen"] = now
-	else:
-		var is_dev: bool = _is_dev(uname)
-		var fr: String = "fr_dev" if is_dev else COMMON_FRAMES[randi() % COMMON_FRAMES.size()]
-		var bn: String = "bn_dev" if is_dev else COMMON_BANNERS[randi() % COMMON_BANNERS.size()]
-		var tt: String = "tt_dev_rgb" if is_dev else (COMMON_TITLES[randi() % COMMON_TITLES.size()] if randf() > 0.3 else "")
-		u = {
-			"username": uname,
-			"password_hash": hash,
-			"salt": salt,
-			"is_registered": true,
-			"is_dev": is_dev,
-			"token": tok,
-			"created_at": now,
-			"last_seen": now,
-			"playtime_s": 0,
-			"matches_played": 0,
-			"wins": 0,
-			"losses": 0,
-			"solo_wins": 0,
-			"avatar": "",
-			"cosmetics": {"frame": fr, "banner": bn, "title": tt}
-		}
-		_users[uname] = u
-	
+		_send(ck, {"t": "auth_fail", "why": "Этот ник временно недоступен до завершения переноса статистики."})
+		return
+	var is_dev: bool = _is_dev(uname)
+	var u: Dictionary = {
+		"id": Crypto.new().generate_random_bytes(16).hex_encode(),
+		"username": uname, "password_hash": hash, "salt": salt,
+		"is_registered": true, "is_dev": is_dev, "sessions": [tok],
+		"created_at": now, "last_seen": now,
+		"cosmetics": {"frame": "fr_dev" if is_dev else COMMON_FRAMES.pick_random(),
+			"banner": "bn_dev" if is_dev else COMMON_BANNERS.pick_random(),
+			"title": "tt_dev_rgb" if is_dev else ""}
+	}
+	_users[uname] = u
 	_save_users(true)
-	if _clients.has(ck):
-		var cl: Dictionary = _clients[ck]
-		cl["auth"] = true
-		cl["auth_user"] = u["username"]
-		cl["name"] = u["username"]
-	_send(ck, {"t": "auth_ok", "token": tok, "user": _public_user(u)})
+	_bind_account(ck, u, tok)
+	_send(ck, {"t": "auth_ok", "token": tok, "user": _public_user(u, u)})
 	_event("user_registered", {"username": u["username"], "is_dev": u["is_dev"]})
 
 
@@ -825,41 +851,224 @@ func _handle_auth_login(ck: int, d: Dictionary) -> void:
 		_send(ck, {"t": "auth_fail", "why": "Неверный пароль"})
 		return
 	var tok: String = Crypto.new().generate_random_bytes(24).hex_encode()
-	u["token"] = tok
+	var sessions: Array = u.get("sessions", [])
+	sessions.append(tok)
+	u["sessions"] = sessions
 	u["last_seen"] = int(Time.get_unix_time_from_system())
 	_save_users(true)
-	if _clients.has(ck):
-		var cl: Dictionary = _clients[ck]
-		cl["auth"] = true
-		cl["auth_user"] = u["username"]
-		cl["name"] = u["username"]
-	_send(ck, {"t": "auth_ok", "token": tok, "user": _public_user(u)})
+	_bind_account(ck, u, tok)
+	_send(ck, {"t": "auth_ok", "token": tok, "user": _public_user(u, u)})
 	_event("user_logged_in", {"username": u["username"]})
 
 
 func _handle_auth_token(ck: int, d: Dictionary) -> void:
-	var uname: String = String(d.get("username", "")).strip_edges()
 	var tok: String = String(d.get("token", ""))
-	var u: Dictionary = _find_user(uname)
-	if not u.is_empty() and tok != "" and String(u.get("token", "")) == tok and bool(u.get("is_registered", false)):
-		u["last_seen"] = int(Time.get_unix_time_from_system())
-		if _clients.has(ck):
-			var cl: Dictionary = _clients[ck]
-			cl["auth"] = true
-			cl["auth_user"] = u["username"]
-			cl["name"] = u["username"]
-		_send(ck, {"t": "auth_ok", "token": tok, "user": _public_user(u)})
+	var u: Dictionary = _find_user_by_token(tok)
+	if not u.is_empty():
+		_bind_account(ck, u, tok)
+		_clients[ck]["social"] = bool(d.get("subscribe", false))
+		_send(ck, {"t": "auth_ok", "token": tok, "user": _public_user(u, u)})
 	else:
 		_send(ck, {"t": "auth_fail", "why": "Сессия устарела. Войдите снова."})
+
+
+func _handle_logout(ck: int, d: Dictionary) -> void:
+	var tok: String = String(d.get("token", ""))
+	var u: Dictionary = _find_user_by_token(tok)
+	if not u.is_empty():
+		if u.get("token") == tok:
+			u.erase("token")
+		(u.get("sessions", []) as Array).erase(tok)
+		_save_users(true)
+	_send(ck, {"t": "logged_out"})
+
+
+var _invites: Dictionary = {}
+
+
+func _social_notice(u: Dictionary) -> void:
+	for peer: int in _clients:
+		var client: Dictionary = _clients[peer]
+		if client.get("social", false) and _has_session(u, String(client.get("session", ""))):
+			_send(peer, {"t": "social_changed"})
+
+
+func _handle_social(ck: int, d: Dictionary) -> void:
+	var u: Dictionary = _viewer(ck)
+	if u.is_empty() or not _clients[ck].get("social", false):
+		_send(ck, {"t": "auth_fail", "why": "Сессия устарела"})
+		return
+	var uid: String = u["id"]
+	var now: int = int(Time.get_unix_time_from_system())
+	var action: String = String(d.get("action", "state"))
+	var result: Dictionary = {"t": "social_result", "action": action, "ok": true}
+	if action == "state":
+		var friends: Array = []
+		var conversations: Array = []
+		var incoming: Array = []
+		var outgoing: Array = []
+		var unread: int = 0
+		for other: Dictionary in _users.values():
+			if not bool(other.get("is_registered", false)) or other == u:
+				continue
+			var oid: String = other["id"]
+			var row: Dictionary = {"username": other["username"], "online": _online(other)}
+			var owner: Dictionary = u if uid < oid else other
+			var partner: String = oid if uid < oid else uid
+			var history: Array = owner.get("chats", {}).get(partner, [])
+			row["message_count"] = history.size()
+			row["unread"] = int(u.get("unread", {}).get(oid, 0))
+			row["can_message"] = _can_message(u, other)
+			unread += int(row["unread"])
+			if not history.is_empty():
+				conversations.append(row)
+			if _friends(u, other):
+				friends.append(row)
+			elif (u.get("requests", []) as Array).has(oid):
+				incoming.append(row)
+			elif (other.get("requests", []) as Array).has(uid):
+				outgoing.append(row)
+		var invites: Array = []
+		for key: String in _invites.keys():
+			var invite: Dictionary = _invites[key]
+			if int(invite["expires"]) <= now:
+				_invites.erase(key)
+			elif invite["to"] == uid:
+				var room: Dictionary = _rooms.get(invite["room"], {})
+				if not room.is_empty() and not room.get("sealed", false):
+					invites.append({"id": key, "from": invite["from"], "seconds": int(invite["expires"]) - now})
+		var roster: Dictionary = {}
+		var code: String = String(d.get("room", ""))
+		var room: Dictionary = _rooms.get(code, {})
+		if not room.is_empty():
+			for peer: int in room["peers"].values():
+				if _has_session(u, String(_clients.get(peer, {}).get("session", ""))):
+					for row: Dictionary in _player_rows(room, u):
+						roster[row["name"]] = {"avatar": row["avatar"], "cosmetics": row["cosmetics"]}
+					break
+		var roster_version: String = str(hash(roster))
+		if String(d.get("roster_version", "")) != roster_version:
+			result["roster"] = roster
+		result["roster_version"] = roster_version
+		result["online_users"] = _online_users().keys()
+		result["profile_version"] = str(hash(_public_user(u, u)))
+		result["room"] = code
+		result.merge({"friends": friends, "conversations": conversations, "incoming": incoming, "outgoing": outgoing, "invites": invites, "unread": unread})
+		_send(ck, result)
+		return
+
+	if action in ["join_invite", "decline_invite"]:
+		var key: String = String(d.get("invite", ""))
+		var invite: Dictionary = _invites.get(key, {})
+		if invite.get("to") == uid:
+			_invites.erase(key)
+			var room: Dictionary = _rooms.get(invite["room"], {})
+			var sender: Dictionary = _find_user(String(invite["from"]))
+			if action == "join_invite" and int(invite["expires"]) > now and _friends(u, sender) and not room.is_empty() and not room.get("sealed", false) and room["peers"].size() < MAX_PEERS and _clients[ck].get("version", "") in ["", room["v"]]:
+				result["room"] = invite["room"]
+			_social_notice(u)
+		if action == "join_invite" and not result.has("room"):
+			result.merge({"ok": false, "why": "Приглашение или комната недоступны"}, true)
+		_send(ck, result)
+		return
+
+	var target: Dictionary = _find_user(String(d.get("username", "")))
+	if not bool(target.get("is_registered", false)) or target == u:
+		_send(ck, {"t": "social_result", "action": action, "ok": false, "why": "Игрок недоступен"})
+		return
+	var oid: String = target["id"]
+	var friends: Array = u.get("friends", [])
+	var their_friends: Array = target.get("friends", [])
+	var requests: Array = u.get("requests", [])
+	var their_requests: Array = target.get("requests", [])
+	var unread: Dictionary = u.get("unread", {})
+	match action:
+		"request":
+			if not friends.has(oid) and not their_requests.has(uid) and not requests.has(oid):
+				their_requests.append(uid)
+		"accept":
+			if requests.has(oid):
+				requests.erase(oid)
+				friends.append(oid)
+				their_friends.append(uid)
+		"decline":
+			requests.erase(oid)
+		"cancel":
+			their_requests.erase(uid)
+		"remove":
+			friends.erase(oid)
+			their_friends.erase(uid)
+		"chat", "message":
+			var owner: Dictionary = u if uid < oid else target
+			var partner: String = oid if uid < oid else uid
+			var chats: Dictionary = owner.get("chats", {})
+			var history: Array = chats.get(partner, [])
+			var can_send: bool = _can_message(u, target)
+			if action == "message":
+				var body: String = String(d.get("body", "")).strip_edges().left(1000)
+				if not can_send or body.is_empty():
+					result["ok"] = false
+					result["why"] = "Игрок принимает сообщения только от друзей"
+				else:
+					history.append({"from": u["username"], "body": body, "at": now})
+					chats[partner] = history
+					owner["chats"] = chats
+					var theirs: Dictionary = target.get("unread", {})
+					theirs[uid] = int(theirs.get(uid, 0)) + 1
+					target["unread"] = theirs
+			elif not history.is_empty() or can_send:
+				var end: int = clampi(int(d.get("before", history.size())), 0, history.size())
+				var start: int = maxi(0, end - 40)
+				result["messages"] = history.slice(start, end)
+				result["message_count"] = history.size()
+				result["can_message"] = can_send
+				result["before"] = start
+				result["older"] = d.has("before")
+				if not d.has("before"):
+					unread.erase(oid)
+			else:
+				result["ok"] = false
+				result["why"] = "Игрок принимает сообщения только от друзей"
+		"invite":
+			var code: String = String(d.get("room", ""))
+			var room: Dictionary = _rooms.get(code, {})
+			var member: bool = false
+			if not room.is_empty():
+				for peer: int in room["peers"].values():
+					if _has_session(u, String(_clients.get(peer, {}).get("session", ""))):
+						member = true
+						break
+			if friends.has(oid) and _online(target) and member and not room.get("sealed", false) and room["peers"].size() < MAX_PEERS:
+				_invites[uid + ":" + oid] = {"from": u["username"], "to": oid, "room": code, "expires": now + 30}
+			else:
+				result["ok"] = false
+		_:
+			result["ok"] = false
+	u["friends"] = friends
+	target["friends"] = their_friends
+	u["requests"] = requests
+	target["requests"] = their_requests
+	u["unread"] = unread
+	if action != "invite":
+		_save_users(true)
+	if action != "chat":
+		_social_notice(u)
+		_social_notice(target)
+	if not result["ok"] and not result.has("why"):
+		result["why"] = "Действие недоступно"
+	result["username"] = target["username"]
+	_send(ck, result)
 
 
 func _handle_get_top(ck: int, d: Dictionary) -> void:
 	var by: String = String(d.get("by", "hours"))
 	var limit: int = clampi(int(d.get("limit", 100)), 1, 1000)
 	var list: Array = []
+	var viewer: Dictionary = _viewer(ck, d)
 	for k: String in _users:
 		var u: Dictionary = _users[k]
-		list.append(_public_user(u))
+		if bool(u.get("is_registered", false)):
+			list.append(_public_user(u, viewer))
 	
 	if by == "wins":
 		list.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -882,7 +1091,9 @@ func _handle_get_top(ck: int, d: Dictionary) -> void:
 	
 	var out: Array = []
 	var rank: int = 1
+	var avatar_budget: int = 500000
 	for row: Dictionary in list.slice(0, limit):
+		avatar_budget = _fit_avatar(row, avatar_budget)
 		row["rank"] = rank
 		out.append(row)
 		rank += 1
@@ -890,11 +1101,19 @@ func _handle_get_top(ck: int, d: Dictionary) -> void:
 	_send(ck, {"t": "top_data", "by": by, "list": out, "total_count": list.size()})
 
 
+func _fit_avatar(row: Dictionary, remaining: int) -> int:
+	var size: int = String(row["avatar"]).length()
+	if size > remaining:
+		row["avatar"] = ""
+		return remaining
+	return remaining - size
+
+
 func _handle_get_profile(ck: int, d: Dictionary) -> void:
 	var uname: String = String(d.get("username", "")).strip_edges()
 	var u: Dictionary = _find_user(uname)
-	if not u.is_empty():
-		_send(ck, {"t": "profile_data", "ok": true, "user": _public_user(u)})
+	if bool(u.get("is_registered", false)):
+		_send(ck, {"t": "profile_data", "ok": true, "user": _public_user(u, _viewer(ck, d))})
 	else:
 		_send(ck, {"t": "profile_data", "ok": false, "why": "Игрок не найден"})
 
@@ -902,10 +1121,14 @@ func _handle_get_profile(ck: int, d: Dictionary) -> void:
 func _handle_search_profiles(ck: int, d: Dictionary) -> void:
 	var q: String = String(d.get("query", "")).strip_edges().to_lower()
 	var res: Array = []
+	var avatar_budget: int = 500000
+	var viewer: Dictionary = _viewer(ck, d)
 	if q != "":
 		for k: String in _users:
-			if k.to_lower().contains(q):
-				res.append(_public_user(_users[k]))
+			if k.to_lower().contains(q) and bool(_users[k].get("is_registered", false)):
+				var row: Dictionary = _public_user(_users[k], viewer)
+				avatar_budget = _fit_avatar(row, avatar_budget)
+				res.append(row)
 				if res.size() >= 30:
 					break
 	_send(ck, {"t": "search_results", "query": d.get("query", ""), "list": res})
@@ -921,9 +1144,9 @@ func _handle_save_profile(ck: int, d: Dictionary) -> void:
 	var is_dev: bool = bool(u.get("is_dev", false))
 	if d.get("cosmetics") is Dictionary:
 		var cos: Dictionary = d["cosmetics"]
-		var fr: String = String(cos.get("frame", "fr_steel"))
-		var bn: String = String(cos.get("banner", "bn_steel"))
-		var tt: String = String(cos.get("title", ""))
+		var fr: String = String(cos.get("frame", u.get("cosmetics", {}).get("frame", "fr_steel")))
+		var bn: String = String(cos.get("banner", u.get("cosmetics", {}).get("banner", "bn_steel")))
+		var tt: String = String(cos.get("title", u.get("cosmetics", {}).get("title", "")))
 		if not is_dev:
 			if fr == "fr_dev": fr = "fr_steel"
 			if bn == "bn_dev": bn = "bn_steel"
@@ -935,8 +1158,15 @@ func _handle_save_profile(ck: int, d: Dictionary) -> void:
 		if av.length() <= 200000:
 			u["avatar"] = av
 	
+	if d.get("message_visibility") in ["all", "friends"]:
+		u["message_visibility"] = d["message_visibility"]
+	if d.get("avatar_visibility") in ["all", "friends", "none"]:
+		u["avatar_visibility"] = d["avatar_visibility"]
+	if d.get("flag") is String and (not d.get("flag_if_unset", false) or not u.has("flag")):
+		u["flag"] = String(d["flag"]).left(64)
 	_save_users(true)
-	_send(ck, {"t": "profile_saved", "ok": true, "user": _public_user(u)})
+	_send(ck, {"t": "profile_saved", "ok": true, "user": _public_user(u, u)})
+	_social_notice(u)
 	_event("profile_updated", {"username": u["username"]})
 
 
@@ -950,11 +1180,19 @@ func _handle_sync_stats(ck: int, d: Dictionary) -> void:
 	var add_pt: int = clampi(int(d.get("playtime_add_s", 0)), 0, 86400)
 	var add_sw: int = clampi(int(d.get("solo_wins_add", 0)), 0, 100)
 	
+	var batch: String = String(d.get("batch", ""))
+	var batches: Dictionary = u.get("stat_batches", {})
+	if batch != "" and batches.has(batch):
+		_send(ck, {"t": "stats_synced", "ok": true, "user": _public_user(u, u)})
+		return
+	if batch != "":
+		batches[batch] = true
+		u["stat_batches"] = batches
 	u["playtime_s"] = int(u.get("playtime_s", 0)) + add_pt
 	u["solo_wins"] = int(u.get("solo_wins", 0)) + add_sw
 	u["last_seen"] = int(Time.get_unix_time_from_system())
-	_save_users()
-	_send(ck, {"t": "stats_synced", "ok": true, "user": _public_user(u)})
+	_save_users(true)
+	_send(ck, {"t": "stats_synced", "ok": true, "user": _public_user(u, u)})
 	_event("stats_synced", {"username": u["username"], "add_playtime": add_pt, "add_solo_wins": add_sw})
 
 
@@ -974,6 +1212,38 @@ func _drop(ck: int, reason: String = "disconnected") -> void :
 	var peers: Dictionary = room["peers"]
 	peers.erase(int(cl.get("id", 0)))
 	if int(cl.get("id", 0)) == 1:
+		if bool(room.get("sealed", false)) and int(room.get("ended_at", 0)) == 0 and not peers.is_empty():
+			var cand_ids: Array = peers.keys()
+			cand_ids.sort()
+			var new_host_id: int = int(cand_ids[0])
+			var new_host_ck: int = int(peers[new_host_id])
+			var new_host_name: String = String(_clients.get(new_host_ck, {}).get("name", "Host"))
+
+			# Re-map candidate to host slot 1
+			peers.erase(new_host_id)
+			peers[1] = new_host_ck
+			if _clients.has(new_host_ck):
+				_clients[new_host_ck]["id"] = 1
+			room["name"] = new_host_name
+
+			_event("host_migrated", {"room": code, "match": String(room.get("match", "")), "old_host_slot": 1,
+				"new_host_slot": 1, "new_host_orig_id": new_host_id, "new_host": new_host_name})
+
+			var epoch: int = int(room.get("epoch", 0)) + 1
+			room["epoch"] = epoch
+			# The promoted guest previously knew only peer 1. Remove that connection
+			# before reusing its ID and register the surviving guests on the new host.
+			_send(new_host_ck, {"t": "left", "id": 1})
+			_send(new_host_ck, {"t": "promoted", "epoch": epoch, "match": String(room.get("match", ""))})
+			for pid: int in peers:
+				if pid == 1:
+					continue
+				var guest_ck: int = int(peers[pid])
+				var guest: Dictionary = _clients.get(guest_ck, {})
+				_send(new_host_ck, {"t": "peer", "id": pid, "name": String(guest.get("name", ""))})
+				_send(guest_ck, {"t": "host_changed", "host": new_host_name, "id": 1, "you": false, "epoch": epoch})
+			return
+
 		if bool(room.get("sealed", false)) and int(room.get("ended_at", 0)) == 0:
 			room["ended_at"] = int(Time.get_unix_time_from_system())
 			room["end_reason"] = "host_disconnected"

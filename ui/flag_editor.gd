@@ -161,6 +161,7 @@ func _put(k: String, v: Variant) -> void :
 			GameConfig.my_name = String(v)
 		"f":
 			GameConfig.my_flag = String(v)
+			Account.update_profile({"flag": GameConfig.my_flag})
 		_:
 			GameConfig.my_land = int(v)
 

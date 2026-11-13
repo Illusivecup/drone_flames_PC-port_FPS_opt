@@ -6,11 +6,19 @@ extends CanvasLayer
 
 signal request(name: String)
 
-const VERSION: String = "Reborn v1.0.0"
+const VERSION: String = "v0.33.5.38 (PC Port by @droneflamesmod)"
 
 const WHATS_NEW: Array = [
-	"DRONE FLAMES REBORN v1.0: рождение новой версии — пересобранная симуляция войны (вывод войск, поиск целей, ИИ артиллерии, кластеризация армий), рендер по умолчанию на самом быстром бэкенде для слабых ПК, новое главное меню с бейджем REBORN. Игра снова playable на любых машинах",
-        "ИНТЕРФЕЙС & ВИДЕО v0.33.5.2: панель склада поднята вплотную к верхней полосе, разграничены клики по ресурсам (деньги -> доходы, энергия -> цепочки, склад -> склад, зеленая полоса -> страна); адаптивный полноэкранный фон вступительного трейлера без черных полос; пасхалка на сплэш-скрине запуска",
+        "ОНЛАЙН v0.33.5.38: друзья, личные сообщения, приглашения, синхронизация профиля и исправления подключения",
+        "ОНЛАЙН v0.33.5.37-test: навигация при тайм-ауте, действия в профиле и настройки личных сообщений",
+        "ОНЛАЙН v0.33.5.36-test: вход, друзья, личные сообщения и приглашения в лобби",
+        "ПЛАТФОРМЫ v0.33.5.35-test: сборка Linux x86_64, установка из релиза и обновление из меню игры",
+        "БАЛАНС v0.33.5.34-test: каждый основанный город повышает цену следующего на 250 до максимума в 2000",
+        "СЕТЕВАЯ ИГРА v0.33.5.33-test: кнопка чата рядом с лобби, отдельное окно и быстрые фразы",
+        "СЕТЕВАЯ ИГРА v0.33.5.32-test: чат до начала матча, исключение игроков хостом",
+        "СЕТЕВАЯ ИГРА v0.33.5.30-test: исправлена обработка пакетов relay и подтверждений снапшота, повторная синхронизация теперь отслеживается отдельно для каждого игрока, моды временно выключаются при входе в сетевую игру",
+        "ТЕСТ v0.33.5.29-test: исправление бесконечной синхронизации на 10-15 минуте партии (сторожевой таймер 20с для сетевых снапшотов, сглаживание субпиксельных рассинхронов, передача слота ИИ при 3 сбоях вместо зависания хоста); автопроверка модов при входе в лобби с диалогом докачки недостающих модов; починка синтаксиса ядерного мода (nuclear_strike); плавная индикация загрузки и кнопка восстановления модов; автопоиск серверов в локальной сети и Radmin VPN (26.0.0.0/8)",
+        "ИНТЕРФЕЙС & ВИДЕО v0.33.5.2: панель склада поднята вплотную к верхней полосе, разграничены клики по ресурсам (деньги -> доходы, энергия -> цепочки, склад -> склад, зеленая полоса -> страна); адаптивный полноэкранный фон вступительного трейлера без черных полос; пасхалка на сплэш-скрине запуска (@droneflamesmod, @nufxa и уточка)",
         "ВЕРИФИКАЦИЯ МОДОВ v0.33.5.2: галочка верификации выдана строго на 6 официальных модов (Солнцепёк, Искандер-М, Ядерный арсенал, ВДВ, FPS-мод, Оазис в пустыне), исправлено отображение иконки без пустых отступов у остальных модов",
         "ИСКАНДЕР & МОДЫ v0.33.5.2: интеграция ОТРК «Искандер-М» в меню ударов (ОФ и кассетные БЧ, гиперзвуковой полёт), ВДВ v1.3.0 с поддержкой нескольких штабов (6 цветов), ядерный удар v1.2.0 с 5-фазной вспышкой, ТОС-1А с радиусом 90-640px, сквозной клик по ярлыкам операций",
         "СТРОИТЕЛЬСТВО v0.33.5.2: живой предпросмотр (обложка) постройки при зажатом Shift в реальном времени под курсором, непрерывное размещение по клику и мгновенное подтверждение по клавише E",
@@ -55,7 +63,15 @@ const WHATS_NEW: Array = [
 ]
 
 var gw: GameWorld
-var net: NetSession
+var net: NetSession:
+        set(value):
+                if net != null and is_instance_valid(net):
+                        if net.has_signal("mods_required") and net.mods_required.is_connected(_on_net_mods_required):
+                                net.mods_required.disconnect(_on_net_mods_required)
+                net = value
+                if net != null and is_instance_valid(net):
+                        if net.has_signal("mods_required") and not net.mods_required.is_connected(_on_net_mods_required):
+                                net.mods_required.connect(_on_net_mods_required)
 const KeybindManager = preload("res://core/keybind_manager.gd")
 const SavesUI = preload("res://ui/saves_ui.gd")
 const ModsUI = preload("res://ui/mods_ui.gd")
@@ -114,6 +130,7 @@ static var _more_open: bool = false
 
 static var _update_dialog_shown: bool = false
 var _up_dialog: Control = null
+var _mp_mods_dialog: Control = null
 
 func setup(world: GameWorld) -> void :
         gw = world
@@ -149,12 +166,17 @@ func is_open() -> bool:
 
 
 func close() -> void :
+        _close_lobby_chat()
+        _lobby_chat_button = null
         if _wn != null and is_instance_valid(_wn):
                 _wn.queue_free()
         _wn = null
         if _up_dialog != null and is_instance_valid(_up_dialog):
                 _up_dialog.queue_free()
         _up_dialog = null
+        if _mp_mods_dialog != null and is_instance_valid(_mp_mods_dialog):
+                _mp_mods_dialog.queue_free()
+        _mp_mods_dialog = null
         if _prefs_dirty:
                 _prefs_dirty = false
                 Save.save_prefs()
@@ -168,6 +190,9 @@ func close() -> void :
 
 
 func _process(delta: float) -> void :
+        _social_tick()
+        if current == "lobby":
+                _update_lobby_chat_button()
         _t += delta
         if _pv_task >= 0 and WorkerThreadPool.is_task_completed(_pv_task):
                 _pv_done()
@@ -780,6 +805,10 @@ func _nav_row(parent: Control, title: String, hint: String, open: Callable) -> B
 
 
 func _input(event: InputEvent) -> void :
+        if is_instance_valid(_lobby_chat_overlay) and event.is_action_pressed("ui_cancel"):
+                _close_lobby_chat()
+                get_viewport().set_input_as_handled()
+                return
         if _bind_waiting_action != "":
                 if event is InputEventKey and event.pressed and not event.echo:
                         var ek: InputEventKey = event as InputEventKey
@@ -978,7 +1007,6 @@ func show_main() -> void :
                 bg.add_child(s)
                 _sparks.append([s, Vector2(randf_range(-8.0, 8.0), - randf_range(18.0, 40.0))])
         var lt: Texture2D = UiKit.tex("logo_df")
-        var logo_w: float = 0.0
         var logo_k: float = 1.0
         if lt != null:
                 _logo = TextureRect.new()
@@ -986,20 +1014,22 @@ func show_main() -> void :
                 _logo.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
                 _logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
                 var k: float = floorf(minf(3.0, (root.size.x + 40.0) / lt.get_size().x) * 2.0) / 2.0
+                logo_k = k
                 _logo.set_meta("k", k)
                 _logo.scale = Vector2(k, k)
                 _logo.pivot_offset = lt.get_size() * 0.5
                 _logo.position = Vector2((root.size.x - lt.get_size().x) * 0.5, 70)
                 bg.add_child(_logo)
-                logo_w = lt.get_size().x
-                logo_k = k
         else:
                 var tl: Label = UiKit.title("DRONE FLAMES", 34)
                 tl.set_anchors_preset(Control.PRESET_TOP_WIDE)
                 tl.offset_top = 110
                 bg.add_child(tl)
-        # REBORN: фирменный бейдж версии и слоган под логотипом
-        var badge_y: float = (70.0 + logo_w * logo_k + 8.0) if _logo != null else 162.0
+        # REBORN: фирменный бейдж и упоминание фанатского порта под логотипом.
+        # Позиция считается от ВЫСОТЫ логотипа (не ширины!) — раньше бейдж
+        # уезжал за нижний край экрана (220*3+70 = 738 px при высоте 720).
+        var badge_y: float = (70.0 + lt.get_size().y * logo_k + 8.0) if lt != null else 162.0
+        badge_y = minf(badge_y, root.size.y * 0.40)
         var rb: Label = UiKit.title("R E B O R N", 30, UiKit.GOLD)
         rb.set_anchors_preset(Control.PRESET_TOP_WIDE)
         rb.offset_top = int(badge_y)
@@ -1011,6 +1041,11 @@ func show_main() -> void :
         tag.set_anchors_preset(Control.PRESET_TOP_WIDE)
         tag.offset_top = int(badge_y) + 42
         bg.add_child(tag)
+        var port_lbl: Label = UiKit.lbl("Фанатский ПК-порт от Reborn Team · не является официальной игрой", 9, Color(0.62, 0.66, 0.78), 1, 2)
+        port_lbl.set_anchors_preset(Control.PRESET_TOP_WIDE)
+        port_lbl.offset_top = int(badge_y) + 62
+        port_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        bg.add_child(port_lbl)
 
         var col: = VBoxContainer.new()
         col.add_theme_constant_override("separation", 10)
@@ -1377,7 +1412,7 @@ func _show_whats_new() -> void :
         var tg_go: Button = UiKit.big("ОТКРЫТЬ @DRONEFLAMESMOD", "blue", "", 34.0, 10)
         tg_go.pressed.connect(func() -> void:
                 UiKit.snd("ui_click")
-                OS.shell_open("https://github.com/Illusivecup/drone_flames_PC-port_FPS_opt")
+                OS.shell_open("https://t.me/droneflamesmod")
         )
         tg_col.add_child(tg_go)
         rows.append(tg_box)
@@ -1790,7 +1825,7 @@ func show_mods_settings(from_pause: bool = false) -> void:
         tg_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         tg_btn.pressed.connect(func() -> void:
                 UiKit.snd("ui_click")
-                OS.shell_open("https://github.com/Illusivecup/drone_flames_PC-port_FPS_opt")
+                OS.shell_open("https://t.me/droneflamesmod")
         )
         vb.add_child(tg_btn)
 
@@ -2072,6 +2107,8 @@ func show_mp(msg: String = "", sev: String = "") -> void :
         if _mp_gate():
                 return
         _hook_account()
+        if current == "main":
+                _mp_tab = 1
         if current != "mp":
                 _mp_new_ok = false
                 _mp_del_ok = false
@@ -2079,6 +2116,27 @@ func show_mp(msg: String = "", sev: String = "") -> void :
         current = "mp"
         if net == null:
                 _button(vb, "НАЗАД", "stone", "main")
+                return
+        Account.load_state()
+        if not Account.is_authenticated():
+                net.browser.stop()
+                _label(vb, "Играйте по интернету: создайте комнату, войдите по коду или выберите открытую игру. Аккаунт сохраняет профиль, статистику и друзей.", 12, UiKit.TEXT, false)
+                MpKit.choice_card(vb, "net_globe", "ВОЙТИ", "УЖЕ ЕСТЬ АККАУНТ", false, func() -> void: _show_online_auth(false, show_mp, show_mp))
+                MpKit.choice_card(vb, "net_edit", "РЕГИСТРАЦИЯ", "СОЗДАТЬ АККАУНТ С НИКОМ И ПАРОЛЕМ", false, func() -> void: _show_online_auth(true, show_mp, show_mp))
+                _mp_back_button(_bottom_row())
+                return
+        if _mp_tab != 0 and not _social.ready:
+                net.browser.stop()
+                var failed: bool = _social.error_text != ""
+                MpKit.placeholder(vb, "net_warn" if failed else "net_sync", _social.error_text if failed else "ПОДКЛЮЧЕНИЕ К СЕРВЕРУ", "МОЖНО ПОВТОРИТЬ ПОПЫТКУ ИЛИ ИГРАТЬ ПО WI-FI", not failed, 86.0)
+                MpKit.choice_card(vb, "net_lan", "ЛОКАЛЬНАЯ СЕТЬ", "ИГРА ПО WI-FI БЕЗ ПОДКЛЮЧЕНИЯ К СЕРВЕРУ", false, func() -> void:
+                        _mp_tab = 0
+                        show_mp())
+                var footer: HBoxContainer = _bottom_row()
+                _mp_back_button(footer)
+                var retry: Button = _ibutton(footer, "ПОВТОРИТЬ", "blue", "", "net_refresh", 48.0)
+                retry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                retry.pressed.connect(_social.retry)
                 return
         var online_ok: bool = _mp_online_ok()
         if _mp_tab < 0:
@@ -2102,16 +2160,17 @@ func show_mp(msg: String = "", sev: String = "") -> void :
                 if i == _mp_tab:
                         return
                 _mp_tab = i
-                if _mp_tab == 1 and not Account.is_authenticated() and not _auth_declined:
-                        _auth_declined = true
-                        show_net_auth_prompt(func() -> void: show_mp(), func() -> void: show_mp())
-                        return
                 show_mp())
         _acc_sig = _account_sig()
         if _mp_tab == 0:
                 _mp_nick_row(vb)
         else:
                 _mp_profile_card(vb)
+                var social_bar := HBoxContainer.new()
+                vb.add_child(social_bar)
+                _social_button(social_bar, "Друзья", func() -> void: _show_social("friends", show_mp))
+                _social_notification = _social_button(social_bar, "Уведомления", func() -> void: _show_social("notifications", show_mp))
+                _update_social_notification()
         _label(vb, "БЕЗ ИНТЕРНЕТА, В ОДНОЙ СЕТИ" if _mp_tab == 0 else "ЧЕРЕЗ ИНТЕРНЕТ, ДО %d ИГРОКОВ" % NetConfig.MAX_PLAYERS, 10, UiKit.MUTED)
         var signed: bool = Account.signed_in()
         var open_ok: bool = online_ok
@@ -2199,6 +2258,20 @@ func _mp_nick_row(vb: VBoxContainer) -> void :
         _nick_edit = ne
 
 
+func _mp_back_button(footer: HBoxContainer) -> void:
+        var back: Button = _button(footer, "НАЗАД", "stone", "")
+        back.custom_minimum_size.x = 111
+        back.pressed.connect( func() -> void :
+                if net != null:
+                        net.lan.stop()
+                        net.browser.stop()
+                        if net.reconnecting:
+                                net.leave(true, true, true)
+                        elif net.active() and not net.in_match:
+                                net.leave()
+                request.emit("main"))
+
+
 func _mp_status_and_buttons(msg: String, sev: String, online_ok: bool, signed: bool) -> void :
 
         var st: String = msg if msg != "" else ("" if net.ranked_mode != "" else net.status_text)
@@ -2216,16 +2289,7 @@ func _mp_status_and_buttons(msg: String, sev: String, online_ok: bool, signed: b
                         if bar != null and is_instance_valid(bar):
                                 (bar as Node).queue_free())
         var br: HBoxContainer = _bottom_row()
-        var back: Button = _button(br, "НАЗАД", "stone", "")
-        back.custom_minimum_size.x = 111
-        back.pressed.connect( func() -> void :
-                net.lan.stop()
-                net.browser.stop()
-                if net.reconnecting:
-                        net.leave(true, true, true)
-                elif net.active() and not net.in_match:
-                        net.leave()
-                request.emit("main"))
+        _mp_back_button(br)
         var mk: Button = _ibutton(br, "СОЗДАТЬ", "green", "", "net_lan" if _mp_tab == 0 else "net_globe", 48.0)
         mk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         var relay_mode: bool = RtcLink.relay_only()
@@ -2451,12 +2515,12 @@ static func _mp_code_shown(c: String) -> String:
         return c if c.length() <= 3 else c.left(3) + "-" + c.substr(3)
 
 
-func _mp_join_code(code: String) -> void :
+func _mp_join_code(code: String, allow_late: bool = true) -> void :
         if not Account.is_authenticated():
-                show_net_auth_prompt(func() -> void: _mp_join_code(code), func() -> void: show_mp())
+                show_net_auth_prompt(func() -> void: _mp_join_code(code, allow_late), func() -> void: show_mp())
                 return
         net.browser.stop()
-        var w: String = net.join_online(code)
+        var w: String = net.join_online(code, allow_late)
         if w != "":
                 show_mp(w)
         else:
@@ -2649,6 +2713,7 @@ func _mp_lobby_changed() -> void :
                 return
         if current == "lobby" or current == "lobby_style":
                 if not net.active():
+                        _lobby_chat_draft = ""
                         show_mp.call_deferred(net.status_text)
                 elif current == "lobby":
                         show_lobby.call_deferred()
@@ -2661,14 +2726,148 @@ func _mp_lobby_changed() -> void :
 
 
 
+const LOBBY_CHAT_QUICK: Array[String] = [
+        "Сыграем впятером?", "Давайте большую карту", "Готов к старту", "Подождите минуту"
+]
+var _lobby_chat_button: Button
+var _lobby_chat_overlay: Control
+var _lobby_chat_log: RichTextLabel
+var _lobby_chat_draft: String = ""
+var _lobby_chat_transport: int = 0
+var _lobby_chat_unread: int = 0
+
+
+func _update_lobby_chat_button() -> void:
+        if not is_instance_valid(_lobby_chat_button) or not is_instance_valid(_panel):
+                return
+        var rect: Rect2 = _panel.get_global_rect()
+        var button_size: Vector2 = _lobby_chat_button.get_combined_minimum_size()
+        var right: float = rect.end.x + 12.0
+        var outside: bool = right + button_size.x <= root.size.x - 8.0
+        var x: float = right if outside else rect.end.x - button_size.x - 10.0
+        _lobby_chat_button.global_position = Vector2(x, maxf(_sm.x + 8.0, rect.position.y + (48.0 if outside else 8.0)))
+
+
+func _update_lobby_chat_label() -> void:
+        if is_instance_valid(_lobby_chat_button):
+                _lobby_chat_button.text = Loc.t("ЧАТ") if _lobby_chat_unread == 0 else "%s · %d" % [Loc.t("ЧАТ"), _lobby_chat_unread]
+
+
+func _fill_lobby_chat() -> void:
+        _lobby_chat_log.clear()
+        for message: Dictionary in net.lobby_chat:
+                _lobby_chat_log.add_text("%s · %s\n" % [message["name"], message["text"]])
+
+
+func _refresh_lobby_chat() -> void:
+        if is_instance_valid(_lobby_chat_overlay) and is_instance_valid(_lobby_chat_log):
+                _fill_lobby_chat()
+        else:
+                _lobby_chat_unread = mini(NetSession.LOBBY_CHAT_HISTORY, _lobby_chat_unread + 1)
+                _update_lobby_chat_label()
+
+
+func _add_lobby_chat_button() -> void:
+        var transport: int = net.multiplayer.multiplayer_peer.get_instance_id()
+        if _lobby_chat_transport != transport:
+                _lobby_chat_transport = transport
+                _lobby_chat_draft = ""
+                _lobby_chat_unread = 0
+        _lobby_chat_button = UiKit.big(Loc.t("ЧАТ"), "blue", "", 38.0, 12)
+        _lobby_chat_button.tooltip_text = Loc.t("Открыть чат комнаты")
+        screen.add_child(_lobby_chat_button)
+        _lobby_chat_button.pressed.connect(_open_lobby_chat)
+        _update_lobby_chat_label()
+        _update_lobby_chat_button()
+        if not net.lobby_chat_received.is_connected(_refresh_lobby_chat):
+                net.lobby_chat_received.connect(_refresh_lobby_chat)
+
+
+func _close_lobby_chat() -> void:
+        if is_instance_valid(_lobby_chat_overlay):
+                _lobby_chat_overlay.queue_free()
+        _lobby_chat_overlay = null
+        _lobby_chat_log = null
+
+
+func _open_lobby_chat(focus_input: bool = true) -> void:
+        if current != "lobby" or is_instance_valid(_lobby_chat_overlay):
+                return
+        _lobby_chat_unread = 0
+        _update_lobby_chat_label()
+        var overlay := ColorRect.new()
+        overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+        overlay.color = Color(0.02, 0.04, 0.09, 0.78)
+        screen.add_child(overlay)
+        _lobby_chat_overlay = overlay
+        var center := CenterContainer.new()
+        center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+        overlay.add_child(center)
+        var panel := PanelContainer.new()
+        panel.custom_minimum_size.x = minf(580.0, root.size.x - 20.0)
+        panel.add_theme_stylebox_override("panel", UiKit.sb("wb_window", 16, 14))
+        center.add_child(panel)
+        var content := VBoxContainer.new()
+        content.add_theme_constant_override("separation", 8)
+        panel.add_child(content)
+        var header := HBoxContainer.new()
+        content.add_child(header)
+        var title: Label = UiKit.title(Loc.t("ЧАТ КОМНАТЫ"), 18)
+        title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        header.add_child(title)
+        var close_button: Button = UiKit.close_btn(36.0)
+        close_button.tooltip_text = Loc.t("Закрыть чат")
+        header.add_child(close_button)
+        close_button.pressed.connect(_close_lobby_chat)
+
+        _lobby_chat_log = RichTextLabel.new()
+        _lobby_chat_log.custom_minimum_size.y = clampf(root.size.y * 0.40, 85.0, 320.0)
+        _lobby_chat_log.add_theme_stylebox_override("normal", UiKit.sb("wb_panel_dark", 8, 6))
+        _lobby_chat_log.scroll_following = true
+        _lobby_chat_log.selection_enabled = true
+        content.add_child(_lobby_chat_log)
+        _fill_lobby_chat()
+
+        var quick := HFlowContainer.new()
+        content.add_child(quick)
+        var row := HBoxContainer.new()
+        content.add_child(row)
+        var input := LineEdit.new()
+        input.placeholder_text = Loc.t("Сообщение…")
+        input.max_length = NetSession.LOBBY_CHAT_LENGTH
+        input.text = _lobby_chat_draft
+        input.editable = net.local_slot >= 0
+        input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        row.add_child(input)
+        var send: Button = UiKit.big(Loc.t("ОТПРАВИТЬ"), "green", "", 40.0, 11)
+        send.disabled = not input.editable
+        row.add_child(send)
+        input.text_changed.connect(func(value: String) -> void: _lobby_chat_draft = value)
+        var submit: Callable = func() -> void:
+                if net.send_lobby_chat(input.text):
+                        input.clear()
+                        _lobby_chat_draft = ""
+        input.text_submitted.connect(func(_text: String) -> void: submit.call())
+        send.pressed.connect(submit)
+        for phrase: String in LOBBY_CHAT_QUICK:
+                var quick_button: Button = UiKit.big(Loc.t(phrase), "stone", "", 30.0, 10)
+                quick_button.disabled = not input.editable
+                quick.add_child(quick_button)
+                quick_button.pressed.connect(func() -> void: net.send_lobby_chat(Loc.t(phrase)))
+        if focus_input and input.editable and not OS.has_feature("mobile"):
+                input.grab_focus()
+
+
 func show_lobby(msg: String = "") -> void :
         if _mp_gate():
                 return
         if not net.active():
                 show_mp(msg if msg != "" else net.status_text)
                 return
+        var reopen_chat: bool = current == "lobby" and is_instance_valid(_lobby_chat_overlay)
         var vb: VBoxContainer = _screen("Комната", 0.45, current != "lobby")
         current = "lobby"
+        _label(vb, "МОДЫ ВРЕМЕННО ОТКЛЮЧЕНЫ В СЕТЕВОЙ ИГРЕ", 10, UiKit.MUTED)
         var online: bool = net.mode == NetSession.Mode.ONLINE
         if online:
                 if net.is_host:
@@ -2707,6 +2906,8 @@ func show_lobby(msg: String = "") -> void :
                         _label(vb, "ОТПРАВЬТЕ IP ДРУЗЬЯМ ИЛИ ОНИ НАЙДУТ СЕРВЕР В СПИСКЕ", 10, UiKit.MUTED)
                 else:
                         _label(vb, "ДРУЗЬЯ В ЭТОЙ СЕТИ НАЙДУТ ЕЁ САМИ", 10, UiKit.MUTED)
+        if online and net.room_code != "":
+                _social_button(vb, "Пригласить друзей", func() -> void: _show_social("invite", show_lobby))
         MpKit.section(vb, "ИГРОКИ %d/%d" % [net.slots.size(), NetConfig.MAX_PLAYERS])
         var seats: = VBoxContainer.new()
         seats.add_theme_constant_override("separation", 4)
@@ -2714,7 +2915,17 @@ func show_lobby(msg: String = "") -> void :
         for i in NetConfig.MAX_PLAYERS:
                 if i < net.slots.size():
                         var sl: Dictionary = net.slots[i]
-                        var pl_row: PanelContainer = MpKit.slot_row(seats, i, String(sl.get("name", "?")), i == 0, i == net.local_slot, String(ArchStyle.NAMES[net.slot_arch(i)]), false, sl.get("cos", {}) if sl.get("cos") is Dictionary else {}, NetSession.clean_flag(sl.get("flag", "")))
+                        var row := HBoxContainer.new()
+                        seats.add_child(row)
+                        var cosmetics: Dictionary = (sl.get("cos", {}) as Dictionary).duplicate()
+                        cosmetics.erase("avatar_b64")
+                        if online and _social.state.get("room", "") == net.room_code:
+                                var roster: Dictionary = _social.state.get("roster", {})
+                                var profile: Dictionary = roster.get(String(sl.get("name", "")), {})
+                                cosmetics = (profile.get("cosmetics", cosmetics) as Dictionary).duplicate()
+                                cosmetics["avatar_b64"] = profile.get("avatar", "")
+                        var pl_row: PanelContainer = MpKit.slot_row(row, i, String(sl.get("name", "?")), i == 0, i == net.local_slot, String(ArchStyle.NAMES[net.slot_arch(i)]), false, cosmetics, NetSession.clean_flag(sl.get("flag", "")))
+                        pl_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
                         var pl_name: String = String(sl.get("name", ""))
                         if pl_name != "":
                                 pl_row.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -2723,6 +2934,24 @@ func show_lobby(msg: String = "") -> void :
                                                 UiKit.snd("ui_click")
                                                 _inspect_player(pl_name, sl.get("cos", {}) if sl.get("cos") is Dictionary else {}, func() -> void: show_lobby())
                                 )
+                        if net.is_host and i != net.local_slot:
+                                var peer_id: int = int(sl["peer"])
+                                var remove := Button.new()
+                                remove.text = Loc.t("Исключить")
+                                remove.tooltip_text = pl_name
+                                row.add_child(remove)
+                                remove.pressed.connect(func() -> void:
+                                        var transport: MultiplayerPeer = net.multiplayer.multiplayer_peer
+                                        var confirm := ConfirmationDialog.new()
+                                        confirm.dialog_text = Loc.f("Исключить игрока {name} из комнаты?", {"name": pl_name})
+                                        add_child(confirm)
+                                        confirm.confirmed.connect(func() -> void:
+                                                if current == "lobby" and net.multiplayer.multiplayer_peer == transport and net.slots.has(sl):
+                                                        net.kick_lobby_player(peer_id)
+                                                confirm.queue_free())
+                                        confirm.canceled.connect(confirm.queue_free)
+                                        confirm.popup_centered())
+
                 else:
                         MpKit.slot_row(seats, i, "", false, false, "", i == net.slots.size())
         if net.local_slot >= 0:
@@ -2757,6 +2986,7 @@ func show_lobby(msg: String = "") -> void :
                                         lv.text = "ПОКИНУТЬ"
                                         _paint_big(lv, "stone"))
                         return
+                _lobby_chat_draft = ""
                 net.leave()
                 show_mp())
         if net.is_host:
@@ -2775,6 +3005,10 @@ func show_lobby(msg: String = "") -> void :
                         request.emit("setup"))
         else:
                 lv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+        _add_lobby_chat_button()
+        if reopen_chat:
+                _open_lobby_chat(false)
 
 
 
@@ -2870,11 +3104,11 @@ func show_settings(from_pause: bool) -> void :
         tg_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         tg_btn.pressed.connect(func() -> void:
                 UiKit.snd("ui_click")
-                OS.shell_open("https://github.com/Illusivecup/drone_flames_PC-port_FPS_opt")
+                OS.shell_open("https://t.me/droneflamesmod")
         )
         tg_btn.tooltip_text = "Неофициальное сообщество ПК-портов и модов игры (не разработчики игры)"
         vb.add_child(tg_btn)
-        var tg_lbl: Label = UiKit.lbl("github.com/Illusivecup/drone_flames_PC-port_FPS_opt · Сообщество Reborn", 9, UiKit.MUTED, 1)
+        var tg_lbl: Label = UiKit.lbl("t.me/droneflamesmod · Сообщество портов и модов (не канал игры)", 9, UiKit.MUTED, 1)
         tg_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         vb.add_child(tg_lbl)
         var back: Button = _button(_bottom_row(), "НАЗАД", "stone", "pause" if from_pause else "main")
@@ -2950,30 +3184,10 @@ func show_update_dialog(tag: String = "", changelog: String = "", dl_url: String
                 changelog = String(up.get("latest_changelog"))
         if tag == "":
                 tag = GitHubUpdater.get_installed_version() if ResourceLoader.exists("res://net/github_updater.gd") else "0.33.4.9"
-        var is_android: bool = OS.has_feature("mobile") or OS.get_name() == "Android"
-        var is_mac: bool = OS.get_name() == "macOS"
-        var direct_installer_url: String = ""
-        var file_label: String = "(.EXE)"
-        if is_android:
-                direct_installer_url = "https://github.com/Illusivecup/drone_flames_PC-port_FPS_opt/releases/download/v%s/DroneFlames_Reborn_v%s_android.apk" % [tag, tag]
-                file_label = "(.APK)"
-        elif is_mac:
-                direct_installer_url = "https://github.com/Illusivecup/drone_flames_PC-port_FPS_opt/releases/download/v%s/DroneFlames_Reborn_macOS_v%s.dmg" % [tag, tag]
-                file_label = "(.DMG)"
-        else:
-                direct_installer_url = "https://github.com/Illusivecup/drone_flames_PC-port_FPS_opt/releases/download/v%s/DroneFlames_Reborn_PC_Setup_v%s.exe" % [tag, tag]
-                file_label = "(.EXE)"
-
-        var is_valid_url: bool = false
-        if is_mac:
-                is_valid_url = dl_url.ends_with(".dmg") or dl_url.ends_with(".zip")
-        elif is_android:
-                is_valid_url = dl_url.ends_with(".apk")
-        else:
-                is_valid_url = dl_url.ends_with(".exe") or dl_url.ends_with(".zip")
-
-        if dl_url == "" or dl_url.contains("/releases/tag/") or dl_url.contains("/releases/latest") or not is_valid_url:
-                dl_url = direct_installer_url
+        var file_label: String = "(%s)" % asset_name.get_extension().to_upper() if not asset_name.is_empty() else ""
+        var gh_url: String = "https://github.com/makkaX2/DroneFlames-PC-Port/releases/tag/v" + tag
+        if dl_url.is_empty():
+                dl_url = gh_url
 
         var bg: = ColorRect.new()
         bg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -3099,10 +3313,18 @@ func show_update_dialog(tag: String = "", changelog: String = "", dl_url: String
                 nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
                 cl_vb.add_child(nl)
 
-        var dl_btn: Button = UiKit.big("СКАЧАТЬ ОБНОВЛЕНИЕ " + file_label, "green", "", 44.0, 13)
+        var linux: bool = OS.get_name() == "Linux"
+        var download_title: String = "ОБНОВИТЬ В ТЕРМИНАЛЕ" if linux else "СКАЧАТЬ ОБНОВЛЕНИЕ " + file_label
+        var dl_btn: Button = UiKit.big(download_title, "green", "", 44.0, 13)
         dl_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         dl_btn.pressed.connect(func() -> void:
                 UiKit.snd("ui_click")
+                if linux:
+                        if up is GitHubUpdater and up.start_linux_update():
+                                return
+                        OS.shell_open(gh_url)
+                        dl_btn.text = "ОТКРЫТА СТРАНИЦА УСТАНОВКИ"
+                        return
                 OS.shell_open(dl_url)
                 dl_btn.text = "✓ СКАЧИВАНИЕ ФАЙЛА НАЧАТО В БРАУЗЕРЕ"
                 dl_btn.disabled = true
@@ -3113,7 +3335,6 @@ func show_update_dialog(tag: String = "", changelog: String = "", dl_url: String
         br_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         br_btn.pressed.connect(func() -> void:
                 UiKit.snd("ui_click")
-                var gh_url: String = "https://github.com/makkaX2/DroneFlames-PC-Port/releases/tag/v" + tag
                 OS.shell_open(gh_url)
         )
         vb.add_child(br_btn)
@@ -3127,6 +3348,263 @@ func show_update_dialog(tag: String = "", changelog: String = "", dl_url: String
                         _up_dialog = null
         )
         vb.add_child(later_btn)
+
+
+func _on_net_mods_required(required_mods: Array) -> void:
+        _show_required_mods_dialog.call_deferred(required_mods)
+
+
+func _show_required_mods_dialog(required_mods: Array) -> void:
+        if _mp_mods_dialog != null and is_instance_valid(_mp_mods_dialog):
+                _mp_mods_dialog.queue_free()
+                _mp_mods_dialog = null
+
+        var mm: Node = null
+        if has_node("/root/ModManager"):
+                mm = get_node("/root/ModManager")
+
+        var missing_info: Array = []
+        if mm != null and mm.has_method("check_missing_mp_mods"):
+                missing_info = mm.check_missing_mp_mods(required_mods)
+        else:
+                missing_info = required_mods
+
+        var bg := ColorRect.new()
+        bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+        bg.color = Color(0.02, 0.04, 0.1, 0.78)
+        bg.mouse_filter = Control.MOUSE_FILTER_STOP
+        root.add_child(bg)
+        _mp_mods_dialog = bg
+
+        var cc := CenterContainer.new()
+        cc.set_anchors_preset(Control.PRESET_FULL_RECT)
+        cc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        bg.add_child(cc)
+
+        var panel := PanelContainer.new()
+        panel.add_theme_stylebox_override("panel", UiKit.sb("wb_window", 16, 14))
+        var win_w: float = minf(490.0, root.size.x - 30.0)
+        panel.custom_minimum_size = Vector2(win_w, 0)
+        cc.add_child(panel)
+
+        var vb := VBoxContainer.new()
+        vb.add_theme_constant_override("separation", 10)
+        panel.add_child(vb)
+
+        var hr := HBoxContainer.new()
+        hr.add_theme_constant_override("separation", 8)
+        vb.add_child(hr)
+
+        var title_lbl: Label = UiKit.title(Loc.t("ТРЕБУЮТСЯ МОДЫ ДЛЯ СЕТЕВОЙ ИГРЫ"), 18, UiKit.GOLD)
+        title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        hr.add_child(title_lbl)
+
+        var close_btn: Button = UiKit.close_btn(32.0)
+        close_btn.pressed.connect(func() -> void:
+                UiKit.snd("ui_close")
+                if _mp_mods_dialog != null and is_instance_valid(_mp_mods_dialog):
+                        _mp_mods_dialog.queue_free()
+                        _mp_mods_dialog = null
+                if net != null:
+                        net.leave()
+        )
+        hr.add_child(close_btn)
+
+        var sub_lbl: Label = UiKit.lbl(Loc.t("У хоста включены моды, изменяющие игровой мир. Без них подключение к серверу запрещено во избежание рассинхронизации:"), 10, UiKit.MUTED, 1)
+        sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        vb.add_child(sub_lbl)
+
+        # Список требуемых модов
+        var list_panel: PanelContainer = PanelContainer.new()
+        list_panel.add_theme_stylebox_override("panel", UiKit.sb("wb_panel_dark", 10, 8))
+        vb.add_child(list_panel)
+
+        var sc := ScrollContainer.new()
+        sc.custom_minimum_size = Vector2(0, mini(int(required_mods.size() * 52 + 10), 180))
+        sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+        list_panel.add_child(sc)
+
+        var mod_list_vb := VBoxContainer.new()
+        mod_list_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        mod_list_vb.add_theme_constant_override("separation", 6)
+        sc.add_child(mod_list_vb)
+
+        for m_item in required_mods:
+                if not (m_item is Dictionary):
+                        continue
+                var mid: String = String(m_item.get("id", ""))
+                var mname: String = String(m_item.get("name", mid))
+                var mver: String = String(m_item.get("version", "1.0.0"))
+
+                var is_inst: bool = mm != null and mm.is_mod_installed(mid)
+                var is_en: bool = mm != null and mm.is_mod_enabled(mid)
+                var cur_v: String = String(mm.installed_mods.get(mid, {}).get("version", "")) if is_inst else ""
+
+                var row := HBoxContainer.new()
+                row.add_theme_constant_override("separation", 8)
+                mod_list_vb.add_child(row)
+
+                var info_v := VBoxContainer.new()
+                info_v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                row.add_child(info_v)
+
+                var title_row := UiKit.lbl("%s (v%s)" % [mname, mver], 11, UiKit.TEXT, 1)
+                info_v.add_child(title_row)
+
+                var st_lbl: Label = null
+                if is_en and (cur_v == "" or cur_v == mver):
+                        st_lbl = UiKit.lbl("✓ Установлен и готов", 9, UiKit.GREEN)
+                elif is_inst and (cur_v == "" or cur_v == mver):
+                        st_lbl = UiKit.lbl("● Установлен (требуется включить)", 9, UiKit.GOLD)
+                elif is_inst and cur_v != mver:
+                        st_lbl = UiKit.lbl("⚠ Требуется обновление (у вас: v%s)" % cur_v, 9, UiKit.RED)
+                else:
+                        st_lbl = UiKit.lbl("↓ Не установлен (будет скачан)", 9, UiKit.RED)
+                info_v.add_child(st_lbl)
+
+        # Панель индикатора прогресса
+        var pbar_vbox := VBoxContainer.new()
+        pbar_vbox.add_theme_constant_override("separation", 4)
+        vb.add_child(pbar_vbox)
+
+        var status_text_lbl: Label = UiKit.lbl("Готово к установке пака модов", 10, UiKit.TEXT, 1)
+        status_text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        pbar_vbox.add_child(status_text_lbl)
+
+        var pbar: ProgressBar = ModsUI.create_styled_progress_bar()
+        pbar.value = 0.0
+        pbar.visible = true
+        pbar_vbox.add_child(pbar)
+
+        # Нижняя панель кнопок
+        var btn_row := HBoxContainer.new()
+        btn_row.add_theme_constant_override("separation", 8)
+        vb.add_child(btn_row)
+
+        var cancel_btn: Button = UiKit.big("ОТМЕНА", "stone", "", 36.0, 10)
+        cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        cancel_btn.pressed.connect(func() -> void:
+                UiKit.snd("ui_close")
+                if _mp_mods_dialog != null and is_instance_valid(_mp_mods_dialog):
+                        _mp_mods_dialog.queue_free()
+                        _mp_mods_dialog = null
+                if net != null:
+                        net.leave()
+        )
+        btn_row.add_child(cancel_btn)
+
+        var install_btn: Button = UiKit.big("СКАЧАТЬ И ВОЙТИ", "green", "", 36.0, 10)
+        install_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        btn_row.add_child(install_btn)
+
+        # Логика скачивания и входа
+        install_btn.pressed.connect(func() -> void:
+                install_btn.disabled = true
+                cancel_btn.disabled = true
+                install_btn.text = "УСТАНОВКА..."
+
+                if mm == null:
+                        status_text_lbl.text = "Ошибка: ModManager не найден"
+                        status_text_lbl.modulate = UiKit.RED
+                        install_btn.disabled = false
+                        cancel_btn.disabled = false
+                        return
+
+                var to_process: Array = required_mods.duplicate()
+                var total_count: int = to_process.size()
+                var completed_count: int = 0
+
+                for m in to_process:
+                        if not (m is Dictionary):
+                                continue
+                        var mid: String = String(m.get("id", ""))
+                        var mname: String = String(m.get("name", mid))
+                        var mver: String = String(m.get("version", ""))
+
+                        var is_installed: bool = mm.is_mod_installed(mid)
+                        var cur_ver: String = String(mm.installed_mods.get(mid, {}).get("version", "")) if is_installed else ""
+
+                        if is_installed and (cur_ver == "" or cur_ver == mver or mver == ""):
+                                # Мод уже есть — просто активируем
+                                status_text_lbl.text = "Активация «%s»..." % mname
+                                mm.toggle_mod(mid, true)
+                                completed_count += 1
+                                pbar.value = clampf(float(completed_count) / float(maxi(1, total_count)) * 100.0, 0.0, 100.0)
+                                await get_tree().process_frame
+                        else:
+                                # Нужно скачать или обновить
+                                status_text_lbl.text = "Скачивание «%s»..." % mname
+                                var dl_done: Array = [false]
+                                var dl_err: Array = [""]
+
+                                var on_prog = func(_id: String, rec: int, tot: int, pct: float) -> void:
+                                        if _id == mid:
+                                                var base_pct: float = float(completed_count) / float(maxi(1, total_count)) * 100.0
+                                                var step_pct: float = (pct / 100.0) * (100.0 / float(maxi(1, total_count)))
+                                                pbar.value = clampf(base_pct + step_pct, 0.0, 100.0)
+                                                var rec_mb: float = float(rec) / (1024.0 * 1024.0)
+                                                var tot_mb: float = float(tot) / (1024.0 * 1024.0)
+                                                if tot > 0:
+                                                        status_text_lbl.text = "Загрузка «%s»: %d%% (%.1f / %.1f МБ)" % [mname, int(pct), rec_mb, tot_mb]
+                                                else:
+                                                        status_text_lbl.text = "Загрузка «%s»: %d%%" % [mname, int(pct)]
+
+                                var on_done = func(_id: String) -> void:
+                                        if _id == mid:
+                                                dl_done[0] = true
+
+                                var on_failed = func(_id: String, err_msg: String) -> void:
+                                        if _id == mid:
+                                                dl_err[0] = err_msg
+                                                dl_done[0] = true
+
+                                if mm.has_signal("mod_download_progress"):
+                                        mm.mod_download_progress.connect(on_prog)
+                                if mm.has_signal("mod_download_completed"):
+                                        mm.mod_download_completed.connect(on_done)
+                                if mm.has_signal("mod_download_failed"):
+                                        mm.mod_download_failed.connect(on_failed)
+
+                                mm.download_and_install_mod(m)
+
+                                # Ждём завершения скачивания с таймаутом
+                                var wait_t: float = 0.0
+                                while not dl_done[0] and wait_t < 60.0:
+                                        await get_tree().create_timer(0.1).timeout
+                                        wait_t += 0.1
+
+                                if mm.has_signal("mod_download_progress") and mm.mod_download_progress.is_connected(on_prog):
+                                        mm.mod_download_progress.disconnect(on_prog)
+                                if mm.has_signal("mod_download_completed") and mm.mod_download_completed.is_connected(on_done):
+                                        mm.mod_download_completed.disconnect(on_done)
+                                if mm.has_signal("mod_download_failed") and mm.mod_download_failed.is_connected(on_failed):
+                                        mm.mod_download_failed.disconnect(on_failed)
+
+                                if dl_err[0] != "":
+                                        status_text_lbl.text = "Ошибка при загрузке «%s»: %s" % [mname, dl_err[0]]
+                                        status_text_lbl.modulate = UiKit.RED
+                                        install_btn.disabled = false
+                                        cancel_btn.disabled = false
+                                        install_btn.text = "ПОВТОРИТЬ"
+                                        return
+
+                                mm.toggle_mod(mid, true)
+                                completed_count += 1
+                                pbar.value = clampf(float(completed_count) / float(maxi(1, total_count)) * 100.0, 0.0, 100.0)
+
+                # Все моды установлены и активированы!
+                status_text_lbl.text = "Все моды готовы! Входим на сервер..."
+                status_text_lbl.modulate = UiKit.GREEN
+                pbar.value = 100.0
+                await get_tree().create_timer(0.4).timeout
+
+                if _mp_mods_dialog != null and is_instance_valid(_mp_mods_dialog):
+                        _mp_mods_dialog.queue_free()
+                        _mp_mods_dialog = null
+
+                if net != null and net.has_method("resend_hello_with_mods"):
+                        net.resend_hello_with_mods()
+        )
 
 
 const PerfProbe: = preload("res://ui/perf_probe.gd")
@@ -4019,6 +4497,29 @@ func show_profile(msg: String = "", sev: String = "info") -> void :
         change_av.pressed.connect(func() -> void:
                 _pick_avatar_file()
         )
+        if Account.is_authenticated():
+                var visibility := OptionButton.new()
+                for title: String in ["Аватар: все", "Аватар: только друзья", "Аватар: никто"]:
+                        visibility.add_item(Loc.t(title))
+                var modes: Array[String] = ["all", "friends", "none"]
+                visibility.select(maxi(0, modes.find(String(Account.info.get("avatar_visibility", "all")))))
+                vb.add_child(visibility)
+                visibility.item_selected.connect(func(index: int) -> void:
+                        var result: Dictionary = await Account.update_profile({"avatar_visibility": modes[index]})
+                        if not result.get("ok", false):
+                                _mp_toast(String(result.get("err", "Настройка не сохранена")))
+                                if is_instance_valid(visibility):
+                                        visibility.select(maxi(0, modes.find(String(Account.info.get("avatar_visibility", "all"))))))
+
+        if Account.is_authenticated():
+                MpKit.section(vb, "КТО МОЖЕТ НАПИСАТЬ МНЕ")
+                var everyone: bool = Account.info.get("message_visibility", "friends") == "all"
+                MpKit.tabs(vb, [["net_players", "ДРУЗЬЯ"], ["net_globe", "ВСЕ ИГРОКИ"]], 1 if everyone else 0, func(index: int) -> void:
+                        var view: Control = screen
+                        var result: Dictionary = await Account.update_profile({"message_visibility": "all" if index == 1 else "friends"})
+                        if screen == view:
+                                show_profile("НАСТРОЙКА СОХРАНЕНА" if result.get("ok", false) else "НЕ УДАЛОСЬ СОХРАНИТЬ НАСТРОЙКУ", "ok" if result.get("ok", false) else "alarm"))
+
         if Account.avatar_b64 != "":
                 var rst_av: Button = UiKit.big("СБРОСИТЬ", "stone", "", 42.0, 12)
                 av_row.add_child(rst_av)
@@ -5001,141 +5502,335 @@ func _lead_row(list: VBoxContainer, e: Dictionary, me: bool) -> void :
         rv.add_child(UiKit.lbl("%d–%d" % [int(e.get("wins", 0)), int(e.get("losses", 0))], 10, UiKit.MUTED, 1, 1))
 
 
-static var _auth_declined: bool = false
-var _prompt_nick_edit: LineEdit = null
-var _prompt_pw_edit: LineEdit = null
+var _social := preload("res://net/social_link.gd").new()
+var _top_presence_labels: Dictionary = {}
+var _social_notification: Button
+var _social_mode: String = ""
+var _social_back: Callable
+var _social_content: VBoxContainer
+var _social_query: LineEdit
+var _social_search: Array = []
+var _social_signature: String = ""
+var _chat_user: String = ""
+var _chat_log: VBoxContainer
+var _chat_send: Button
+var _chat_permission: Label
+var _player_actions: VBoxContainer
+var _player_actions_user: Dictionary = {}
+var _player_actions_back: Callable
+var _chat_input: LineEdit
+var _chat_before: int = 0
+var _chat_count: int = -1
+var _chat_pending: String = ""
+var _chat_messages: Array = []
+var _invite_panel: HBoxContainer
+var _invite_label: Label
+var _shown_invite: String = ""
+var _joining_invite: bool = false
+
+
+func _social_button(parent: Control, title: String, action: Callable, colour: String = "blue") -> Button:
+        var button: Button = _button(parent, title, colour, "")
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.pressed.connect(action)
+        return button
+
+
+func _send_social(action: String, data: Dictionary = {}) -> bool:
+        if _social.send(action, data):
+                return true
+        _mp_toast("Связь с сервером восстанавливается")
+        return false
+
+
+func _social_tick() -> void:
+        if not _social.state_changed.is_connected(_social_state_changed):
+                _social.state_changed.connect(_social_state_changed)
+                _social.received.connect(_social_received)
+        Account.load_state()
+        NetConfig.load_cfg()
+        _social.tick(net.room_code if net != null and net.mode == NetSession.Mode.ONLINE else "")
+        _update_invitation()
+
+
+func _update_social_notification() -> void:
+        if is_instance_valid(_social_notification):
+                var count: int = (_social.state.get("incoming", []) as Array).size() + (_social.state.get("invites", []) as Array).size() + int(_social.state.get("unread", 0))
+                _social_notification.text = "Уведомления (%d)" % count if count > 0 else "Уведомления"
+
+
+func _social_state_changed() -> void:
+        if not _social.ready:
+                _joining_invite = false
+                _chat_pending = ""
+                _chat_count = -1
+        if not visible:
+                return
+        _update_social_notification()
+        if current == "mp":
+                var connection: String = "%s|%s|%s" % [_social.ready, Account.is_authenticated(), _social.error_text if _mp_tab != 0 else ""]
+                if _social_signature != connection:
+                        _social_signature = connection
+                        show_mp()
+        elif current == "leaderboard":
+                var online: Array = _social.state.get("online_users", [])
+                for nick: String in _top_presence_labels:
+                        var label: Label = _top_presence_labels[nick]
+                        if is_instance_valid(label):
+                                label.visible = online.has(nick)
+        elif current == "social":
+                _render_social()
+        elif current == "player_profile":
+                _render_player_actions()
+        elif current == "friend_chat":
+                for friend: Dictionary in _social.state.get("conversations", []):
+                        if friend["username"] == _chat_user and int(friend.get("message_count", 0)) != _chat_count:
+                                _social.send("chat", {"username": _chat_user})
+                        elif friend["username"] == _chat_user:
+                                _chat_access(bool(friend.get("can_message", false)))
+        elif current == "lobby":
+                var roster_signature: String = str(hash(_social.state.get("roster", {})))
+                if roster_signature != _social_signature:
+                        _social_signature = roster_signature
+                        show_lobby()
+
+
+func _show_social(mode: String, back: Callable) -> void:
+        var title: String = {"friends": "Друзья", "notifications": "Уведомления", "invite": "Пригласить друзей"}[mode]
+        var vb: VBoxContainer = _screen(title, 0.45, true)
+        current = "social"
+        _social_mode = mode
+        _social_back = back
+        _social_search = []
+        if mode == "friends":
+                _social_query = MpKit.field(vb, "Поиск по нику", "Ник", "nick")["edit"]
+                var search: Callable = func() -> void:
+                        var query: String = _social_query.text.strip_edges()
+                        var result: Dictionary = await Account.search_profiles(query)
+                        if current == "social" and _social_mode == "friends" and is_instance_valid(_social_query) and _social_query.text.strip_edges() == query:
+                                _social_search = result.get("list", [])
+                                _render_social()
+                _social_query.text_submitted.connect(func(_value: String) -> void: search.call())
+                _social_button(vb, "Найти", search)
+        _social_content = VBoxContainer.new()
+        vb.add_child(_social_content)
+        _social_button(_bottom_row(), "Назад", back, "stone")
+        _render_social()
+
+
+func _render_social() -> void:
+        if not is_instance_valid(_social_content):
+                return
+        for child: Node in _social_content.get_children():
+                _social_content.remove_child(child)
+                child.queue_free()
+        if not _social.ready:
+                _label(_social_content, "Подключение к серверу…", 12, UiKit.MUTED)
+                return
+        if _social_mode == "notifications":
+                for invite: Dictionary in _social.state.get("invites", []):
+                        _social_button(_social_content, "Приглашение от %s" % invite["from"], func() -> void: _accept_invitation(invite["id"]))
+                for friend: Dictionary in _social.state.get("conversations", []):
+                        if int(friend["unread"]) > 0:
+                                var nick: String = friend["username"]
+                                _social_button(_social_content, "%s · Сообщения (%d)" % [nick, int(friend["unread"])], func() -> void: _inspect_player(nick, {}, func() -> void: _show_social("notifications", _social_back)))
+                for player: Dictionary in _social.state.get("incoming", []):
+                        var nick: String = player["username"]
+                        _label(_social_content, "Заявка от %s" % nick, 13, UiKit.TEXT)
+                        var row := HBoxContainer.new()
+                        _social_content.add_child(row)
+                        _social_button(row, "Принять", func() -> void: _send_social("accept", {"username": nick}))
+                        _social_button(row, "Отклонить", func() -> void: _send_social("decline", {"username": nick}))
+                if _social_content.get_child_count() == 0:
+                        _label(_social_content, "Новых уведомлений нет", 12, UiKit.MUTED)
+                return
+        for friend: Dictionary in _social.state.get("friends", []):
+                var nick: String = friend["username"]
+                if _social_mode == "invite":
+                        if friend["online"]:
+                                _social_button(_social_content, nick, func() -> void: _send_social("invite", {"username": nick, "room": net.room_code}))
+                        continue
+                var subtitle: String = "В СЕТИ · ОТКРЫТЬ ПРОФИЛЬ" if friend["online"] else "ОТКРЫТЬ ПРОФИЛЬ"
+                MpKit.choice_card(_social_content, "net_players", nick, subtitle, false, func() -> void:
+                        _inspect_player(nick, {}, func() -> void: _show_social("friends", _social_back)))
+        if _social_content.get_child_count() == 0:
+                _label(_social_content, "Нет друзей в сети" if _social_mode == "invite" else "Список друзей пуст", 12, UiKit.MUTED)
+        if _social_mode == "friends":
+                for player: Dictionary in _social.state.get("outgoing", []):
+                        var nick: String = player["username"]
+                        _social_button(_social_content, "Отменить заявку · %s" % nick, func() -> void: _send_social("cancel", {"username": nick}))
+                for player: Dictionary in _social_search:
+                        var nick: String = player["username"]
+                        if nick.nocasecmp_to(Account.username()) != 0:
+                                MpKit.choice_card(_social_content, "net_players", nick, "ОТКРЫТЬ ПРОФИЛЬ", false, func() -> void: _inspect_player(nick, {}, func() -> void: _show_social("friends", _social_back)))
+
+
+func _show_friend_chat(nick: String, back: Callable) -> void:
+        var vb: VBoxContainer = _screen("Сообщения: " + nick, 0.45, true)
+        current = "friend_chat"
+        _chat_user = nick
+        _chat_before = 0
+        _chat_count = -1
+        _chat_pending = ""
+        _chat_messages = []
+        _social_button(vb, "Ранние сообщения", func() -> void:
+                if _chat_before > 0:
+                        _send_social("chat", {"username": nick, "before": _chat_before}))
+        _chat_log = VBoxContainer.new()
+        vb.add_child(_chat_log)
+        _chat_input = MpKit.field(vb, "Сообщение", "Сообщение", "nick")["edit"]
+        _chat_input.max_length = 1000
+        _chat_permission = _label(vb, "Загрузка переписки…", 11, UiKit.MUTED)
+        _chat_input.editable = false
+        var send: Callable = func() -> void:
+                var body: String = _chat_input.text.strip_edges()
+                if _chat_input.editable and body != "" and _chat_pending == "" and _send_social("message", {"username": nick, "body": body}):
+                        _chat_pending = body
+        _chat_input.text_submitted.connect(func(_value: String) -> void: send.call())
+        var footer: HBoxContainer = _bottom_row()
+        _social_button(footer, "Назад", back, "stone")
+        _chat_send = _social_button(footer, "Отправить", send, "green")
+        _chat_send.disabled = true
+        _send_social("chat", {"username": nick})
+
+
+func _chat_access(allowed: bool) -> void:
+        if is_instance_valid(_chat_input) and is_instance_valid(_chat_send):
+                _chat_input.editable = allowed
+                _chat_send.disabled = not allowed
+                _chat_permission.text = "" if allowed else "Игрок принимает сообщения только от друзей."
+
+
+func _social_received(result: Dictionary) -> void:
+        var action: String = result.get("action", "")
+        if action == "join_invite":
+                _joining_invite = false
+        if action == "message" and current == "friend_chat" and result.get("username") == _chat_user:
+                if result.get("ok", false) and _chat_input.text.strip_edges() == _chat_pending:
+                        _chat_input.clear()
+                _chat_pending = ""
+        if not result.get("ok", false):
+                if current == "friend_chat" and action in ["chat", "message"]:
+                        _chat_access(false)
+                _mp_toast(String(result.get("why", "Действие недоступно")))
+                return
+        match action:
+                "request":
+                        _mp_toast("Заявка отправлена")
+                "invite":
+                        _mp_toast("Приглашение отправлено")
+                "join_invite":
+                        if net != null and not net.go:
+                                if net.active():
+                                        net.leave()
+                                _mp_join_code(String(result["room"]), false)
+                "message":
+                        if current == "friend_chat" and result.get("username") == _chat_user:
+                                _social.send("chat", {"username": _chat_user})
+                "chat":
+                        if current == "friend_chat" and result.get("username") == _chat_user and is_instance_valid(_chat_log):
+                                _chat_access(bool(result.get("can_message", false)))
+                                _chat_before = int(result.get("before", 0))
+                                if not result.get("older", false):
+                                        _chat_count = int(result.get("message_count", 0))
+                                _chat_messages = result.get("messages", []) + _chat_messages if result.get("older", false) else result.get("messages", [])
+                                for child: Node in _chat_log.get_children():
+                                        _chat_log.remove_child(child)
+                                        child.queue_free()
+                                for message: Dictionary in _chat_messages:
+                                        var line: Label = _label(_chat_log, "%s  %s" % [message["from"], message["body"]], 12, UiKit.TEXT)
+                                        line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+
+func _update_invitation() -> void:
+        if root == null:
+                return
+        var invites: Array = _social.state.get("invites", [])
+        var elapsed: int = (Time.get_ticks_msec() - int(_social.state.get("received_at", 0))) / 1000
+        var next: Dictionary = {}
+        if visible and not (net != null and net.go):
+                for invite: Dictionary in invites:
+                        if int(invite["seconds"]) > elapsed:
+                                next = invite
+                                break
+        var key: String = next.get("id", "")
+        if key != _shown_invite:
+                _shown_invite = key
+                if is_instance_valid(_invite_panel):
+                        _invite_panel.queue_free()
+                if key != "":
+                        _invite_panel = HBoxContainer.new()
+                        _invite_panel.z_index = 20
+                        root.add_child(_invite_panel)
+                        _invite_panel.position = Vector2(12, _safe_tb().x + 8)
+                        _invite_label = _label(_invite_panel, "", 13, UiKit.TEXT)
+                        _social_button(_invite_panel, "Принять", func() -> void: _accept_invitation(key))
+                        _social_button(_invite_panel, "Отклонить", func() -> void: _send_social("decline_invite", {"invite": key}))
+        if key != "":
+                _invite_label.text = "%s приглашает в лобби · %d с" % [next["from"], int(next["seconds"]) - elapsed]
+
+
+func _accept_invitation(key: String) -> void:
+        if net == null or net.go or _joining_invite:
+                return
+        if not net.active():
+                _joining_invite = _send_social("join_invite", {"invite": key})
+                return
+        var confirm := ConfirmationDialog.new()
+        confirm.dialog_text = "Выйти из текущей комнаты и принять приглашение?"
+        add_child(confirm)
+        confirm.confirmed.connect(func() -> void:
+                if not net.go:
+                        _joining_invite = _send_social("join_invite", {"invite": key})
+                confirm.queue_free())
+        confirm.canceled.connect(confirm.queue_free)
+        confirm.popup_centered()
+
 
 func show_net_auth_prompt(on_success: Callable = Callable(), on_cancel: Callable = Callable()) -> void:
-        var vb: VBoxContainer = _screen("Авторизация", 0.55, true)
+        _show_online_auth(false, on_success if on_success.is_valid() else show_mp, on_cancel if on_cancel.is_valid() else show_mp)
+
+
+func _show_online_auth(registering: bool, on_success: Callable, on_cancel: Callable) -> void:
+        var vb: VBoxContainer = _screen("Регистрация" if registering else "Вход", 0.55, true)
         current = "net_auth_prompt"
-        _top = true
-        
-        MpKit.status_bar(vb, "СЕТЬ DRONEFLAMES MULTIPLAYER", "info", "net_globe")
-        
-        var disc_p: PanelContainer = PanelContainer.new()
-        disc_p.add_theme_stylebox_override("panel", UiKit.sb("wb_panel_dark", 8, 4))
-        vb.add_child(disc_p)
-        var dv: VBoxContainer = VBoxContainer.new()
-        dv.add_theme_constant_override("separation", 6)
-        disc_p.add_child(dv)
-        
-        var dl1: Label = UiKit.lbl("ВАШ АККАУНТ НЕ ЗАРЕГИСТРИРОВАН", 12, UiKit.GOLD, 3, 2)
-        dl1.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        dv.add_child(dl1)
-        
-        var desc: String = (
-                "Ваш никнейм ещё не был зарегистрирован в сети мультиплеера DroneFlames.\n\n" +
-                "🔒 БЕЗОПАСНОСТЬ И КОНФИДЕНЦИАЛЬНОСТЬ:\n" +
-                "Пароль хранится на сервере исключительно для сохранения вашей статистики (часов, побед), " +
-                "участия в топе игроков, будущей синхронизации миров и облачного сохранения косметики.\n" +
-                "Мы не собираем личные данные и не требуем почту.\n\n" +
-                "⚠️ Внимание: не используйте пароли от вашей личной почты, банка или других важных сайтов!"
-        )
-        var dl2: Label = UiKit.lbl(desc, 10, UiKit.TEXT, 1, 1)
-        dl2.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        dv.add_child(dl2)
-        
-        MpKit.section(vb, "УЧЁТНАЯ ЗАПИСЬ")
-        
-        var fn: Dictionary = MpKit.field(vb, "НИКНЕЙМ", "Ваш ник", "nick")
-        _prompt_nick_edit = fn["edit"]
-        _prompt_nick_edit.text = Account.username()
-        
-        var fp: Dictionary = MpKit.field(vb, "ПАРОЛЬ", "Придумайте пароль (от 4 символов)", "password")
-        _prompt_pw_edit = fp["edit"]
-        _prompt_pw_edit.secret = true
-        
-        var err_slot: Control = Control.new()
-        err_slot.custom_minimum_size = Vector2(0, 32)
-        vb.add_child(err_slot)
-        
-        var set_err: Callable = func(err_msg: String) -> void:
-                for ch: Node in err_slot.get_children():
-                        ch.queue_free()
-                if err_msg != "":
-                        var sb: PanelContainer = MpKit.status_bar(err_slot, err_msg, "alarm")
-                        sb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-        
-        var act_box: VBoxContainer = VBoxContainer.new()
-        act_box.add_theme_constant_override("separation", 6)
-        vb.add_child(act_box)
-        
-        var btn_reg: Button = UiKit.big("СОЗДАТЬ ПАРОЛЬ", "green", "", 46.0, 13)
-        act_box.add_child(btn_reg)
-        
-        var btn_login: Button = UiKit.big("ВОЙТИ ПО ПАРОЛЮ", "blue", "", 42.0, 12)
-        act_box.add_child(btn_login)
-        
-        btn_reg.pressed.connect(func() -> void:
-                var u: String = _prompt_nick_edit.text.strip_edges()
-                var p: String = _prompt_pw_edit.text.strip_edges()
-                if u.length() < 2:
-                        set_err.call("Никнейм минимум 2 символа")
+        var nick: LineEdit = MpKit.field(vb, "Ник", "Ник", "nick")["edit"]
+        var password: LineEdit = MpKit.field(vb, "Пароль", "Пароль", "password")["edit"]
+        password.secret = true
+        var repeat: LineEdit
+        if registering:
+                repeat = MpKit.field(vb, "Повторите пароль", "Пароль", "password")["edit"]
+                repeat.secret = true
+        var status: Label = _label(vb, "", 12, UiKit.MUTED)
+        var switch: Button = _nav_row(vb, "УЖЕ ЕСТЬ АККАУНТ" if registering else "РЕГИСТРАЦИЯ", "ВОЙТИ ПО НИКУ" if registering else "СОЗДАТЬ АККАУНТ", func() -> void: _show_online_auth(not registering, on_success, on_cancel))
+        var footer: HBoxContainer = _bottom_row()
+        var back: Button = _button(footer, "НАЗАД", "stone", "")
+        back.custom_minimum_size.x = 111
+        back.pressed.connect(on_cancel)
+        var submit: Button = _ibutton(footer, "СОЗДАТЬ АККАУНТ" if registering else "ВОЙТИ", "green", "", "net_globe", 48.0)
+        submit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        var form: Control = screen
+        submit.pressed.connect(func() -> void:
+                if registering and password.text != repeat.text:
+                        status.text = "Пароли не совпадают"
                         return
-                if p.length() < 4:
-                        set_err.call("Пароль минимум 4 символа")
-                        return
-                btn_reg.disabled = true
-                btn_login.disabled = true
-                btn_reg.text = "РЕГИСТРАЦИЯ..."
-                var res: Dictionary = await Account.register(u, p)
-                if not is_instance_valid(btn_reg):
-                        return
-                if bool(res.get("ok", false)):
-                        UiKit.snd("ui_capture")
-                        MpKit.toast("УСПЕШНО ЗАРЕГИСТРИРОВАН")
-                        if on_success.is_valid():
-                                on_success.call()
-                        else:
-                                show_mp("АККАУНТ ЗАРЕГИСТРИРОВАН", "ok")
+                submit.disabled = true
+                switch.disabled = true
+                status.text = "Подключение к серверу…"
+                var result: Dictionary
+                if registering:
+                        result = await Account.register(nick.text, password.text)
                 else:
-                        btn_reg.disabled = false
-                        btn_login.disabled = false
-                        btn_reg.text = "СОЗДАТЬ ПАРОЛЬ"
-                        set_err.call(String(res.get("err", "Ошибка регистрации")).to_upper())
-                        UiKit.snd("ui_error")
-        )
-        
-        btn_login.pressed.connect(func() -> void:
-                var u: String = _prompt_nick_edit.text.strip_edges()
-                var p: String = _prompt_pw_edit.text.strip_edges()
-                if u.length() < 2:
-                        set_err.call("Никнейм минимум 2 символа")
+                        result = await Account.login(nick.text, password.text)
+                if screen != form or not is_instance_valid(submit):
                         return
-                if p.length() < 4:
-                        set_err.call("Пароль минимум 4 символа")
-                        return
-                btn_reg.disabled = true
-                btn_login.disabled = true
-                btn_login.text = "ВХОД..."
-                var res: Dictionary = await Account.login(u, p)
-                if not is_instance_valid(btn_login):
-                        return
-                if bool(res.get("ok", false)):
-                        UiKit.snd("ui_capture")
-                        MpKit.toast("ВЫ УСПЕШНО ВОШЛИ")
-                        if on_success.is_valid():
-                                on_success.call()
-                        else:
-                                show_mp("ВЫ ВОШЛИ В АККАУНТ", "ok")
+                if result.get("ok", false):
+                        _mp_tab = 1
+                        on_success.call()
                 else:
-                        btn_reg.disabled = false
-                        btn_login.disabled = false
-                        btn_login.text = "ВОЙТИ ПО ПАРОЛЮ"
-                        set_err.call(String(res.get("err", "Неверный пароль или ошибка входа")).to_upper())
-                        UiKit.snd("ui_error")
-        )
-        
-        var br: HBoxContainer = _bottom_row()
-        var cancel_btn: Button = _button(br, "ОТКАЗАТЬСЯ / ПОЗЖЕ", "stone", "")
-        cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        cancel_btn.pressed.connect(func() -> void:
-                _auth_declined = true
-                if on_cancel.is_valid():
-                        on_cancel.call()
-                else:
-                        _mp_tab = 0
-                        show_mp()
+                        status.text = String(result.get("err", "Ошибка входа"))
+                        submit.disabled = false
+                        switch.disabled = false
         )
 
 
@@ -5144,6 +5839,7 @@ var _lead_data: Array = []
 var _lead_search: String = ""
 
 func show_leaderboard(metric: String = "") -> void:
+        _top_presence_labels.clear()
         if metric != "":
                 _lead_metric = metric
         var vb: VBoxContainer = _screen("Таблица лидеров", 0.45, current != "leaderboard")
@@ -5212,9 +5908,19 @@ func show_leaderboard(metric: String = "") -> void:
                                 fill_rows.call(filtered)
         )
         
+        var br: HBoxContainer = _bottom_row()
+        var back: Button = _button(br, "НАЗАД", "stone", "")
+        back.custom_minimum_size.x = 111
+        back.pressed.connect(func() -> void: show_mp())
+
+        var rf: Button = _ibutton(br, "ОБНОВИТЬ", "blue", "", "net_refresh", 46.0)
+        rf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        rf.pressed.connect(func() -> void: show_leaderboard())
+
+
         # Fetch top from server
         var res: Dictionary = await Account.get_top(_lead_metric, 100)
-        if not is_instance_valid(list_box) or current != "leaderboard":
+        if not is_instance_valid(list_box) or list_box.is_queued_for_deletion() or current != "leaderboard":
                 return
         if not bool(res.get("ok", false)):
                 for ch in list_box.get_children():
@@ -5224,14 +5930,6 @@ func show_leaderboard(metric: String = "") -> void:
         _lead_data = res.get("list", res.get("top", []))
         fill_rows.call(_lead_data)
         
-        var br: HBoxContainer = _bottom_row()
-        var back: Button = _button(br, "НАЗАД", "stone", "")
-        back.custom_minimum_size.x = 111
-        back.pressed.connect(func() -> void: show_mp())
-        
-        var rf: Button = _ibutton(br, "ОБНОВИТЬ", "blue", "", "net_refresh", 46.0)
-        rf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        rf.pressed.connect(func() -> void: show_leaderboard())
 
 
 func _render_lead_row(parent: Control, rank: int, u: Dictionary) -> Control:
@@ -5267,23 +5965,18 @@ func _render_lead_row(parent: Control, rank: int, u: Dictionary) -> Control:
         
         var uname: String = String(u.get("username", u.get("name", u.get("nick", "Игрок"))))
         var is_dev: bool = bool(u.get("is_dev", false)) or Account.is_dev_name(uname)
-        var registered: bool = bool(u.get("is_registered", u.get("registered", false)))
-        
+
         var nl: Label = UiKit.lbl(uname, 13, UiKit.GOLD if is_dev else UiKit.TEXT, 3, 2)
         nh.add_child(nl)
         
         if is_dev:
                 nh.add_child(MpKit.dev_badge_button(uname))
         
-        var tag_p: PanelContainer = PanelContainer.new()
-        tag_p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        tag_p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        var tag_col: Color = UiKit.GREEN if registered else UiKit.DIM
-        tag_p.add_theme_stylebox_override("panel", MpKit._flat(Color(0.1, 0.1, 0.1, 0.8), tag_col, 1, 3))
-        var tag_l: Label = UiKit.lbl("✓ В СЕТИ" if registered else "НЕ ЗАРЕГ.", 9, tag_col, 1, 0)
-        tag_p.add_child(tag_l)
-        nh.add_child(tag_p)
-        
+        var presence: Label = UiKit.lbl("В СЕТИ", 9, UiKit.GREEN, 1, 0)
+        nh.add_child(presence)
+        presence.visible = bool(u.get("online", false))
+        _top_presence_labels[uname] = presence
+
         var total_w: int = int(u.get("total_wins", int(u.get("wins", 0)) + int(u.get("solo_wins", 0))))
         var matches_cnt: int = int(u.get("matches_played", u.get("matches", 0)))
         var play_s: float = float(u.get("playtime_s", float(u.get("hours", 0.0)) * 3600.0))
@@ -5306,15 +5999,16 @@ func _render_lead_row(parent: Control, rank: int, u: Dictionary) -> Control:
         var stat_l: Label = UiKit.lbl(stat_text, 13, UiKit.GOLD, 3, 2)
         stat_l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         row.add_child(stat_l)
-        
+
         b.pressed.connect(func() -> void:
                 UiKit.press_fx(b)
-                show_player_profile(u, func() -> void: show_leaderboard())
+                _inspect_player(uname, cos, func() -> void: show_leaderboard())
         )
         return b
 
 
 func show_player_profile(u: Dictionary, return_cb: Callable = Callable()) -> void:
+        _player_actions = null
         var uname: String = String(u.get("username", u.get("name", u.get("nick", "Игрок"))))
         var vb: VBoxContainer = _screen("Профиль: " + uname, 0.45, true)
         _panel.custom_minimum_size = Vector2(minf(350.0, root.size.x - 16.0), 0)
@@ -5326,9 +6020,24 @@ func show_player_profile(u: Dictionary, return_cb: Callable = Callable()) -> voi
         var cos: Dictionary = u.get("cosmetics", {}) if u.get("cosmetics") is Dictionary else {}
         var a_b64: String = String(u.get("avatar_b64", u.get("avatar", "")))
         
-        var sub: String = "АВТОРИЗОВАННЫЙ ПРОФИЛЬ" if registered else "НЕАВТОРИЗОВАННЫЙ (ИСТОРИЧЕСКИЙ) АККАУНТ"
+        var sub: String = "В СЕТИ" if u.get("online", false) else "ПРОФИЛЬ ИГРОКА"
         MpKit.player_card(vb, uname, sub, cos, 72.0, Callable(), null, is_dev, a_b64)
         
+        var flag: String = NetSession.clean_flag(u.get("flag", ""))
+        if flag != "":
+                vb.add_child(FlagEditor.flag_pic(flag, 30, 20, 2, 2))
+        if u.has("load_error"):
+                MpKit.status_bar(vb, String(u["load_error"]), "alarm", "net_warn")
+                _nav_row(vb, "ПОВТОРИТЬ", "ЗАГРУЗИТЬ ПРОФИЛЬ", func() -> void: _inspect_player(uname, cos, return_cb))
+                _social_button(_bottom_row(), "Назад", return_cb if return_cb.is_valid() else show_leaderboard, "stone")
+                return
+        if registered and Account.is_authenticated() and uname.nocasecmp_to(Account.username()) != 0:
+                _player_actions = VBoxContainer.new()
+                vb.add_child(_player_actions)
+                _player_actions_user = u
+                _player_actions_back = return_cb
+                _render_player_actions()
+
         if is_dev:
                 var dev_sb: PanelContainer = MpKit.status_bar(vb, "РАЗРАБОТЧИК ПОРТА DRONEFLAMES", "ok", "mod_verified")
                 dev_sb.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -5385,35 +6094,76 @@ func show_player_profile(u: Dictionary, return_cb: Callable = Callable()) -> voi
         )
 
 
-func _inspect_player(uname: String, fallback_cos: Dictionary = {}, return_cb: Callable = Callable()) -> void:
-        var res: Dictionary = await Account.get_profile(uname)
-        var u: Dictionary
-        if bool(res.get("ok", false)) and res.get("user") is Dictionary:
-                u = res["user"]
+func _render_player_actions() -> void:
+        if not is_instance_valid(_player_actions) or _player_actions.is_queued_for_deletion():
+                return
+        var nick: String = _player_actions_user["username"]
+        var relation: String = ""
+        var signature: Array = [_social.ready]
+        var can_message: bool = bool(_player_actions_user.get("can_message", false))
+        var has_chat: bool = false
+        for key: String in ["friends", "incoming", "outgoing", "conversations"]:
+                for player: Dictionary in _social.state.get(key, []):
+                        if player["username"] == nick:
+                                if key == "conversations":
+                                        has_chat = true
+                                        can_message = bool(player.get("can_message", can_message))
+                                else:
+                                        relation = key
+                                break
+        signature.append_array([relation, can_message, has_chat])
+        if _player_actions.get_meta("signature", []) == signature:
+                return
+        _player_actions.set_meta("signature", signature)
+        for child: Node in _player_actions.get_children():
+                _player_actions.remove_child(child)
+                child.queue_free()
+        MpKit.section(_player_actions, "ОБЩЕНИЕ")
+        if not _social.ready:
+                _label(_player_actions, "Связь с сервером восстанавливается.", 11, UiKit.MUTED, false)
+                return
+        var target: Dictionary = {"username": nick}
+        match relation:
+                "friends":
+                        _nav_row(_player_actions, "УДАЛИТЬ ИЗ ДРУЗЕЙ", "ВЫ УЖЕ ДРУЗЬЯ", func() -> void: _send_social("remove", target))
+                "incoming":
+                        _nav_row(_player_actions, "ПРИНЯТЬ ЗАЯВКУ", "ИГРОК ХОЧЕТ ДОБАВИТЬ ВАС", func() -> void: _send_social("accept", target))
+                        _nav_row(_player_actions, "ОТКЛОНИТЬ ЗАЯВКУ", "", func() -> void: _send_social("decline", target))
+                "outgoing":
+                        _nav_row(_player_actions, "ОТМЕНИТЬ ЗАЯВКУ", "ОЖИДАЕТ ОТВЕТА", func() -> void: _send_social("cancel", target))
+                _:
+                        _nav_row(_player_actions, "ДОБАВИТЬ В ДРУЗЬЯ", "ОТПРАВИТЬ ЗАЯВКУ ИГРОКУ", func() -> void: _send_social("request", target))
+        if can_message or relation == "friends" or has_chat:
+                var back: Callable = _player_actions_back
+                _nav_row(_player_actions, "НАПИСАТЬ" if can_message or relation == "friends" else "ИСТОРИЯ СООБЩЕНИЙ", "ЛИЧНАЯ ПЕРЕПИСКА", func() -> void:
+                        _show_friend_chat(nick, func() -> void: _inspect_player(nick, {}, back)))
         else:
-                u = {
-                        "username": uname,
-                        "cosmetics": fallback_cos,
-                        "playtime_s": 0.0,
-                        "wins": 0,
-                        "matches": 0,
-                        "registered": false,
-                        "is_dev": Account.is_dev_name(uname)
-                }
+                _label(_player_actions, "Игрок принимает сообщения только от друзей.", 11, UiKit.MUTED, false)
+
+
+func _inspect_player(uname: String, fallback_cos: Dictionary = {}, return_cb: Callable = Callable()) -> void:
         var on_back: Callable = return_cb
         if not on_back.is_valid():
-                if net != null and net.active():
-                        on_back = func() -> void: show_lobby()
-                else:
-                        on_back = func() -> void: show_leaderboard()
-        show_player_profile(u, on_back)
+                on_back = show_lobby if net != null and net.active() else show_leaderboard
+        var vb: VBoxContainer = _screen("Профиль: " + uname, 0.45, true)
+        current = "player_profile_loading"
+        MpKit.placeholder(vb, "net_sync", "ЗАГРУЗКА ПРОФИЛЯ", "", true, 72.0)
+        _social_button(_bottom_row(), "Назад", on_back, "stone")
+        var loading: Control = screen
+        var res: Dictionary = await Account.get_profile(uname)
+        if screen != loading:
+                return
+        if res.get("ok", false):
+                show_player_profile(res["user"], on_back)
+        else:
+                show_player_profile({"username": uname, "cosmetics": fallback_cos, "load_error": res.get("err", "Профиль недоступен")}, on_back)
 
 
 func _pick_avatar_file() -> void:
         if DisplayServer.has_feature(DisplayServer.FEATURE_NATIVE_DIALOG_FILE):
                 DisplayServer.file_dialog_show("Выберите картинку для аватарки", "", "", false, DisplayServer.FILE_DIALOG_MODE_OPEN_FILE, PackedStringArray(["*.png, *.jpg, *.jpeg ; Изображения"]), func(status: bool, selected_paths: PackedStringArray, _filter_idx: int) -> void:
                         if status and not selected_paths.is_empty():
-                                var res: Dictionary = Account.save_avatar_file(selected_paths[0])
+                                var res: Dictionary = await Account.save_avatar_file(selected_paths[0])
                                 if bool(res.get("ok", false)):
                                         show_profile("АВАТАРКА ОБНОВЛЕНА", "ok")
                                 else:
@@ -5427,7 +6177,7 @@ func _pick_avatar_file() -> void:
                 get_tree().root.add_child(fd)
                 fd.popup_centered_ratio(0.7)
                 fd.file_selected.connect(func(path: String) -> void:
-                        var res: Dictionary = Account.save_avatar_file(path)
+                        var res: Dictionary = await Account.save_avatar_file(path)
                         fd.queue_free()
                         if bool(res.get("ok", false)):
                                 show_profile("АВАТАРКА ОБНОВЛЕНА", "ok")

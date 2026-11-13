@@ -219,7 +219,7 @@ func _build_menu_state() -> Dictionary:
 		},
 		"assets": {
 			"large_image": "https://raw.githubusercontent.com/makkaX2/DroneFlames-Mods/main/assets/droneflames_logo.png",
-			"large_text": "DroneFlames (Reborn by Reborn Team)",
+			"large_text": "DroneFlames (PC Port by @droneflamesmod)",
 			"small_image": "https://raw.githubusercontent.com/makkaX2/DroneFlames-Mods/main/assets/profile_avatar.png",
 			"small_text": "Профиль: %s" % player_name
 		},
@@ -345,7 +345,7 @@ func _build_ingame_state() -> Dictionary:
 		},
 		"assets": {
 			"large_image": "https://raw.githubusercontent.com/makkaX2/DroneFlames-Mods/main/assets/droneflames_logo.png",
-			"large_text": "DroneFlames (Reborn by Reborn Team)",
+			"large_text": "DroneFlames (PC Port by @droneflamesmod)",
 			"small_image": "https://raw.githubusercontent.com/makkaX2/DroneFlames-Mods/main/assets/profile_avatar.png",
 			"small_text": small_txt.left(120)
 		},
@@ -372,7 +372,7 @@ func _get_player_name() -> String:
 		var n = cfg.get_value("prefs", "my_name", "")
 		if String(n).strip_edges() != "":
 			return String(n)
-	return "Reborn Team & @CryptoAngelazaz"
+	return "@good_boy_irl & @CryptoAngelazaz"
 
 func _format_cash(val: int) -> String:
 	if abs(val) >= 1000000:

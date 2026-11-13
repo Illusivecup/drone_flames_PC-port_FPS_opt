@@ -46,6 +46,7 @@ var power_use: int = 0
 var fuel_sold: int = 0
 var at_war: Dictionary = {}
 var city_ids: PackedInt32Array = PackedInt32Array()
+var towns_founded: int = 0
 
 
 var titanium: int = 0

@@ -23,31 +23,15 @@ static var BROWSE_PORT: int = 24602
 static var test_no_broadcast: bool = false
 const MAX_PLAYERS: int = 8
 const FRAME_SIM_MS: float = 14.0
-# RESILIENT (2026-11-12): the hold thresholds were so tight that any guest hitch longer than
-# 1.5 s slowed the whole match and one over 2.5 s stopped it («ЖДЁМ X · МЕДЛЕННОЕ УСТРОЙСТВО»,
-# constant freezes). Now the match slows smoothly from 3 s of backlog and only stands still
-# from 6 s (a device behind by more than HOLD_MAX pauses nobody, see NetSession).
-const HOLD_BACKLOG: int = 60
-const HOLD_SLOW: int = 30
-const HOLD_MAX: int = 90
+const HOLD_BACKLOG: int = 35
+const HOLD_SLOW: int = 20
+const HOLD_MAX: int = 70
 const LAG_NOW_S: float = 0.3
 const JOB_DELAY_TICKS: int = 120
 const SIM_DT: float = 1.0 / 30.0
 const TICKS_PER_TURN: int = 3
 const HASH_EVERY: int = 150
-const SNAP_CHUNK: int = 32768
-# RESILIENT: snapshot parts stream this many 32 KiB chunks per turn (not one burst: a burst of
-# reliable packets clogs the link and the turn packets queue behind it -> more backlog).
-const SNAP_PARTS_PER_TURN: int = 12
-# RESILIENT: turns of history kept beyond the oldest waiting snapshot before the host really
-# pauses the match for a resync (TURN_KEEP is 900: the match keeps flowing ~78 s of restore).
-const TURN_MARGIN: int = 120
-# RESILIENT: when a guest catches up (3+ turns behind), a frame may spend up to this many ms in
-# the sim (was a flat FRAME_SIM_MS: one heavy tick per frame could never catch up).
-const CATCHUP_MS: float = 60.0
-# RESILIENT: one mismatched state hash no longer resyncs the whole match at once («СИНХРОНИЗАЦИЯ»
-# pauses): the second consecutive mismatch of the same peer confirms a real desync first.
-const RESYNC_CONFIRM: bool = true
+const SNAP_CHUNK: int = 65536
 const HOST_IDLE_S: float = 0.35
 const CAPITAL_TIMEOUT_S: float = 90.0
 
@@ -67,154 +51,154 @@ static var _loaded: bool = false
 
 
 static func load_cfg() -> void :
-        if _loaded:
-                return
-        _loaded = true
-        for p: String in ["res://net/net.cfg", "user://net.cfg"]:
-                var cf: = ConfigFile.new()
-                if cf.load(p) != OK:
-                        continue
-                signal_url = String(cf.get_value("net", "signal_url", signal_url))
-                api_url = String(cf.get_value("net", "api_url", api_url)).trim_suffix("/")
-                trace_api = bool(cf.get_value("net", "trace_api", trace_api))
-                gcp_project = int(cf.get_value("net", "gcp_project", gcp_project))
-                if p == USER_CFG:
-                        nickname = clean_nick(String(cf.get_value("net", "nick", "")))
-        if OS.has_feature("mp_relay") or signal_url.contains("snaipix.com"):
-                signal_url = RELAY_URL
+	if _loaded:
+		return
+	_loaded = true
+	for p: String in ["res://net/net.cfg", "user://net.cfg"]:
+		var cf: = ConfigFile.new()
+		if cf.load(p) != OK:
+			continue
+		signal_url = String(cf.get_value("net", "signal_url", signal_url))
+		api_url = String(cf.get_value("net", "api_url", api_url)).trim_suffix("/")
+		trace_api = bool(cf.get_value("net", "trace_api", trace_api))
+		gcp_project = int(cf.get_value("net", "gcp_project", gcp_project))
+		if p == USER_CFG:
+			nickname = clean_nick(String(cf.get_value("net", "nick", "")))
+	if OS.has_feature("mp_relay") or signal_url.contains("snaipix.com"):
+		signal_url = RELAY_URL
 
 
 
 
 static func clean_code(s: String) -> String:
-        const CYR: String = "АВЕКМНОРСТХУ"
-        const LAT: String = "ABEKMHOPCTXY"
-        var o: String = ""
-        for ch: String in s.to_upper():
-                var i: int = CYR.find(ch)
-                if i >= 0:
-                        ch = LAT[i]
-                if (ch >= "A" and ch <= "Z") or (ch >= "0" and ch <= "9"):
-                        o += ch
-        return o
+	const CYR: String = "АВЕКМНОРСТХУ"
+	const LAT: String = "ABEKMHOPCTXY"
+	var o: String = ""
+	for ch: String in s.to_upper():
+		var i: int = CYR.find(ch)
+		if i >= 0:
+			ch = LAT[i]
+		if (ch >= "A" and ch <= "Z") or (ch >= "0" and ch <= "9"):
+			o += ch
+	return o
 
 
 
 static func version() -> String:
-        return "%s/%d" % [Menus.VERSION, PROTO]
+	return "%s/%d" % [Menus.VERSION, PROTO]
 
 
 
 static func nick() -> String:
-        load_cfg()
-        if nickname == "":
-                set_nick("Player%06d" % (randi() % 1000000))
-        return nickname
+	load_cfg()
+	if nickname == "":
+		set_nick("Player%06d" % (randi() % 1000000))
+	return nickname
 
 
 
 static func set_nick(n: String) -> String:
-        load_cfg()
-        var c: String = clean_nick(n)
-        if c == "":
-                return nickname
-        nickname = c
-        var cf: = ConfigFile.new()
-        cf.load(USER_CFG)
-        cf.set_value("net", "nick", nickname)
-        if cf.save(USER_CFG) != OK:
-                push_warning("[Net] cannot write " + USER_CFG)
-        return nickname
+	load_cfg()
+	var c: String = clean_nick(n)
+	if c == "":
+		return nickname
+	nickname = c
+	var cf: = ConfigFile.new()
+	cf.load(USER_CFG)
+	cf.set_value("net", "nick", nickname)
+	if cf.save(USER_CFG) != OK:
+		push_warning("[Net] cannot write " + USER_CFG)
+	return nickname
 
 
 
 
 static func save_rejoin(d: Dictionary) -> void :
-        var cf: = ConfigFile.new()
-        cf.load(USER_CFG)
-        if cf.has_section("rejoin"):
-                cf.erase_section("rejoin")
-        for k: String in d:
-                cf.set_value("rejoin", k, d[k])
-        cf.set_value("rejoin", "t", int(Time.get_unix_time_from_system()))
-        cf.save(USER_CFG)
+	var cf: = ConfigFile.new()
+	cf.load(USER_CFG)
+	if cf.has_section("rejoin"):
+		cf.erase_section("rejoin")
+	for k: String in d:
+		cf.set_value("rejoin", k, d[k])
+	cf.set_value("rejoin", "t", int(Time.get_unix_time_from_system()))
+	cf.save(USER_CFG)
 
 
 static func load_rejoin() -> Dictionary:
-        var cf: = ConfigFile.new()
-        if cf.load(USER_CFG) != OK or not cf.has_section("rejoin"):
-                return {}
-        var d: Dictionary = {}
-        for k: String in cf.get_section_keys("rejoin"):
-                d[k] = cf.get_value("rejoin", k)
-        var keep: int = MATCH_KEEP_S if bool(d.get("gone", false)) else REJOIN_KEEP_S
+	var cf: = ConfigFile.new()
+	if cf.load(USER_CFG) != OK or not cf.has_section("rejoin"):
+		return {}
+	var d: Dictionary = {}
+	for k: String in cf.get_section_keys("rejoin"):
+		d[k] = cf.get_value("rejoin", k)
+	var keep: int = MATCH_KEEP_S if bool(d.get("gone", false)) else REJOIN_KEEP_S
 
-        var is_lan: bool = String(d.get("mode", "")) == "lan" or String(d.get("ip", "")) != ""
-        var no_tok: bool = String(d.get("tok", "")) == "" and String(d.get("why", "")) != "handover" and not is_lan
-        if no_tok or int(Time.get_unix_time_from_system()) - int(d.get("t", 0)) > keep:
-                return {}
-        return d
+	var is_lan: bool = String(d.get("mode", "")) == "lan" or String(d.get("ip", "")) != ""
+	var no_tok: bool = String(d.get("tok", "")) == "" and String(d.get("why", "")) != "handover" and not is_lan
+	if no_tok or int(Time.get_unix_time_from_system()) - int(d.get("t", 0)) > keep:
+		return {}
+	return d
 
 
 
 static func save_match(d: Dictionary) -> void :
-        d["t"] = int(Time.get_unix_time_from_system())
-        var tmp: String = MATCH_FILE + ".tmp"
-        var f: = FileAccess.open(tmp, FileAccess.WRITE)
-        if f == null:
-                return
-        f.store_var(d, false)
-        f.close()
-        var da: = DirAccess.open("user://")
-        if da == null:
-                return
-        if da.file_exists(MATCH_FILE.get_file()):
-                da.remove(MATCH_FILE.get_file())
-        da.rename(tmp.get_file(), MATCH_FILE.get_file())
+	d["t"] = int(Time.get_unix_time_from_system())
+	var tmp: String = MATCH_FILE + ".tmp"
+	var f: = FileAccess.open(tmp, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_var(d, false)
+	f.close()
+	var da: = DirAccess.open("user://")
+	if da == null:
+		return
+	if da.file_exists(MATCH_FILE.get_file()):
+		da.remove(MATCH_FILE.get_file())
+	da.rename(tmp.get_file(), MATCH_FILE.get_file())
 
 
 static func load_match() -> Dictionary:
-        if not FileAccess.file_exists(MATCH_FILE):
-                return {}
-        var f: = FileAccess.open(MATCH_FILE, FileAccess.READ)
-        if f == null:
-                return {}
-        var v: Variant = f.get_var(false)
-        f.close()
-        if not (v is Dictionary) or not (v as Dictionary).has("snap"):
-                return {}
-        if int(Time.get_unix_time_from_system()) - int((v as Dictionary).get("t", 0)) > MATCH_KEEP_S:
-                return {}
-        return v
+	if not FileAccess.file_exists(MATCH_FILE):
+		return {}
+	var f: = FileAccess.open(MATCH_FILE, FileAccess.READ)
+	if f == null:
+		return {}
+	var v: Variant = f.get_var(false)
+	f.close()
+	if not (v is Dictionary) or not (v as Dictionary).has("snap"):
+		return {}
+	if int(Time.get_unix_time_from_system()) - int((v as Dictionary).get("t", 0)) > MATCH_KEEP_S:
+		return {}
+	return v
 
 
 static func clear_match() -> void :
-        if FileAccess.file_exists(MATCH_FILE):
-                DirAccess.remove_absolute(ProjectSettings.globalize_path(MATCH_FILE))
+	if FileAccess.file_exists(MATCH_FILE):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(MATCH_FILE))
 
 
 
 static func ago_text(unix_t: int) -> String:
-        var s: int = maxi(0, int(Time.get_unix_time_from_system()) - unix_t)
-        if s < 60:
-                return "СЕЙЧАС"
-        if s < 3600:
-                return "%d МИН НАЗАД" % (s / 60)
-        if s < 86400:
-                return "%d Ч НАЗАД" % (s / 3600)
-        return "ВЧЕРА" if s < 2 * 86400 else "%d ДН НАЗАД" % (s / 86400)
+	var s: int = maxi(0, int(Time.get_unix_time_from_system()) - unix_t)
+	if s < 60:
+		return "СЕЙЧАС"
+	if s < 3600:
+		return "%d МИН НАЗАД" % (s / 60)
+	if s < 86400:
+		return "%d Ч НАЗАД" % (s / 3600)
+	return "ВЧЕРА" if s < 2 * 86400 else "%d ДН НАЗАД" % (s / 86400)
 
 
 static func clear_rejoin() -> void :
-        var cf: = ConfigFile.new()
-        if cf.load(USER_CFG) == OK and cf.has_section("rejoin"):
-                cf.erase_section("rejoin")
-                cf.save(USER_CFG)
+	var cf: = ConfigFile.new()
+	if cf.load(USER_CFG) == OK and cf.has_section("rejoin"):
+		cf.erase_section("rejoin")
+		cf.save(USER_CFG)
 
 
 static func clean_nick(n: String) -> String:
-        var out: String = ""
-        for ch: String in n:
-                if ch.unicode_at(0) >= 32 and ch.unicode_at(0) != 127:
-                        out += ch
-        return out.strip_edges().left(NICK_MAX).strip_edges()
+	var out: String = ""
+	for ch: String in n:
+		if ch.unicode_at(0) >= 32 and ch.unicode_at(0) != 127:
+			out += ch
+	return out.strip_edges().left(NICK_MAX).strip_edges()

@@ -77,7 +77,7 @@ func _set_mode(m: int) -> void :
 		Mode.CAPITAL:
 			hud.set_hint("ВЫБЕРИТЕ МЕСТО ДЛЯ СТОЛИЦЫ")
 		Mode.TOWN:
-			hud.set_hint(Loc.t("ГОРОД %d: СВОБОДНАЯ ЗЕМЛЯ ДО 360 М ОТ СТРАНЫ") % Military.COST_TOWN)
+			hud.set_hint(Loc.t("ГОРОД %d: СВОБОДНАЯ ЗЕМЛЯ ДО 360 М ОТ СТРАНЫ") % Military.town_cost(world.player.towns_founded if world.player != null else 0))
 		Mode.STRIKE:
 			hud.set_hint("ТЕСТОВЫЙ УДАР: НАЖМИТЕ НА ЦЕЛЬ")
 		Mode.FACTORY, Mode.DRONEPORT, Mode.TEL, Mode.MFACTORY, Mode.REFINERY, Mode.POWER, Mode.AIRFIELD, Mode.SAWMILL, Mode.OIL_RIG, Mode.PORT, Mode.SOLAR_FARM, Mode.NAVBASE, Mode.NPP, Mode.UMINE:
@@ -654,7 +654,7 @@ func _pend_text() -> String:
 		Mode.CAPITAL:
 			return Loc.t("Основать столицу здесь")
 		Mode.TOWN:
-			return Loc.t("Основать город · %d") % Military.COST_TOWN
+			return Loc.t("Основать город · %d") % Military.town_cost(world.player.towns_founded if world.player != null else 0)
 		Mode.SATELLITE:
 			return Loc.t("Спутниковый снимок · %d") % int(world.vision.satellite_cost())
 		Mode.RECON:

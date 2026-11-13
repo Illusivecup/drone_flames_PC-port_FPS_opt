@@ -870,7 +870,7 @@ func _police_patrol_tick() -> void:
                 if unit.target != null or unit.pi < unit.path.size():
                         continue
                 for attempt: int in 12:
-                        var cell: Vector2i = station.cell + Vector2i(randi_range(-24, 24), randi_range(-24, 24))
+                        var cell: Vector2i = station.cell + Vector2i(gw.rng.range_ab(-24, 24) if gw.net_driven else randi_range(-24, 24), gw.rng.range_ab(-24, 24) if gw.net_driven else randi_range(-24, 24))
                         if not gw.data.inside(cell.x, cell.y) or gw.data.get_owner_id(cell.x, cell.y) != unit.country_id or Biome.is_water(gw.data.get_biome(cell.x, cell.y)):
                                 continue
                         var destination: Vector2 = Vector2(cell * GameWorld.CELL)

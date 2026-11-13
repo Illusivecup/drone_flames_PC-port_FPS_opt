@@ -36,7 +36,7 @@ func key_title(nm: String) -> Array:
 		return [Military.title_of(kind), "%s · %s%s" % [_sentence(purpose), Economy.cost_text(Economy.build_cost(kind)), per]]
 	var sub: String = String(info[2])
 	if nm == "town":
-		sub = "%s · %d" % [sub, Military.COST_TOWN]
+		sub = "%s · %d" % [sub, Military.town_cost(gw.player.towns_founded if gw != null and gw.player != null else 0)]
 	elif nm == "rail_st":
 		sub = Loc.t("%s · %s · ~%d мин") % [sub, Economy.cost_text(RailBuild.station_cost()), ceili(Rail.MAN_ST_TIME / 60.0)]
 	elif nm == "rail_line":

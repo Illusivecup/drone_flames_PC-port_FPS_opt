@@ -1,6 +1,6 @@
 extends RefCounted
 
-## Мод «Ядерный арсенал (МБР и Шахты)» для DroneFlames Reborn
+## Мод «Ядерный арсенал (МБР и Шахты)» для DroneFlames PC Port
 ## Полная аутентичная интеграция в интерфейс, меню и движок игры.
 ## Добавляет шахтный комплекс МБР во вкладку «АРМИЯ» нижней панели.
 ## Позволяет обогащать уран и собирать термоядерные боеголовки.
@@ -290,6 +290,7 @@ func _is_silo(f: Facility) -> bool:
 		return false
 	if f.army_build == "nuclear_silo" or f.lower_sprite == "nuclear_silo" or bool(f.get_meta("is_nuclear_silo", false)):
 		f.kind = Facility.Kind.CIV_FACTORY
+		f.halted = true # Отключаем генерацию денег
 		f.set_meta("is_nuclear_silo", true)
 		f.set_meta("mod_facility", true)
 		f.moving = false
@@ -373,28 +374,57 @@ func cancel_placement() -> void:
 
 func place_why(cell: Vector2i) -> String:
 	if world_ref == null or not is_instance_valid(world_ref):
-		return "Мир недоступен"
+		return "Нет мира"
 	var d = world_ref.data
 	if d == null:
-		return "Данные карты недоступны"
+		return "Нет данных"
 
 	if cell.x < 2 or cell.y < 2 or cell.x + SILO_SIZE.x >= d.w - 2 or cell.y + SILO_SIZE.y >= d.h - 2:
-		return "Не помещается у края карты"
+		return "За пределами карты"
 
 	var player = world_ref.player
 	if player == null:
-		return "Игрок не найден"
+		return "Нет игрока"
 
+	var my_rect = Rect2i(cell, SILO_SIZE)
+
+	# 1. Защита от наложения построек друг на друга (стакинг шахт и зданий)
+	if world_ref.mil != null and "facilities" in world_ref.mil:
+		for other_f in world_ref.mil.facilities:
+			if other_f == null or not is_instance_valid(other_f):
+				continue
+			if "hp" in other_f and other_f.hp <= 0.0:
+				continue
+			var other_rect = Rect2i(other_f.cell, other_f.size)
+			if my_rect.intersects(other_rect):
+				return "Место занято: здесь уже постройка"
+
+	# 2. Защита от постройки на месторождениях руды, нефти, урана
+	if world_ref.econ != null:
+		if "deposits" in world_ref.econ and world_ref.econ.deposits is Array:
+			for dp in world_ref.econ.deposits:
+				if dp is Dictionary:
+					var dc: Vector2i = dp.get("cell", Vector2i(-999, -999))
+					var d_sz: int = int(dp.get("size", 3))
+					var h: int = d_sz / 2 + 1
+					var dep_rect = Rect2i(dc - Vector2i(h, h), Vector2i(h * 2 + 1, h * 2 + 1))
+					if my_rect.intersects(dep_rect):
+						return "Нельзя строить: здесь месторождение"
+		if world_ref.econ.has_method("deposit_free_rect"):
+			if not world_ref.econ.deposit_free_rect(my_rect):
+				return "Нельзя строить: здесь месторождение"
+
+	# 3. Проверка клеток по карте
 	for dy in range(SILO_SIZE.y):
 		for dx in range(SILO_SIZE.x):
 			var cx = cell.x + dx
 			var cy = cell.y + dy
 			if not d.inside(cx, cy):
-				return "За пределами карты"
-			
+				return "За пределами"
+
 			var owner_id = d.get_owner_id(cx, cy) if d.has_method("get_owner_id") else d.get_owner(cx, cy)
 			if owner_id != player.id:
-				return "Стройте только на своей территории"
+				return "Чужая территория"
 
 			var b = d.get_biome(cx, cy)
 			if Biome.is_water(b):
@@ -402,16 +432,13 @@ func place_why(cell: Vector2i) -> String:
 
 			var fl = d.flags[cy * d.w + cx]
 			if (fl & (WorldData.F_CITY | WorldData.F_BRIDGE)) != 0:
-				return "Место занято: городские постройки"
+				return "Место занято: город или мост"
 
 			if (fl & WorldData.F_OCCUPIED) != 0:
-				if world_ref.tree_at.has(cy * d.w + cx):
+				var idx = cy * d.w + cx
+				if world_ref.tree_at != null and world_ref.tree_at.has(idx):
 					continue
-				if world_ref.mil != null and world_ref.mil.has_method("facility_at"):
-					var fac_at = world_ref.mil.facility_at(Vector2i(cx, cy))
-					if fac_at != null and is_instance_valid(fac_at):
-						return "Место занято: постройка или ПВО"
-				return "Место занято другими объектами"
+				return "Место занято"
 
 	return ""
 
@@ -442,6 +469,7 @@ func place_silo_at(cell: Vector2i) -> void:
 	f.id = world_ref.mil.facilities.size()
 	# ВАЖНО: CIV_FACTORY — неподвижное сооружение. Ни при каких обстоятельствах не поедет!
 	f.kind = Facility.Kind.CIV_FACTORY
+	f.halted = true # Отключаем генерацию денег
 	f.country_id = p.id
 	f.cell = cell
 	f.size = SILO_SIZE

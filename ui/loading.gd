@@ -170,7 +170,7 @@ func _ready() -> void :
 	credits_row.add_theme_constant_override("separation", 6)
 	credits_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(credits_row)
-	var clbl: Label = UiKit.lbl("DroneFlames Reborn · Reborn Team", 10, UiKit.MUTED, 1, 1)
+	var clbl: Label = UiKit.lbl("Порт создан: @droneflamesmod   Главный разработчик: @nufxa", 10, UiKit.MUTED, 1, 1)
 	clbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	credits_row.add_child(clbl)
 	var c_duck: TextureRect = TextureRect.new()

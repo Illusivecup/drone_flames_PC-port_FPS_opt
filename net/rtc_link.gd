@@ -63,24 +63,7 @@ static func available() -> bool:
 
 ## MultiplayerPeer packets use the WSS room relay when this build selects relay transport.
 static func relay_only() -> bool:
-	if OS.has_feature("mp_relay") or NetConfig.signal_url.contains("45.145.12.165"):
-		return true
-	if not ClassDB.class_exists("WebRTCPeerConnectionExtension"):
-		return true
-	# RESILIENT: a self-hosted local relay (ws:// loopback / private LAN) needs no WebRTC and
-	# no accounts: the room and the match both ride the local socket.
-	var u: String = NetConfig.signal_url.to_lower()
-	if u.begins_with("ws://"):
-		var host: String = u.get_slice("://", 1).get_slice("/", 0).get_slice(":", 0)
-		if host == "127.0.0.1" or host == "localhost" or host == "::1" or host == "[::1]":
-			return true
-		if host.begins_with("192.168.") or host.begins_with("10."):
-			return true
-		if host.begins_with("172."):
-			var o: int = int(host.get_slice(".", 1)) if host.get_slice(".", 1).is_valid_int() else 0
-			if o >= 16 and o <= 31:
-				return true
-	return false
+	return OS.has_feature("mp_relay") or NetConfig.signal_url.contains("45.145.12.165") or not ClassDB.class_exists("WebRTCPeerConnectionExtension")
 
 
 func room_sealed() -> bool:
@@ -105,13 +88,8 @@ static func open_socket(ws: WebSocketPeer) -> int:
 
 
 
-## RESILIENT: self-hosted relays have no accounts: the local nick is the name then.
-static func display_name() -> String:
-	return Account.username() if Account.username() != "" else NetConfig.nick()
-
-
 func host(pub: bool = false, code: String = "") -> void :
-	_start({"t": "host", "v": NetConfig.version(), "pub": pub, "code": code, "name": display_name(), "auth_user": Account.username(), "auth_token": Account.token})
+	_start({"t": "host", "v": NetConfig.version(), "pub": pub, "code": code, "name": Account.username(), "auth_user": Account.username(), "auth_token": Account.token})
 
 
 
@@ -119,9 +97,9 @@ func set_pub(pub: bool) -> void :
 	_send({"t": "set_pub", "pub": pub})
 
 
-func join(room: String, tok: String = "") -> void :
-	var msg: Dictionary = {"t": "join", "code": NetConfig.clean_code(room), "v": NetConfig.version(), "late": true,
-		"name": display_name(), "auth_user": Account.username(), "auth_token": Account.token}
+func join(room: String, tok: String = "", allow_late: bool = true) -> void :
+	var msg: Dictionary = {"t": "join", "code": NetConfig.clean_code(room), "v": NetConfig.version(), "late": allow_late,
+		"name": Account.username(), "auth_user": Account.username(), "auth_token": Account.token}
 	if tok != "":
 		msg["rejoin"] = true
 		msg["tok_h"] = tok.sha256_text()
@@ -148,7 +126,7 @@ var snap: int = 0
 
 func resume(mid: String, tok: String = "") -> void :
 	var msg: Dictionary = {"t": "resume", "match": mid, "v": NetConfig.version(), "epoch": epoch, "snap": snap,
-		"name": display_name(), "auth_user": Account.username(), "auth_token": Account.token}
+		"name": Account.username(), "auth_user": Account.username(), "auth_token": Account.token}
 	if tok != "":
 		msg["tok_h"] = tok.sha256_text()
 	_start(msg, my_id == 1 and peer != null)
@@ -286,7 +264,7 @@ func _process(delta: float) -> void :
 		_ra_wait -= delta
 		if _ra_wait < 0.0:
 			_want = {"t": "reattach", "code": code, "id": my_id, "tok_h": _auth_tok_h,
-				"v": NetConfig.version(), "name": display_name(),
+				"v": NetConfig.version(), "name": Account.username(),
 				"auth_user": Account.username(), "auth_token": Account.token}
 			_connect()
 		return
@@ -308,8 +286,22 @@ func _process(delta: float) -> void :
 		var send_rate: float = 600.0 if relay_only() else SEND_PER_S
 		_tokens = minf(send_burst, _tokens + delta * send_rate)
 		while not _out.is_empty() and _tokens >= 1.0:
+			var message: PackedByteArray = JSON.stringify(_out[0]).to_utf8_buffer()
+			if message.size() > _ws.outbound_buffer_size:
+				close_socket()
+				failed.emit("Сетевое сообщение слишком велико для отправки")
+				return
+			if _ws.get_current_outbound_buffered_amount() + message.size() > _ws.outbound_buffer_size:
+				break
+			var send_err: int = _ws.send(message, WebSocketPeer.WRITE_MODE_TEXT)
+			if send_err == ERR_OUT_OF_MEMORY:
+				break  # Buffer full: retry after poll without dropping the message.
+			if send_err != OK:
+				print("[Rtc] send failed: %s" % error_string(send_err))
+				_ws.close(-1)  # Reconnect through the normal closed-socket path.
+				break
+			_out.pop_front()
 			_tokens -= 1.0
-			_ws.send_text(JSON.stringify(_out.pop_front()))
 		if _close_after and _out.is_empty():
 			_close_after = false
 			close_socket()
@@ -496,15 +488,21 @@ func _on_msg(d: Dictionary) -> void :
 			epoch = int(d.get("epoch", epoch))
 			my_id = 1
 			match_id = String(d.get("match", match_id))
-			_ice = d.get("ice", _ice)
-			for c7: WebRTCPeerConnection in _conns.values():
-				c7.close()
-			_conns.clear()
-			peer = WebRTCMultiplayerPeer.new()
-			peer.create_server()
+			if tunnel != null:
+				tunnel._id = 1
+				tunnel._server = true
+			if not relay_only():
+				_ice = d.get("ice", _ice)
+				for c7: WebRTCPeerConnection in _conns.values():
+					c7.close()
+				_conns.clear()
+				peer = WebRTCMultiplayerPeer.new()
+				peer.create_server()
 			promoted.emit()
 		"host_changed":
 			epoch = int(d.get("epoch", epoch))
+			if tunnel != null and not bool(d.get("you", false)):
+				tunnel._server = false
 			host_changed.emit(String(d.get("host", "")), bool(d.get("you", false)))
 		"reattached":
 			_ra_try = 0
@@ -519,11 +517,8 @@ func _on_msg(d: Dictionary) -> void :
 			if tunnel != null and peer == null:
 				if not relay_only():
 					_start_p2p()
-				# RESILIENT: in relay mode the tunnel rides THIS socket - closing it (was:
-				# close_socket()) silently dropped every packet of the match: the start pack
-				# and the turns never reached the guests. The socket stays open now.
-				else:
-					pass  # keep the relay socket open
+			else:
+				close_socket()
 		"peer":
 			var pid: int = int(d["id"])
 			peer_names[pid] = String(d.get("name", ""))

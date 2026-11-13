@@ -2,7 +2,7 @@ extends RefCounted
 
 # Стенд замеров (только песочница): ускоренная партия ИИ без графики, срез по системам.
 const LIMIT_REAL_S: float = 60.0
-const WINDOW_GAME_S: float = 40.0   # печатаем срез каждые 15 игровых минут
+const WINDOW_GAME_S: float = 40.0   # интервал отчёта в игровых секундах
 
 func run(main: Node) -> void:
 	var tree: SceneTree = main.get_tree()

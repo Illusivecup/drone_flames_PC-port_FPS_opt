@@ -124,6 +124,13 @@ func _host_tick(delta: float) -> void :
 		_t = 1.0
 		_udp.set_dest_address("255.255.255.255", NetConfig.BROWSE_PORT)
 		_udp.put_packet(_info_packet())
+		for a: String in IP.get_local_addresses():
+			if a.begins_with("26."):
+				_udp.set_dest_address("26.255.255.255", NetConfig.BROWSE_PORT)
+				_udp.put_packet(_info_packet())
+			elif a.begins_with("25."):
+				_udp.set_dest_address("25.255.255.255", NetConfig.BROWSE_PORT)
+				_udp.put_packet(_info_packet())
 
 
 func _browse_tick(delta: float) -> void :
@@ -133,6 +140,16 @@ func _browse_tick(delta: float) -> void :
 			_scan_t = SCAN_EVERY
 			_targets = sweep_targets()
 		var q: PackedByteArray = "DF?".to_utf8_buffer()
+		if _targets.size() == sweep_targets().size() or _scan_t >= SCAN_EVERY - 0.2:
+			_udp.set_dest_address("255.255.255.255", NetConfig.BEACON_PORT)
+			_udp.put_packet(q)
+			for a: String in IP.get_local_addresses():
+				if a.begins_with("26."):
+					_udp.set_dest_address("26.255.255.255", NetConfig.BEACON_PORT)
+					_udp.put_packet(q)
+				elif a.begins_with("25."):
+					_udp.set_dest_address("25.255.255.255", NetConfig.BEACON_PORT)
+					_udp.put_packet(q)
 		var n: int = mini(SCAN_PER_FRAME, _targets.size())
 		for i in n:
 			_udp.set_dest_address(_targets[i], NetConfig.BEACON_PORT)

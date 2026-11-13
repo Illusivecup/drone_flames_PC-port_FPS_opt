@@ -2,7 +2,7 @@
   "id": "repeat_build",
   "name": "Повторное размещение построек",
   "version": "1.0.0",
-  "author": "Reborn Team",
+  "author": "@CryptoAngelazaz",
   "type": "interface",
   "status": "stable",
   "description": "[СТАБИЛЬНАЯ ВЕРСИЯ] Оставляет выбранную постройку активной после успешного размещения, пока вы не отмените режим клавишей Esc.",

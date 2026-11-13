@@ -285,12 +285,19 @@ static func net_restore(m: Node, bytes: PackedByteArray) -> bool:
 	_wait()
 	var v: Variant = bytes_to_var(bytes)
 	if not (v is Array) or (v as Array).size() != 2:
+		if m != null and m.get("loading") != null and m.loading.active:
+			m.loading.finish()
 		return false
 	var raw: PackedByteArray = ((v as Array)[1] as PackedByteArray).decompress(int((v as Array)[0]), FileAccess.COMPRESSION_ZSTD)
 	var body: Variant = bytes_to_var(raw)
 	if not (body is Dictionary) or not (body as Dictionary).has("core"):
+		if m != null and m.get("loading") != null and m.loading.active:
+			m.loading.finish()
 		return false
-	return await _load_pack(m, {"path": "net", "header": {}, "body": body}, true)
+	var res: bool = await _load_pack(m, {"path": "net", "header": {}, "body": body}, true)
+	if not res and m != null and m.get("loading") != null and m.loading.active:
+		m.loading.finish()
+	return res
 
 
 
@@ -936,7 +943,6 @@ static func load_prefs() -> void :
 	GameConfig.object_lod = clampi(GameConfig.object_lod, 0, 2)
 	GameConfig.strat_lod_z = clampi(GameConfig.strat_lod_z, 0, 3)
 	GameConfig.dynamic_fps_target = clampi(GameConfig.dynamic_fps_target, 0, 3)
-	GameConfig.mods_enabled = true
 	apply_display_resolution()
 	apply_power_save()
 	apply_ui_scale()

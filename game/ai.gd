@@ -302,7 +302,7 @@ func _take_neutral(c: Country) -> void :
 	if now < float(_take_t.get(c.id, 120.0 + float(c.id) * 10.0)):
 		return
 	_take_t[c.id] = now + 75.0
-	if c.city_ids.size() >= mini(8, int(D_TOWNS[GameConfig.diff_of(c)])) or c.money < Military.COST_TOWN + 500:
+	if c.city_ids.size() >= mini(8, int(D_TOWNS[GameConfig.diff_of(c)])) or c.money < Military.town_cost(c.towns_founded) + 500:
 		return
 	var lack: Array = gw.econ.scarce_of(c)
 	if lack.is_empty():
@@ -352,8 +352,7 @@ func _take_neutral(c: Country) -> void :
 			var pl5: Dictionary = gw.can_found_city(p, City.Kind.TOWN) if gw.cad344 == null else gw.cad344.can_found_ai(p, City.Kind.TOWN)
 			if not bool(pl5["ok"]) or preload("res://game/ad_relocate.gd").war_blocked(gw, p, c, int(pl5["radius"])):
 				continue
-			if gw.found_city(p, c, City.Kind.TOWN, pl5) != null:
-				c.money -= Military.COST_TOWN
+			if gw.purchase_town(p, c, pl5) != null:
 				_stat(c, "towns")
 				gw.news_m(Loc.mk("%s ЗАНИМАЕТ МЕСТОРОЖДЕНИЕ (%s): НОВЫЙ ГОРОД", [Loc.name(c.name).to_upper(), String(Economy.RES_NAMES.get(String(best["res"]), "")).to_lower()]), "amber")
 				return
@@ -2422,7 +2421,7 @@ func _sinks(c: Country, P: Dictionary) -> Array:
 
 	if (n < mini(8 + extra, int(D_TOWNS[GameConfig.diff_of(c)])) or now >= float(EXP_EARLY[clampi(GameConfig.expand_i, 0, 2)])) and c.money > 8000:
 		var app: float = appetite(c)
-		add.call((0.45 + trade * 0.4 + aggr * 0.1 + float(extra) * 0.1) * app, "town", Military.COST_TOWN, null, (90.0 if extra < 2 else 45.0) / app)
+		add.call((0.45 + trade * 0.4 + aggr * 0.1 + float(extra) * 0.1) * app, "town", Military.town_cost(c.towns_founded), null, (90.0 if extra < 2 else 45.0) / app)
 
 	if extra >= 1 and gw.protect != null:
 		var pp: Array = _protect_pick(c, extra, caut)
@@ -2627,8 +2626,7 @@ func _expand(c: Country) -> bool:
 		var pl6: Dictionary = gw.can_found_city(q, City.Kind.TOWN) if gw.cad344 == null else gw.cad344.can_found_ai(q, City.Kind.TOWN)
 		if not bool(pl6["ok"]) or preload("res://game/ad_relocate.gd").war_blocked(gw, q, c, int(pl6["radius"])):
 			continue
-		if gw.found_city(q, c, City.Kind.TOWN, pl6) != null:
-			c.money -= Military.COST_TOWN
+		if gw.purchase_town(q, c, pl6) != null:
 			_stat(c, "towns")
 			gw.diplo.dlog(c.id, "новый город", "городов %d, казна %d" % [c.city_ids.size(), c.money])
 			return true
@@ -2708,7 +2706,7 @@ func _grow_land(c: Country) -> void :
 		return
 	_town_t[c.id] = now + (float(EXP_GAP[e]) * (1.0 + 0.04 * float(n - 6)) / (appetite(c) * _drama_expand(c)) if ok else EXP_FAIL)
 	if ok:
-		_spent(c, "town", Military.COST_TOWN)
+		_spent(c, "town", Military.town_cost(c.towns_founded - 1))
 
 
 

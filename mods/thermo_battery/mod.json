@@ -2,7 +2,7 @@
   "id": "thermo_battery",
   "name": "Термобарическая батарея «Солнцепёк»",
   "version": "1.1.0",
-  "author": "Reborn Team",
+  "author": "@CryptoAngelazaz",
   "type": "gameplay",
   "status": "stable",
   "entry": "mod.gd",

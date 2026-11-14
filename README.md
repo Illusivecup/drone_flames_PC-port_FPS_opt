@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.7-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.1.0-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/engine-Godot%204.7.2-478cbf.svg" alt="Engine">
   <img src="https://img.shields.io/badge/core-Rust%20%F0%9F%A6%80-dea584.svg" alt="Rust core">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Android-0078d7.svg" alt="Platform">
@@ -135,6 +135,10 @@ Rust-библиотеку под Windows (static CRT) и macOS (universal чер
 
 - **Полноценная глобальная стратегия**: экономика, логистика, железные дороги, флоты,
   дипломатия, альянсы, ядерные удары, ВДВ, разведка, ПВО
+- **Армии на Rust + форсирование рек**: движение армий ведёт GDExtension `dfarmy`;
+  спец-кнопка «ФОРСИРОВАНИЕ» — армия переправляется через реки вброд (медленно,
+  остановить можно огнём); армии слушаются приказов и не убегают к казармам,
+  десант больше не уплывает обратно и сразу идёт на штурм
 - **Нативное ПК-управление**: WASD/стрелки, зум колесом, перетаскивание СКМ/ПКМ,
   горячие клавиши `1–7`, `B`/`T`, `F11` на полный экран, переназначение клавиш
 - **Мультиплеер** (WebRTC Native): LAN и прямое подключение, комнаты, рейтинговые матчи,
@@ -226,7 +230,9 @@ godot --headless --path . -- --bench
 ```text
 drone_flames_PC-port_FPS_opt/
 ├── native/df_native/       # 🦀 Rust-ядро симуляции (godot-rust, GDExtension)
+├── rust/dfarmy/            # 🦀 Rust-движок армий: степпинг, форсирование рек
 ├── addons/df_native/       # Подключение .gdextension + собранные бинарники
+├── addons/dfarmy/          # Подключение dfarmy + собранные бинарники
 ├── assets/branding/        # Фирменные материалы Reborn
 ├── core/                   # Базовые подсистемы (моды, звук, палитра, клавиши)
 ├── dev/                    # Бенчмарки и dev-утилиты (--bench, --verify)

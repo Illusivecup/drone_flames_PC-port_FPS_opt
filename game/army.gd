@@ -589,6 +589,8 @@ func update(dt: float) -> void :
                         t0i = Time.get_ticks_usec()
                         if done != null:
                                 # движение арт-юнита уже сделал Rust-батч
+                                if u.state == Unit.State.FIGHT:
+                                        u.state = Unit.State.MOVE if u.pi < u.path.size() else Unit.State.IDLE
                                 if bool(done[1]):
                                         _blocked(u, u.still_t, dt)
                                 elif bool(done[0]) and u.pi >= u.path.size():
@@ -686,6 +688,8 @@ func update(dt: float) -> void :
                                 t0i = Time.get_ticks_usec()
                                 if done != null:
                                         # движение уже сделал Rust-батч; тут итоги пути
+                                        if u.state == Unit.State.FIGHT:
+                                                u.state = Unit.State.MOVE if u.pi < u.path.size() else Unit.State.IDLE
                                         if bool(done[1]):
                                                 _blocked(u, u.still_t, dt)
                                         elif bool(done[0]) and u.pi >= u.path.size():

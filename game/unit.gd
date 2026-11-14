@@ -56,32 +56,35 @@ var reinf_t: float = 0.0
 var reinf_v: float = 0.0
 var reinf_s: float = 0.0
 
+## R-FORD: свой берег для выхода из реки при прерванном форсировании
+var ford_bank: Vector2 = Vector2.INF
+
 
 func ground() -> bool:
-	return type != Type.FPV and type != Type.RECON
+        return type != Type.FPV and type != Type.RECON
 
 
 func air() -> bool:
-	return type == Type.FPV or type == Type.RECON
+        return type == Type.FPV or type == Type.RECON
 
 
 
 func foot() -> bool:
-	return type == Type.INFANTRY or type == Type.ASSAULT or type == Type.ATGM or type == Type.MORTAR
+        return type == Type.INFANTRY or type == Type.ASSAULT or type == Type.ATGM or type == Type.MORTAR
 
 
 
 func indirect() -> bool:
-	return type == Type.MORTAR or type == Type.ARTY or type == Type.MLRS
+        return type == Type.MORTAR or type == Type.ARTY or type == Type.MLRS
 
 
 func vehicle() -> bool:
-	return type == Type.TANK or type == Type.IFV or type == Type.ARTY or type == Type.MLRS or type == Type.POLICE
+        return type == Type.TANK or type == Type.IFV or type == Type.ARTY or type == Type.MLRS or type == Type.POLICE
 
 
 func update_frame() -> void :
-	frame = posmod(roundi(rad_to_deg(heading) / 22.5), 16)
+        frame = posmod(roundi(rad_to_deg(heading) / 22.5), 16)
 
 
 func alive() -> bool:
-	return state != State.DEAD
+        return state != State.DEAD

@@ -2177,11 +2177,14 @@ func _tick(op: Dictionary, dt: float) -> void :
                                 _finish(op, true, Loc.t("Армия №%d: %s — приказ выполнен") % [f.army_no, Loc.msg(op["state"])])
                         return
                 if top.is_empty():
-
-                        if float(op["losses"]) >= 0.3 and not afloat:
+                        # R-OBED: тактический план кончился (штурм отменён/застряли).
+                        # Раньше при потерях >= 30% вся армия уходила к казармам — это и
+                        # было «подошли и ушли». Теперь: отход только при тяжёлых потерях
+                        # (retreat_at), иначе армия закрепляется на достигнутом рубеже.
+                        if float(op["losses"]) >= float(op["retreat_at"]) and not afloat:
                                 _to_retreat(op, Loc.mk("потери %d%%, отход", [roundi(float(op["losses"]) * 100.0)]))
                         else:
-                                _finish(op, false, Loc.t("Армия №%d: наступление на %s сорвано, войска закрепились") % [f.army_no, city.name])
+                                _finish(op, false, Loc.t("Армия №%d: закрепилась на достигнутом рубеже") % f.army_no)
                         return
                 var ph: int = int(top["phase"])
                 match ph:
@@ -2205,10 +2208,11 @@ func _tick(op: Dictionary, dt: float) -> void :
                 return
 
         if top.is_empty():
-                if float(op["losses"]) >= 0.3 and not afloat:
+                # R-OBED: как выше — без автоматического ухода к казармам.
+                if float(op["losses"]) >= float(op["retreat_at"]) and not afloat:
                         _to_retreat(op, Loc.mk("потери %d%%, отход", [roundi(float(op["losses"]) * 100.0)]))
                 else:
-                        _finish(op, false, Loc.t("Армия №%d: движение остановлено") % f.army_no)
+                        _finish(op, false, Loc.t("Армия №%d: закрепилась на достигнутом рубеже") % f.army_no)
                 return
         var hold: bool = int(top["phase"]) == 5 or int(top["phase"]) == 4
         if not hold:

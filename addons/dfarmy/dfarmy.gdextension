@@ -1,0 +1,14 @@
+; DroneFlames Reborn: армейские действия на Rust (движок форсирования рек,
+; детерминированный степпинг, слоты построения). GDScript-фолбэк — game/ford.gd,
+; классы DFArmy. Сборка: rust/dfarmy (cargo build --release --target x86_64-pc-windows-gnu).
+[configuration]
+
+entry_symbol = "dfarmy_init"
+compatibility_minimum = "4.6"
+
+[libraries]
+
+linux.debug.x86_64 = "res://addons/dfarmy/lib/libdfarmy.so"
+linux.release.x86_64 = "res://addons/dfarmy/lib/libdfarmy.so"
+windows.debug.x86_64 = "res://addons/dfarmy/lib/libdfarmy.dll"
+windows.release.x86_64 = "res://addons/dfarmy/lib/libdfarmy.dll"

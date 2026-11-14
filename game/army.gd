@@ -141,6 +141,12 @@ var _fgrid: Dictionary = {}
 var _flines: Array = []
 var _fgrid_t: float = -99.0
 var _fpv_fly: Dictionary = {}
+## R-FORD: форсирование рек — пауза по id казарм (game_time окончания) и анти-спам сообщений.
+var ford_halt: Dictionary = {}
+var ford_said: Dictionary = {}
+var _ford_t: float = 0.0
+## Кэш батча кадра: id юнита -> [arrived, blocked, water]
+var _batch_done: Dictionary = {}
 var _fpv_b: Dictionary = {}
 var post_fixes: int = 0
 var occupy_why: String = ""
@@ -451,6 +457,16 @@ func order_attack(country_id: int, city: City, only: Facility = null) -> int:
                 if not tac.start(h, groups[h], city):
                         loose.append_array(groups[h])
         var base_path: PackedVector2Array = gw.econ.nav_path(cen, goal) if not loose.is_empty() else PackedVector2Array()
+        # R-FORD: сухого пути нет — свободные отряды идут вброд, если у них
+        # включено форсирование (у казарменных групп то же умеет tac.start).
+        if not loose.is_empty() and not gw.econ.nav_last_ok:
+                var any_ford: bool = false
+                for uf: Unit in loose:
+                        if uf.home != null and ford_on(uf.home):
+                                any_ford = true
+                                break
+                if any_ford:
+                        base_path = gw.econ.army_path_ford(cen, goal)
         if not loose.is_empty():
                 var fpg: GDScript = load("res://game/front_plan.gd")
                 if bool(fpg.call("closed_path", gw, country_id, base_path)):
@@ -553,6 +569,11 @@ func update(dt: float) -> void :
         var f_rcd := PackedFloat64Array()
         var f_us: Array[Unit] = []
         var f_tgt: Array = []
+        # R-FORD: батч-степпинг на Rust — юниты в воде и армий с включённым
+        # форсированием (мостовые кейсы остаются в GDScript-ной _advance).
+        _ford_tick(dt)
+        _batch_done.clear()
+        _ford_batch_run(dt)
         for u: Unit in units:
                 if not u.alive():
                         continue
@@ -563,9 +584,17 @@ func update(dt: float) -> void :
                 u.gren_cd -= dt
                 u.supp = maxf(0.0, u.supp - dt * 0.3)
                 var p0: Vector2 = u.pos
+                var done: Variant = _batch_done.get(u.id)
                 if u.indirect():
                         t0i = Time.get_ticks_usec()
-                        _advance(u, dt)
+                        if done != null:
+                                # движение арт-юнита уже сделал Rust-батч
+                                if bool(done[1]):
+                                        _blocked(u, u.still_t, dt)
+                                elif bool(done[0]) and u.pi >= u.path.size():
+                                        _advance_end(u)
+                        else:
+                                _advance(u, dt)
                         acc_adv += float(Time.get_ticks_usec() - t0i) / 1000.0
                 else:
                         var already_valid: bool = false
@@ -655,7 +684,14 @@ func update(dt: float) -> void :
                                 acc_fig += float(Time.get_ticks_usec() - t0i) / 1000.0
                         else:
                                 t0i = Time.get_ticks_usec()
-                                _advance(u, dt)
+                                if done != null:
+                                        # движение уже сделал Rust-батч; тут итоги пути
+                                        if bool(done[1]):
+                                                _blocked(u, u.still_t, dt)
+                                        elif bool(done[0]) and u.pi >= u.path.size():
+                                                _advance_end(u)
+                                else:
+                                        _advance(u, dt)
                                 acc_adv += float(Time.get_ticks_usec() - t0i) / 1000.0
                                 if tgt != null and u.op_move:
                                         _fire_moving(u, tgt)
@@ -1207,6 +1243,7 @@ func _damage(t: Object, dmg: float, by: int, at: = Vector2.INF, clear: bool = fa
                 var k: float = 0.6 if u.type == Unit.Type.TANK and dmg < 20.0 else (0.75 if u.vehicle() and dmg < 20.0 else 1.0)
                 u.hit_t = gw.game_time
                 u.supp = minf(1.0, u.supp + 0.25)
+                ford_stop_hit(u)  # R-FORD: огонь по юниту в реке останавливает переправу армии
                 if not u.entrenched:
 
                         var cv: float = u.cover * (0.6 if u.dug else 1.0)
@@ -1279,30 +1316,36 @@ func _kill(u: Unit, by: int) -> void :
 
 
 
+func _advance_end(u: Unit) -> void :
+        # R-FORD: общий итог «путь кончился» — вызывается и из _advance,
+        # и после Rust-батча (форсирование).
+        if u.post != null and not u.entrenched:
+                u.entrenched = true
+                u.state = Unit.State.IDLE
+                u.heading = _post_facing(u.post)
+                u.update_frame()
+                return
+        if u.op_hold:
+
+                u.op_move = false
+                if u.cover >= 1.0:
+                        u.cover = tac.unit_cover(u.pos)
+                if u.state != Unit.State.IDLE:
+                        u.state = Unit.State.IDLE
+                return
+        if u.target_city >= 0 and u.state != Unit.State.SIEGE:
+                u.state = Unit.State.SIEGE
+        elif u.target_city < 0:
+                u.state = Unit.State.IDLE
+        if u.state == Unit.State.SIEGE and not u.indirect():
+                _siege_fire(u)
+
+
 func _advance(u: Unit, dt: float) -> void :
         if u.state == Unit.State.FIGHT:
                 u.state = Unit.State.MOVE if u.pi < u.path.size() else Unit.State.IDLE
         if u.pi >= u.path.size():
-                if u.post != null and not u.entrenched:
-                        u.entrenched = true
-                        u.state = Unit.State.IDLE
-                        u.heading = _post_facing(u.post)
-                        u.update_frame()
-                        return
-                if u.op_hold:
-
-                        u.op_move = false
-                        if u.cover >= 1.0:
-                                u.cover = tac.unit_cover(u.pos)
-                        if u.state != Unit.State.IDLE:
-                                u.state = Unit.State.IDLE
-                        return
-                if u.target_city >= 0 and u.state != Unit.State.SIEGE:
-                        u.state = Unit.State.SIEGE
-                elif u.target_city < 0:
-                        u.state = Unit.State.IDLE
-                if u.state == Unit.State.SIEGE and not u.indirect():
-                        _siege_fire(u)
+                _advance_end(u)
                 return
         var st0: float = u.still_t
         var dug0: bool = u.dug
@@ -2688,6 +2731,130 @@ func set_auto_refill(f: Facility, on: bool) -> String:
                 _number(f)
                 gw.say(c, Loc.mk("Армия №%d: %s", [f.army_no, Loc.t("автопополнение включено") if on else Loc.t("автопополнение выключено")]))
         return ""
+
+
+## R-FORD: включить/выключить форсирование рек армией (команда army.set_ford).
+func set_ford(f: Facility, on: bool) -> String:
+        if f == null or f.kind != Facility.Kind.BARRACKS:
+                return Loc.t("Это не казармы")
+        f.ford = on
+        if not on:
+                ford_halt.erase(f.id)
+        var c: Country = gw.country_by_id(f.country_id)
+        if c != null and c.is_player:
+                gw.say(c, Loc.mk("Армия №%d: форсирование рек — %s", [f.army_no, Loc.t("ВКЛЮЧЕНО") if on else Loc.t("ВЫКЛЮЧЕНО")]))
+        return ""
+
+
+## Форсирование разрешено: кнопка игрока или боты (у ботов всегда, они иначе
+## не умеют идти через реки и уходят к казармам при блокировке пути).
+func ford_on(f: Facility) -> bool:
+        if f == null:
+                return false
+        if f.ford:
+                return true
+        var c: Country = gw.country_by_id(f.country_id)
+        return c != null and not c.is_player
+
+
+## R-FORD: собрать юниты для Rust-батча и применить результат степпинга.
+func _ford_batch_run(dt: float) -> void :
+        var batch: Array[Unit] = []
+        for u: Unit in units:
+                if u.alive() and u.state != Unit.State.FIGHT and FordCore.batchable(gw, u):
+                        batch.append(u)
+        if batch.is_empty():
+                return
+        var res: Dictionary = FordCore.batch_step(gw, batch, dt)
+        if res.is_empty():
+                # Rust-движка нет: детерминированный GDScript-фолбэк
+                for u2: Unit in batch:
+                        var r2: Dictionary = FordCore.step_one_gd(gw, u2, dt)
+                        _ford_apply(u2, dt, u2.pos, int(r2.get("pi", u2.pi)), bool(r2.get("water", false)), bool(r2.get("arrived", false)), bool(r2.get("blocked", false)), false)
+                return
+        var nps: PackedVector2Array = res.get("pos", PackedVector2Array())
+        var npi: PackedInt32Array = res.get("pi", PackedInt32Array())
+        var wat: PackedByteArray = res.get("water", PackedByteArray())
+        var arr: PackedByteArray = res.get("arrived", PackedByteArray())
+        var blk: PackedByteArray = res.get("blocked", PackedByteArray())
+        var bck: PackedByteArray = res.get("back", PackedByteArray())
+        var n: int = mini(batch.size(), nps.size())
+        for k in n:
+                var u3: Unit = batch[k]
+                var is_back: bool = k < bck.size() and int(bck[k]) != 0
+                _ford_apply(u3, dt, nps[k], int(npi[k]), bool(wat[k] == 1), bool(arr[k] == 1) and not is_back, bool(blk[k] == 1) and not is_back, is_back)
+
+
+## Применить результат Rust-батча к юниту (поворот, вода, берег, город-привязка).
+func _ford_apply(u: Unit, dt: float, new_pos: Vector2, new_pi: int, water: bool, arrived: bool, blocked: bool, back: bool) -> void :
+        if new_pos != u.pos:
+                var want: float = (new_pos - u.pos).angle()
+                u.heading += clampf(wrapf(want - u.heading, - PI, PI), - PI * 1.5 * dt, PI * 1.5 * dt)
+                u.update_frame()
+                u.still_t = 0.0
+                u.dug = false
+                u.cover = 1.0
+        u.pos = new_pos
+        var was_water: bool = FordCore.in_river(gw, u)
+        var in_water: bool = water or was_water
+        if in_water:
+                # свой берег для отступления из реки (обновляем, если далеко от прежнего)
+                if u.ford_bank.is_finite() and u.ford_bank.distance_to(u.pos) > 80.0:
+                        u.ford_bank = FordCore.bank_point(gw, u, u.path[u.path.size() - 1] if not u.path.is_empty() else u.pos)
+                if not u.ford_bank.is_finite():
+                        u.ford_bank = FordCore.bank_point(gw, u, u.path[u.path.size() - 1] if not u.path.is_empty() else u.pos)
+                u.supp = minf(u.supp + dt * 0.15, PIN_MAX)
+        if not back:
+                var old_pi: int = u.pi
+                u.pi = new_pi
+                # привязка к городу и переплан тапка — как в _advance
+                if u.target_city >= 0 and u.target_city < gw.cities.size():
+                        var city: City = gw.cities[u.target_city]
+                        if u.pos.distance_to(Vector2(city.center * GameWorld.CELL)) < float(city.radius * GameWorld.CELL) + 10.0:
+                                u.pi = u.path.size()
+                if new_pi > old_pi and u.type == Unit.Type.TANK and u.pi < u.path.size() and gw.econ.point_blocked(u.path[u.pi]):
+                        u.path = gw.econ.nav_path(u.pos, u.path[u.path.size() - 1])
+                        u.pi = 0
+        _batch_done[u.id] = [arrived, blocked, in_water]
+
+
+## R-FORD: пауза/возобновление форсирования. Огонь по юнитам в воде ставит
+## паузу (в batch_step они уходят на свой берег), затишье снимает.
+func _ford_tick(dt: float) -> void :
+        _ford_t -= dt
+        if _ford_t > 0.0:
+                return
+        _ford_t = 0.5
+        var now: float = gw.game_time
+        if ford_halt.is_empty():
+                return
+        for fid: int in ford_halt.keys():
+                if now < float(ford_halt[fid]):
+                        continue
+                var calm: bool = true
+                for u2: Unit in units:
+                        if u2.home != null and u2.home.id == fid and FordCore.in_river(gw, u2) and now - u2.hit_t < FordCore.FORD_CALM_S:
+                                calm = false
+                                break
+                if calm:
+                        ford_halt.erase(fid)
+
+
+## Юнит в воде получил урон: остановить форсирование армии (вызывается из _damage).
+func ford_stop_hit(u: Unit) -> void :
+        if u == null or u.home == null:
+                return
+        if not FordCore.in_river(gw, u):
+                return
+        var f: Facility = u.home
+        var now: float = gw.game_time
+        if ford_halt.has(f.id) and now < float(ford_halt[f.id]):
+                return
+        ford_halt[f.id] = now + FordCore.FORD_HOLD_S
+        var c: Country = gw.country_by_id(f.country_id)
+        if c != null and c.is_player and now - float(ford_said.get(f.id, -99.0)) > FordCore.FORD_SAY_CD:
+                ford_said[f.id] = now
+                gw.say(c, Loc.mk("Армия №%d: форсирование остановлено огнём — выходим на берег", [f.army_no]))
 
 
 

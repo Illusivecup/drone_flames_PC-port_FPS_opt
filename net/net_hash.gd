@@ -147,6 +147,23 @@ static func parts(gw: GameWorld) -> Dictionary:
 	out["okinds"] = kinds
 	out["oblocks"] = blocks
 	out["fire_rng"] = str(gw.army.fire.rng_state) if gw.army != null and gw.army.fire != null else "0"
+	# R-FORD/R-OBED: хэш тактических планов армий и пауз форсирования — если
+	# расходятся, desync_parts сразу показывает «army_tac» / «ford».
+	if gw.army != null and gw.army.tac != null:
+		var tac_s: String = ""
+		var ths: Array = gw.army.tac.ops.keys()
+		ths.sort_custom(func(a: Object, b: Object) -> bool: return a.id < b.id)
+		for h2: Object in ths:
+			var t: Dictionary = gw.army.tac.ops[h2]
+			var legs: Array = t.get("leg", [-1, -1])
+			tac_s += "%d:%d:%d:%d " % [h2.id, int(t.get("city", -1)), int(t.get("phase", -1)), int(legs[0]) if legs is Array and legs.size() > 0 else -1]
+		out["army_tac"] = tac_s.sha256_text().substr(0, 12)
+		var fhs: Array = gw.army.ford_halt.keys()
+		fhs.sort()
+		var f_s: String = ""
+		for fid: Variant in fhs:
+			f_s += "%d:%d " % [fid, roundi(float(gw.army.ford_halt[fid]) * 2.0)]
+		out["ford"] = f_s
 
 	var ul: Array = []
 	for u: Unit in gw.army.units:

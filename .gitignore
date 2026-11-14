@@ -34,3 +34,4 @@ godot_bin
 /DroneFlames_Debug.exe
 /DroneFlames_console.exe
 *.dll
+rust/dfarmy/target/

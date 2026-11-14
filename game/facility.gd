@@ -114,22 +114,25 @@ var mag_t: float = 0.0
 
 var mb: bool = false
 
+## R-FORD: форсирование рек этой армией (кнопка в карточке армии; команды army.set_ford)
+var ford: bool = false
+
 
 func is_line() -> bool:
-	return kind == Kind.TRENCH_H or kind == Kind.TEETH_H
+        return kind == Kind.TRENCH_H or kind == Kind.TEETH_H
 
 
 func origin_px() -> Vector2:
-	return Vector2(cell * 4)
+        return Vector2(cell * 4)
 
 
 func center_px() -> Vector2:
-	return Vector2(cell * 4) + Vector2(size * 4) * 0.5
+        return Vector2(cell * 4) + Vector2(size * 4) * 0.5
 
 
 func runway_ok() -> bool:
-	return craters.is_empty()
+        return craters.is_empty()
 
 
 func is_launcher() -> bool:
-	return kind == Kind.DP_RAMP or kind == Kind.DP_RUNWAY
+        return kind == Kind.DP_RAMP or kind == Kind.DP_RUNWAY

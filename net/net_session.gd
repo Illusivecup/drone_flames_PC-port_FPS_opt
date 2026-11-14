@@ -44,7 +44,7 @@ const ALLOWED: Dictionary = {
 	"mil.air.launch_kab": -1, "mil.air.launch_cruise": -1, "mil.air.multi_launch": -1,
 	"mil.air.kab_strike": 0, "mil.air.cas_support": 0,  # R316 attack jet (country id, jet id, targets / point)
 	"army.order_hold": 0, "army.occupy": 1, "army.leave": -1, "army.set_auto_refill": -1,
-	"army.set_build": -1, "army.toggle_support": 0, "army.order_attack": 0,
+	"army.set_build": -1, "army.toggle_support": 0, "army.order_attack": 0, "army.set_ford": -1,  # R-FORD: спец-кнопка форсирования рек
 	"ops.set_stance_all": 0, "ops.set_stance": -1, "ops.set_auto_orders": 0, "ops.start": -1,
 	"ops.start_all": 0, "ops.cancel": -1, "ops.order": 0, "ops.prompt_accepted": -1, "ops.dismiss_prompt": -1,
 	"ops.front_draw": 0, "ops.front_tap": 0,  # v0.29b FRONT29B: drawn front / tapped front of an army group
@@ -1803,6 +1803,22 @@ func host_start() -> String:
 	return ""
 
 
+## R-NET: отпечаток активных модов (рассинхрон из-за разных модов — самая
+## частая причина «постоянного рассинхрона»; теперь ловим до старта партии).
+func _mods_fp() -> String:
+	var ids: Array = []
+	if has_node("/root/ModManager"):
+		var mm: Node = get_node("/root/ModManager")
+		var raw: Variant = mm.get("enabled_mod_ids")
+		if raw is Array:
+			ids = raw
+	var parts: Array = []
+	for id: Variant in ids:
+		parts.append(str(id))
+	parts.sort()
+	return ",".join(parts)
+
+
 ## The start pack to every connected peer + the guests' seat tokens.
 func _send_start(s: WorldSettings, cfg: Dictionary) -> void:
 	for sl: Dictionary in slots:
@@ -1810,6 +1826,8 @@ func _send_start(s: WorldSettings, cfg: Dictionary) -> void:
 	_start.rpc({"seats": slots.map(func(sl: Dictionary) -> int: return int(sl["seat"])),"ws": Save.dump(s), "cfg": cfg, "n": slots.size(), "ranked": _ranked_pack(),
 		"names": slots.map(func(sl: Dictionary) -> String: return String(sl.get("name", ""))),  # NET 29: country names
 		"archs": slots.map(func(sl: Dictionary) -> int: return clampi(int(sl.get("arch", 0)), 0, 3)),  # NET 30: their styles
+		"mods": _mods_fp(),  # R-NET: отпечаток модов — гости с другим набором не войдут
+		"rust": FordCore.has_rust(),  # R-NET: у всех пиров должен быть один режим армии (Rust/GDScript)
 		"flags": slots.map(func(sl: Dictionary) -> String: return clean_flag(sl.get("flag", "")))})  # MPFLAG: their own flags
 	for i2: int in _tokens:
 		if multiplayer.get_peers().has(int(slots[i2]["peer"])):
@@ -1880,6 +1898,18 @@ func _on_p2p_started() -> void:
 
 @rpc("authority", "call_local", "reliable")
 func _start(pack: Dictionary) -> void:
+	# R-NET: до старта сверяем моды и режим движка армий — расхождение = гарантированный
+	# рассинхрон, теперь внятная ошибка вместо бесконечных «СИНХРОНИЗАЦИЯ».
+	if not is_host:
+		var fp_in: String = String(pack.get("mods", ""))
+		if fp_in != "" and fp_in != _mods_fp():
+			leave(false, true)
+			_status("Моды не совпадают с хостом: выровняйте наборы модов и попробуйте снова")
+			return
+		if bool(pack.get("rust", false)) != FordCore.has_rust():
+			leave(false, true)
+			_status("Разные версии Reborn: у хоста и у вас разный движок армий. Скачайте тот же релиз")
+			return
 	var cfg: Dictionary = pack["cfg"]
 	for n: String in cfg:
 		if CFG_KEYS.has(n):
@@ -1927,7 +1957,6 @@ func _start(pack: Dictionary) -> void:
 		_mark_ready(1)
 	else:
 		_ready_rq.rpc_id(1)
-
 
 @rpc("any_peer", "call_remote", "reliable")
 func _ready_rq() -> void:
